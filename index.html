@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>BLOOD STRIKE STALKER</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .box {
+      width: 100%;
+      max-width: 420px;
+      background: #151515;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.6);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: #e50914;
+      color: #fff;
+    }
+    button:disabled {
+      opacity: .6;
+    }
+    pre {
+      margin-top: 15px;
+      background: #0d0d0d;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+      overflow-x: auto;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      opacity: .6;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h1>BLOOD STRIKE STALKER</h1>
+  <input id="userId" placeholder="Masukkan User ID Blood Strike">
+  <button id="btn">Check Account</button>
+  <pre id="output"></pre>
+  <div class="footer">Powered by givy</div>
+</div>
+
+<script>
+  const btn = document.getElementById("btn");
+  const output = document.getElementById("output");
+
+  btn.onclick = async () => {
+    const userId = document.getElementById("userId").value.trim();
+    if (!userId) return alert("User ID wajib diisi");
+
+    btn.disabled = true;
+    btn.innerText = "Checking...";
+    output.style.display = "none";
+
+    try {
+      const res = await fetch("/api/bloodstrike", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId })
+      });
+
+      const data = await res.json();
+      output.style.display = "block";
+      output.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      output.style.display = "block";
+      output.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Check Account";
+    }
+  };
+</script>
+
+</body>
+</html>
