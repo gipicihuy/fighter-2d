@@ -1,7 +1,7 @@
 # Fighter 2D
 
 Game fighting 2D sederhana (HTML5 canvas, tanpa dependensi) dari sprite sheet.
-Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT homing: ngejar target, tidak bisa dihindari/diblok, menembus proyektil kecil, bikin lawan sisa sekitar 5 HP). CEO SAWIT punya **Kenbunshoku Haki**: kadang (sekitar 40%) menghindar otomatis dari pukulan/tendangan lawan, lengkap dengan aura, afterimage, dan suara hindaran. Gerakan semua karakter dihaluskan (render interpolasi, akselerasi jalan, tempo animasi serang sedikit diperlambat). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
+Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT homing: ngejar target, tidak bisa dihindari/diblok, menembus proyektil kecil, bikin lawan sisa sekitar 5 HP). CEO SAWIT punya **Kenbunshoku Haki**: kadang (sekitar 40%) menghindar otomatis dari pukulan/tendangan lawan, lengkap dengan aura, afterimage, dan suara hindaran. Gerakan semua karakter dihaluskan (render interpolasi, akselerasi jalan, tempo animasi serang sedikit diperlambat). CEO SAWIT juga lebih cepat (jalan +30%) dan punya **Dash** (Shift/Q atau ketuk 2x arah, bisa disambung langsung ke serangan). Jumlah musuh bisa dipilih 1 sampai 4 di menu (atau `?n=3`): semua musuh nyerang bareng dengan damage normal masing-masing. Arena lebar (1000 px) dengan kamera mengikuti pemain; panah merah di tepi layar menunjukkan musuh di luar layar. Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
 
 ## Jalankan
 ```
@@ -19,6 +19,7 @@ Langsung main tanpa menu: `http://localhost:3000/?auto=1&l=hard` (level: easy / 
 | Pukul | J (atau Z) | ikon kepalan (terbesar, di bawah jempol) |
 | Tendang | K (atau X) | ikon sepatu |
 | Pukulan berat (knockdown) | L (atau C) | ikon ledakan ungu |
+| Dash (khusus CEO SAWIT) | Shift / Q, atau ketuk 2x arah | ikon panah ganda biru (muncul kalau pakai CEO SAWIT) |
 | Skill / proyektil (20 energi) | U (atau V) | ikon api (ring = isi energi) |
 | ULT (50 energi) | I (atau B) | ikon petir merah (menyala kalau siap) |
 
