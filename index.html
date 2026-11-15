@@ -88,7 +88,8 @@ const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
    fire = frame saat proyektil keluar   kd = knockdown   end = jeda setelah animasi (tick @60fps) */
-const scl=(att,def,v)=>Math.max(1,Math.round(v*(att.def.atk||1)*(def.def.def||1))); // pengali damage per karakter
+// pengali damage: atk = damage keluar penyerang; def = damage masuk ke yang diserang; vs = override def untuk penyerang tertentu (per id)
+const scl=(att,def,v)=>{const d=def.def,r=d.vs&&d.vs[att.id]!=null?d.vs[att.id]:(d.def||1);return Math.max(1,Math.round(v*(att.def.atk||1)*r))};
 const A_=(frames,fps,loop)=>({frames,fps:fps||1,loop:!!loop});
 const rng=(p,a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(p+String(i).padStart(2,'0'));return o};
 const CHARDEF={
@@ -104,7 +105,7 @@ const CHARDEF={
    ult  :{anim:'skill_ultimate',fps:12,hit:[8,8],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  sawit:{
-  color:'#ffb300',atk:1.35,def:.72, // damage keluar x1.35, damage masuk x0.72
+  color:'#ffb300',atk:1.35,def:.72,vs:{patrick:.12}, // damage keluar x1.35, masuk x0.72 (dari Patrick cuma x0.12 = geli doang)
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true)},
   moves:{
