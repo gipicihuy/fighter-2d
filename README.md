@@ -26,7 +26,8 @@ Tombol lain: **F** fullscreen (atau tombol ⛶), **M** mute (atau tombol 🔊). 
 
 **ULT** (50 energi, garis putih di bar energi): layar freeze + gelap, kebal selama startup, beam jangkauan jauh tapi **rendah dan aktif sebentar**, jadi bisa dihindari dengan **lompat** (waktunya pas sebelum beam keluar) atau diblok. Ada garis peringatan di lantai selama startup. Kalau kena, musuh terkunci kena 6x beam lalu knockdown (total ~38 damage). Kalau diblok cuma chip ~10 damage. Bisa di-cancel dari pukulan yang sudah kena.
 
-Energi naik cepat tiap kena / kasih pukulan, ngisi sendiri pelan-pelan, dan tiap ronde mulai dengan 25. Blok mengurangi damage jadi 20% (chip, tidak bisa membunuh).
+Energi naik cepat tiap kena / kasih pukulan, ngisi sendiri pelan-pelan, dan tiap ronde mulai dengan 25. Lompat sambil menahan arah bisa melewati musuh (karakter otomatis berbalik hadap di udara) dan arah masih bisa diatur saat di udara. D-pad di HP satu area: jari boleh digeser antar arah.
+Blok mengurangi damage jadi 20% (chip, tidak bisa membunuh).
 Kombo makin lemah, dan hit ke-4 selalu knockdown.
 
 ## File

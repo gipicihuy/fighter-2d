@@ -22,9 +22,10 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 #pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));z-index:5;pointer-events:none}
 #pad.show{display:flex}
 #pad .grp{display:grid;gap:6px;pointer-events:auto}
-#pad .l{grid-template-columns:repeat(3,58px);grid-template-areas:". up ." "left down right"}
-#pad .r{grid-template-columns:repeat(3,58px)}
-#pad button{height:52px;border-radius:12px;border:1px solid #fff5;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;touch-action:none}
+#pad .l{width:168px;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,50px);grid-template-areas:". up ." "left . right" ". down .";background:rgba(255,255,255,.07);border-radius:18px;padding:4px;touch-action:none}
+#pad .l button{height:100%;pointer-events:none}
+#pad .r{grid-template-columns:repeat(3,64px)}
+#pad button{height:56px;border-radius:12px;border:1px solid #fff5;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;touch-action:none}
 #pad button.on{background:rgba(255,213,74,.6);color:#111}
 #pad [data-k=up]{grid-area:up}#pad [data-k=left]{grid-area:left}#pad [data-k=down]{grid-area:down}#pad [data-k=right]{grid-area:right}
 #pad [data-k=ult]{background:rgba(255,80,80,.3)}
@@ -69,7 +70,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 'use strict';
 const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
-const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=1.5,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
+const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=2.7,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK'};
@@ -85,10 +86,10 @@ const CHARDEF={
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r3_01'],1,true),jump:A_(['r2_14'],1,true)},
   moves:{
-   punch:{anim:'punch',fps:16,hit:[5,7],rx:[10,50],dmg:6,stun:16,kb:1.2,stop:3,end:6},
-   kick :{anim:'kick',fps:12,hit:[1,1],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
-   heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,66],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[0,2,2.2]},
-   skill:{anim:A_(rng('r4_',1,6),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,vfx:'beam_small',ph:55}},
+   punch:{anim:'punch',fps:16,hit:[5,7],rx:[10,50],dmg:6,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:12,hit:[1,1],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:6},
+   heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,66],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[0,2,2.2]},
+   skill:{anim:A_(rng('r4_',1,6),12),fire:5,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:3.8,vfx:'beam_small',ph:55}},
    ult  :{anim:'skill_ultimate',fps:12,hit:[7,8],beam:true,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  patrick:{
@@ -96,10 +97,10 @@ const CHARDEF={
   anims:{idle:'idle',walk:A_(rng('r2_',3,8),10,true),hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r3_01'],1,true),jump:A_(['r2_11'],1,true)},
   moves:{
-   punch:{anim:'punch',fps:16,hit:[6,7],rx:[10,58],dmg:6,stun:16,kb:1.2,stop:3,end:6},
-   kick :{anim:'kick',fps:14,hit:[5,6],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
-   heavy:{anim:'punch_heavy',fps:14,hit:[4,5],rx:[10,84],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[3,5,1.4]},
-   skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
+   punch:{anim:'punch',fps:16,hit:[6,7],rx:[10,58],dmg:6,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:14,hit:[5,6],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:6},
+   heavy:{anim:'punch_heavy',fps:14,hit:[4,5],rx:[10,84],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[3,5,1.4]},
+   skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
    ult  :{anim:'skill_ultimate',fps:12,hit:[9,9],beam:true,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }}
 };
@@ -107,8 +108,8 @@ function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (
  const an=A.animations,has=n=>!!an[n],first=Object.keys(an)[0],idle=has('idle')?'idle':first;
  const last2=n=>{const l=an[n].frames.length;return[Math.max(0,l-2),l-1]};
  const moves={};
- if(has('punch'))moves.punch={anim:'punch',hit:last2('punch'),rx:[10,52],dmg:6,stun:16,kb:1.2,stop:3,end:6};
- if(has('kick'))moves.kick={anim:'kick',hit:last2('kick'),rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10};
+ if(has('punch'))moves.punch={anim:'punch',hit:last2('punch'),rx:[10,52],dmg:6,stun:16,kb:1.2,stop:3,end:3};
+ if(has('kick'))moves.kick={anim:'kick',hit:last2('kick'),rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:6};
  const g0=(has('punch')?an.punch:an[idle]).frames[0];
  return{color:'#ffd54a',anims:{idle,walk:has('walk')?'walk':idle,hit:has('hit')?'hit':idle,knock:has('knockdown')?'knockdown':(has('hit')?'hit':idle),
    getup:has('getup')?'getup':idle,win:has('victory')?'victory':idle,block:A_([g0],1,true),jump:A_([an[idle].frames[0]],1,true)},moves};
@@ -170,14 +171,24 @@ const SND={ctx:null,m:null,muted:false,nb:null,
 const KEYMAP={KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',KeyW:'up',ArrowUp:'up',Space:'up',KeyS:'down',ArrowDown:'down',
  KeyJ:'punch',KeyZ:'punch',KeyK:'kick',KeyX:'kick',KeyL:'heavy',KeyC:'heavy',KeyU:'skill',KeyV:'skill',KeyI:'ult',KeyB:'ult'};
 const codes=new Set(),touch={},buf={punch:0,kick:0,heavy:0,skill:0,ult:0};
-addEventListener('keydown',e=>{const a=KEYMAP[e.code];if(!a)return;e.preventDefault();if(!e.repeat&&ATK.includes(a))buf[a]=8;codes.add(e.code)});
+addEventListener('keydown',e=>{const a=KEYMAP[e.code];if(!a)return;e.preventDefault();if(!e.repeat&&ATK.includes(a))buf[a]=10;codes.add(e.code)});
 addEventListener('keyup',e=>{codes.delete(e.code)});
 addEventListener('blur',()=>{codes.clear();for(const k in touch)touch[k]=false});
-document.querySelectorAll('#pad button').forEach(b=>{
+document.querySelectorAll('#pad .r button').forEach(b=>{
  const k=b.dataset.k;
- b.addEventListener('pointerdown',e=>{e.preventDefault();touch[k]=true;b.classList.add('on');if(ATK.includes(k))buf[k]=8;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+ b.addEventListener('pointerdown',e=>{e.preventDefault();touch[k]=true;b.classList.add('on');if(ATK.includes(k))buf[k]=10;try{b.setPointerCapture(e.pointerId)}catch(_){}});
  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>{touch[k]=false;b.classList.remove('on')}));
 });
+const dp=document.querySelector('#pad .l');let dpid=null;
+function dpSet(e){
+ const r=dp.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+ touch.left=x<-.17;touch.right=x>.17;touch.up=y<-.17;touch.down=y>.17&&Math.abs(x)<.17;
+ dp.querySelectorAll('button').forEach(b=>b.classList.toggle('on',!!touch[b.dataset.k]));
+}
+function dpOff(e){if(e.pointerId!==dpid)return;dpid=null;touch.left=touch.right=touch.up=touch.down=false;dp.querySelectorAll('button').forEach(b=>b.classList.remove('on'))}
+dp.addEventListener('pointerdown',e=>{e.preventDefault();dpid=e.pointerId;try{dp.setPointerCapture(e.pointerId)}catch(_){}dpSet(e)});
+dp.addEventListener('pointermove',e=>{if(e.pointerId===dpid)dpSet(e)});
+['pointerup','pointercancel','lostpointercapture'].forEach(ev=>dp.addEventListener(ev,dpOff));
 document.addEventListener('contextmenu',e=>e.preventDefault());
 const NEUTRAL={left:0,right:0,up:0,down:0,attack:null,consume(){}};
 const PlayerInput={
@@ -283,13 +294,13 @@ class Fighter{
   // super cancel: ULT bisa disambung dari serangan yang sudah kena
   if(S==='attack'&&this.move!=='ult'&&this.hitDone&&inp.attack==='ult'&&this.en>=ULTC)this.tryAttack(inp,G);
   if(S==='idle'||S==='walk'||S==='block'||S==='jump'){
-   if(!air&&foe.x!==this.x)this.face=foe.x>this.x?1:-1;
+   if(foe.x!==this.x)this.face=foe.x>this.x?1:-1; // hadap musuh, termasuk saat di udara (lompat melewati musuh)
    if(inp.attack&&this.tryAttack(inp,G)){/* mulai serang */}
    else if(!air){
-    if(inp.up){SND.play('jump');this.vy=JUMPV;this.vx=(inp.right-inp.left)*SPD*.9;this.setState('jump','jump')}
+    if(inp.up){SND.play('jump');this.vy=JUMPV;this.vx=(inp.right-inp.left)*JUMPX;this.setState('jump','jump')}
     else if(inp.down){this.vx=0;if(S!=='block')this.setState('block','block')}
     else{const d=inp.right-inp.left;this.vx=d*SPD;const ns=d?'walk':'idle';if(S!==ns)this.setState(ns,ns)}
-   }
+   }else if(S==='jump'){const d=inp.right-inp.left;if(d)this.vx+=(d*JUMPX-this.vx)*.2} // kontrol di udara
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
    if(m.lunge&&idx>=m.lunge[0]&&idx<=m.lunge[1])this.vx=this.face*m.lunge[2];else if(!air)this.vx*=.8;
@@ -411,9 +422,9 @@ const G={
   const ia=live?a.ctrl.get(a,b,this):NEUTRAL,ib=live?b.ctrl.get(b,a,this):NEUTRAL;
   a.update(ia,b,this);b.update(ib,a,this);
   // dorong agar tidak tumpang tindih
-  if(a.y<30&&b.y<30&&a.vulnerable()&&b.vulnerable()){
+  if(a.y===0&&b.y===0&&a.vulnerable()&&b.vulnerable()){
    const dx=b.x-a.x,ov=26-Math.abs(dx);
-   if(ov>0){const s=dx>=0?1:-1;a.x=Math.max(16,Math.min(W-16,a.x-s*ov/2));b.x=Math.max(16,Math.min(W-16,b.x+s*ov/2))}
+   if(ov>0){const s=dx>=0?1:-1,mv=Math.min(ov/2,1.6);a.x=Math.max(16,Math.min(W-16,a.x-s*mv));b.x=Math.max(16,Math.min(W-16,b.x+s*mv))}
   }
   // ULT drain: beam beruntun ke musuh yang terkunci
   for(const f of[a,b])if(f.drain){
