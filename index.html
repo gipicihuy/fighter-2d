@@ -68,7 +68,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 'use strict';
 const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
-const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=2.7,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
+const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK'};
@@ -206,7 +206,7 @@ function tickBuf(){for(const a of ATK)if(buf[a]>0)buf[a]--}
 
 /* ================= bot ================= */
 class Bot{
- constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,consume(){}};this.timer=0}
+ constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,autoFace:true,consume(){}};this.timer=0}
  get(me,foe,G){
   const I=this.I,L=this.lv;I.attack=null;
   const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed;
@@ -295,13 +295,15 @@ class Fighter{
   // super cancel: ULT bisa disambung dari serangan yang sudah kena
   if(S==='attack'&&this.move!=='ult'&&this.hitDone&&inp.attack==='ult'&&this.en>=ULTC)this.tryAttack(inp,G);
   if(S==='idle'||S==='walk'||S==='block'||S==='jump'){
-   if(foe.x!==this.x)this.face=foe.x>this.x?1:-1; // hadap musuh, termasuk saat di udara (lompat melewati musuh)
+   const dm=mvx(inp);
+   if(inp.autoFace){if(foe.x!==this.x)this.face=foe.x>this.x?1:-1} // bot: selalu hadap musuh
+   else if(Math.abs(dm)>.15)this.face=dm>0?1:-1; // player: hadap ikut arah stick/tombol, termasuk di udara
    if(inp.attack&&this.tryAttack(inp,G)){/* mulai serang */}
    else if(!air){
-    if(inp.up){SND.play('jump');this.vy=JUMPV;this.vx=mvx(inp)*JUMPX;this.setState('jump','jump')}
+    if(inp.up){SND.play('jump');this.vy=JUMPV;const dj=mvx(inp);this.vx=Math.abs(dj)>.25?Math.sign(dj)*JUMPX:0;this.setState('jump','jump')}
     else if(inp.down){this.vx=0;if(S!=='block')this.setState('block','block')}
     else{const d=mvx(inp);this.vx=d*SPD;const ns=Math.abs(d)>.15?'walk':'idle';if(S!==ns)this.setState(ns,ns)}
-   }else if(S==='jump'){const d=mvx(inp);if(d)this.vx+=(d*JUMPX-this.vx)*.2} // kontrol di udara
+   }else if(S==='jump'){const d=mvx(inp);if(Math.abs(d)>.25)this.vx+=(Math.sign(d)*JUMPX-this.vx)*.25} // kontrol di udara
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
    if(m.lunge&&idx>=m.lunge[0]&&idx<=m.lunge[1])this.vx=this.face*m.lunge[2];else if(!air)this.vx*=.8;
