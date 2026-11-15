@@ -53,7 +53,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
     <select id="selL"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Susah</option></select>
   </label>
   <button class="btn" id="go">MULAI</button>
-  <small>Keyboard: A/D jalan · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi) · F fullscreen · M suara<br>
+  <small>Keyboard: A/D jalan · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
   HP: best of 3 ronde. Energi naik tiap kena/kasih pukulan.</small>
 </div>
 
@@ -71,7 +71,7 @@ const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
 const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=1.5,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
 const ATK=['ult','skill','heavy','kick','punch'];
-const LEVELS={easy:{react:[20,34],block:.12,aggr:.45},normal:{react:[10,20],block:.35,aggr:.65},hard:{react:[4,10],block:.6,aggr:.85}};
+const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK'};
 
 /* ============ definisi karakter (mapping ke atlas) ============
@@ -89,7 +89,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:12,hit:[1,1],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
    heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,66],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[0,2,2.2]},
    skill:{anim:A_(rng('r4_',1,6),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,vfx:'beam_small',ph:55}},
-   ult  :{anim:'skill_ultimate',fps:16,hit:[7,8],beam:true,reach:300,ry:[0,140],cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+   ult  :{anim:'skill_ultimate',fps:12,hit:[7,8],beam:true,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -100,7 +100,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:14,hit:[5,6],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
    heavy:{anim:'punch_heavy',fps:14,hit:[4,5],rx:[10,84],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[3,5,1.4]},
    skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
-   ult  :{anim:'skill_ultimate',fps:16,hit:[9,9],beam:true,reach:300,ry:[0,140],cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+   ult  :{anim:'skill_ultimate',fps:12,hit:[9,9],beam:true,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -198,6 +198,14 @@ class Bot{
  constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,consume(){}};this.timer=0}
  get(me,foe,G){
   const I=this.I,L=this.lv;I.attack=null;
+  const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed;
+  if(!fu)this.dodgeRoll=null;
+  else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
+   if(this.dodgeRoll==null)this.dodgeRoll=Math.random()<L.dodge;
+   const tl=Math.ceil(foe.mdef.hit[0]*60/foe.an.fps)-foe.t;
+   if(this.dodgeRoll&&tl<=14&&tl>=9){I.left=I.right=I.down=0;I.up=1;this.timer=20;return I}
+   if(!this.dodgeRoll&&tl<=14){I.left=I.right=I.up=0;I.down=1;this.timer=12;return I}
+  }
   if(this.timer>0){this.timer--;return I}
   I.left=I.right=I.up=I.down=0;
   const rnd=Math.random,dx=foe.x-me.x,d=Math.abs(dx),toward=dx>0?'right':'left',away=dx>0?'left':'right';
@@ -285,9 +293,9 @@ class Fighter{
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
    if(m.lunge&&idx>=m.lunge[0]&&idx<=m.lunge[1])this.vx=this.face*m.lunge[2];else if(!air)this.vx*=.8;
-   if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;SND.play('beam');G.shake=Math.max(G.shake,10)}
+   if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;this.actStart=this.t;SND.play('beam');G.shake=Math.max(G.shake,10)}
    if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.spawnProj(this,m.proj)}
-   if(!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]){
+   if(!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
     const hb=this.hitbox(),hu=foe.hurtbox();
     if(hu&&hb.x0<hu.x1&&hb.x1>hu.x0&&hb.y0<hu.y1&&hb.y1>hu.y0){this.hitDone=true;G.applyHit(this,foe,m,this.face)}
    }
@@ -468,6 +476,11 @@ const G={
   ctx.save();
   if(this.shake>0)ctx.translate(Math.round((Math.random()-.5)*this.shake*.6),Math.round((Math.random()-.5)*this.shake*.6));
   drawBG();
+  for(const f of[this.p1,this.p2])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
+   const m=f.mdef,x0=f.face>0?f.x+10:f.x-m.reach,hh=m.ry[1],pl=.18+.14*Math.sin(this.pt*.5);
+   ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
+   if(f===this.p2){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(50,Math.min(W-50,f.x-f.face*-60)),GROUND-hh-8)}
+  }
   this.p1.draw(ctx);this.p2.draw(ctx);
   for(const p of this.projs){
    const A=p.owner.A,py=Math.round(GROUND-p.y);
