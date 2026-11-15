@@ -24,9 +24,9 @@ Langsung main tanpa menu: `http://localhost:3000/?auto=1&l=hard` (level: easy / 
 
 Tombol lain: **F** fullscreen (atau tombol ⛶), **M** mute (atau tombol 🔊). Suara di-generate lewat WebAudio, tanpa file.
 
-**ULT** (50 energi, garis putih di bar energi): layar freeze + gelap, kebal selama startup, beam jangkauan jauh tapi **rendah dan aktif sebentar**, jadi bisa dihindari dengan **lompat** (waktunya pas sebelum beam keluar) atau diblok. Ada garis peringatan di lantai selama startup. Kalau kena, musuh terkunci kena 6x beam lalu knockdown (total ~38 damage). Kalau diblok cuma chip ~10 damage. Bisa di-cancel dari pukulan yang sudah kena.
+**ULT** (50 energi, garis putih di bar energi): layar freeze + gelap, kebal selama startup, beam jangkauan jauh tapi **rendah dan aktif sebentar**, jadi bisa dihindari dengan **lompat** (waktunya pas sebelum beam keluar) atau diblok. Ada garis peringatan di lantai selama startup. Selama startup karakter otomatis menghadap dan maju mengejar musuh, jadi beam selalu pas ke arah musuh. Kalau kena, musuh terkunci kena 6x beam lalu knockdown (total ~38 damage). Kalau diblok cuma chip ~10 damage. Bisa di-cancel dari pukulan yang sudah kena.
 
-Energi naik cepat tiap kena / kasih pukulan, ngisi sendiri pelan-pelan, dan tiap ronde mulai dengan 25. Lompat sambil menahan arah bisa melewati musuh (karakter otomatis berbalik hadap di udara) dan arah masih bisa diatur saat di udara. D-pad di HP satu area: jari boleh digeser antar arah.
+Energi naik cepat tiap kena / kasih pukulan, ngisi sendiri pelan-pelan, dan tiap ronde mulai dengan 25. Lompat sambil menahan arah bisa melewati musuh (karakter otomatis berbalik hadap di udara) dan arah masih bisa diatur saat di udara. Di HP: **stick analog** di kiri (geser pelan = jalan pelan, geser jauh = cepat, tarik ke bawah = blok) dan tombol **LOMPAT** di kanan.
 Blok mengurangi damage jadi 20% (chip, tidak bisa membunuh).
 Kombo makin lemah, dan hit ke-4 selalu knockdown.
 
