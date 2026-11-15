@@ -88,6 +88,7 @@ const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
    fire = frame saat proyektil keluar   kd = knockdown   end = jeda setelah animasi (tick @60fps) */
+const scl=(att,def,v)=>Math.max(1,Math.round(v*(att.def.atk||1)*(def.def.def||1))); // pengali damage per karakter
 const A_=(frames,fps,loop)=>({frames,fps:fps||1,loop:!!loop});
 const rng=(p,a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(p+String(i).padStart(2,'0'));return o};
 const CHARDEF={
@@ -103,7 +104,7 @@ const CHARDEF={
    ult  :{anim:'skill_ultimate',fps:12,hit:[8,8],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  sawit:{
-  color:'#ffb300',
+  color:'#ffb300',atk:1.35,def:.72, // damage keluar x1.35, damage masuk x0.72
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true)},
   moves:{
@@ -113,7 +114,7 @@ const CHARDEF={
    // skill: lempar sawit kecil
    skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:46,ph:50,sfx:'sawitfire'}},
    // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
-   ult  :{anim:'skill_ultimate',fps:10,fire:5,cost:ULTC,armor:true,end:34,
+   ult  :{anim:A_(['r5_02','r5_03','r5_04','r5_05','r5_06','r5_07','r5_01'],10),fire:5,cost:ULTC,armor:true,end:12,
           proj:{vfx:'sawit_big',size:120,ph:42,vx:6.2,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
   }},
  patrick:{
@@ -249,13 +250,22 @@ class Bot{
  constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,autoFace:true,consume(){}};this.timer=0}
  get(me,foe,G){
   const I=this.I,L=this.lv;I.attack=null;
-  const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed;
+  const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed&&!foe.fired&&!!foe.mdef.hit;
   if(!fu)this.dodgeRoll=null;
   else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
    if(this.dodgeRoll==null)this.dodgeRoll=Math.random()<L.dodge;
    const tl=Math.ceil(foe.mdef.hit[0]*60/foe.an.fps)-foe.t;
    if(this.dodgeRoll&&tl<=14&&tl>=9){I.left=I.right=I.down=0;I.up=1;this.timer=20;return I}
    if(!this.dodgeRoll&&tl<=14){I.left=I.right=I.up=0;I.down=1;this.timer=12;return I}
+  }
+  // sawit raksasa (proyektil ULT): bot lompat pas jaraknya pas (kalau lolos roll dodge), atau blok
+  const big=G.projs.find(p=>p.owner!==me&&p.pd.big&&((p.vx>0)===(me.x>p.x))&&Math.abs(p.x-me.x)<150);
+  if(!big)this.bigRoll=null;
+  else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
+   if(this.bigRoll==null)this.bigRoll=Math.random()<L.dodge;
+   const bd=Math.abs(big.x-me.x);
+   if(this.bigRoll&&bd<=105&&bd>=70){I.left=I.right=I.down=0;I.up=1;this.timer=24;return I}
+   if(!this.bigRoll&&bd<=100){I.left=I.right=I.up=0;I.down=1;this.timer=16;return I}
   }
   if(this.timer>0){this.timer--;return I}
   I.left=I.right=I.up=I.down=0;
@@ -430,19 +440,19 @@ const G={
   if(!def.vulnerable())return false;
   const sx=def.x-dir*6,sy=def.y+55;
   if(def.state==='block'&&def.y===0){
-   def.hp=Math.max(1,def.hp-Math.max(1,Math.round(m.chip||m.dmg*.2)));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
+   def.hp=Math.max(1,def.hp-scl(att,def,Math.max(1,Math.round(m.chip||m.dmg*.2))));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
    def.en=Math.min(MAXEN,def.en+3);att.en=Math.min(MAXEN,att.en+4);
    this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);return true;
   }
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
-   def.hp=Math.max(0,def.hp-m.dmg);
+   def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
    else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att}}
    this.flash=8;this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,6);SND.play('ulthit');if(m.hitSfx)SND.play(m.hitSfx);
    if(m.boom)for(let i=0;i<6;i++)this.spark(sx+(Math.random()-.5)*34,sy+(Math.random()-.5)*44,i%2?'#ffb347':'#ff5c3c');
    this.spark(sx,sy,att.def.color);return true;
   }
-  const d=Math.max(1,Math.round(m.dmg*Math.max(.5,1-.1*def.combo)));
+  const d=scl(att,def,m.dmg*Math.max(.5,1-.1*def.combo));
   def.hp=Math.max(0,def.hp-d);def.combo++;
   att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
   if(m.kd||def.hp<=0||def.combo>=4||def.y>0)def.knockdown(dir,m.kb||3);else def.gotHit(dir,m.kb||1.2,m.stun||16);
@@ -476,7 +486,7 @@ const G={
   // ULT drain: beam beruntun ke musuh yang terkunci
   for(const f of[a,b])if(f.drain){
    const d=f.drain;d.t++;
-   if(d.t%d.every===0){f.hp=Math.max(0,f.hp-d.dmg);d.left--;this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);SND.play('hit');this.shake=Math.max(this.shake,6)}
+   if(d.t%d.every===0){f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);SND.play('hit');this.shake=Math.max(this.shake,6)}
    if(d.left<=0||f.hp<=0){f.drain=null;f.knockdown(d.dir,5);this.flash=10;this.shake=16;this.stop=10;SND.play('heavy')}
   }
   // proyektil
@@ -486,7 +496,7 @@ const G={
    if(hu&&Math.abs(p.x-foe.x)<20&&p.y>=hu.y0&&p.y<=hu.y1){this.applyHit(p.owner,foe,p.pd,p.dir);p.life=0}
    if(p.x<-40||p.x>W+40)p.life=0;
   }
-  if(this.projs.length>1){const[q,r]=this.projs;if(q.owner!==r.owner&&Math.abs(q.x-r.x)<14){q.life=r.life=0;this.spark((q.x+r.x)/2,q.y,'#ffffff')}}
+  if(this.projs.length>1){const[q,r]=this.projs;if(q.owner!==r.owner&&Math.abs(q.x-r.x)<14){if(q.pd.big&&!r.pd.big)r.life=0;else if(r.pd.big&&!q.pd.big)q.life=0;else q.life=r.life=0;this.spark((q.x+r.x)/2,q.y,'#ffffff')}}
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
   for(const f of[a,b]){f.hpShow+=(f.hp-f.hpShow)*.08;if(live&&f.hp>0)f.en=Math.min(MAXEN,f.en+.07)}
