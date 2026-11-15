@@ -1,7 +1,7 @@
 # Fighter 2D
 
 Game fighting 2D sederhana (HTML5 canvas, tanpa dependensi) dari sprite sheet.
-Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT menembus proyektil kecil). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
+Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT homing: ngejar target, tidak bisa dihindari/diblok, menembus proyektil kecil, bikin lawan sisa sekitar 5 HP). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
 
 ## Jalankan
 ```

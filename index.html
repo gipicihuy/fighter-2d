@@ -116,7 +116,7 @@ const CHARDEF={
    skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:46,ph:50,sfx:'sawitfire'}},
    // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
    ult  :{anim:A_(['r5_02','r5_03','r5_04','r5_05','r5_06','r5_07','r5_01'],10),fire:5,cost:ULTC,armor:true,end:12,
-          proj:{vfx:'sawit_big',size:120,ph:42,vx:6.2,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
+          proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -260,7 +260,7 @@ class Bot{
    if(!this.dodgeRoll&&tl<=14){I.left=I.right=I.up=0;I.down=1;this.timer=12;return I}
   }
   // sawit raksasa (proyektil ULT): bot lompat pas jaraknya pas (kalau lolos roll dodge), atau blok
-  const big=G.projs.find(p=>p.owner!==me&&p.pd.big&&((p.vx>0)===(me.x>p.x))&&Math.abs(p.x-me.x)<150);
+  const big=G.projs.find(p=>p.owner!==me&&p.pd.big&&!p.pd.homing&&((p.vx>0)===(me.x>p.x))&&Math.abs(p.x-me.x)<150);
   if(!big)this.bigRoll=null;
   else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
    if(this.bigRoll==null)this.bigRoll=Math.random()<L.dodge;
@@ -440,7 +440,7 @@ const G={
  applyHit(att,def,m,dir){
   if(!def.vulnerable())return false;
   const sx=def.x-dir*6,sy=def.y+55;
-  if(def.state==='block'&&def.y===0){
+  if(def.state==='block'&&def.y===0&&!m.pierce){
    def.hp=Math.max(1,def.hp-scl(att,def,Math.max(1,Math.round(m.chip||m.dmg*.2))));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
    def.en=Math.min(MAXEN,def.en+3);att.en=Math.min(MAXEN,att.en+4);
    this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);return true;
@@ -492,9 +492,11 @@ const G={
   }
   // proyektil
   for(const p of this.projs){
+   const foe=p.owner===a?b:a;
+   if(p.pd.homing){const dx=foe.x-p.x;if(Math.abs(dx)>3){p.dir=dx>0?1:-1;p.vx=p.dir*Math.abs(p.pd.vx)}p.y+=(foe.y+45-p.y)*.2}
    p.x+=p.vx;p.life--;
-   const foe=p.owner===a?b:a,hu=foe.hurtbox();
-   if(hu&&Math.abs(p.x-foe.x)<20&&p.y>=hu.y0&&p.y<=hu.y1){this.applyHit(p.owner,foe,p.pd,p.dir);p.life=0}
+   const hu=foe.hurtbox();
+   if(hu&&Math.abs(p.x-foe.x)<(p.pd.homing?24:20)&&(p.pd.homing||(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,foe,p.pd,p.dir);p.life=0}
    if(p.x<-40||p.x>W+40)p.life=0;
   }
   if(this.projs.length>1){const[q,r]=this.projs;if(q.owner!==r.owner&&Math.abs(q.x-r.x)<14){if(q.pd.big&&!r.pd.big)r.life=0;else if(r.pd.big&&!q.pd.big)q.life=0;else q.life=r.life=0;this.spark((q.x+r.x)/2,q.y,'#ffffff')}}
