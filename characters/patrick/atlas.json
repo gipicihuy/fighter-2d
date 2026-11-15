@@ -1,0 +1,1304 @@
+{
+ "character": {
+  "id": "patrick",
+  "name": "Patrick (kacamata + dasi)"
+ },
+ "image": "spritesheet_transparent.png",
+ "sheetSize": [
+  1280,
+  853
+ ],
+ "notes": "Koordinat piksel di spritesheet_transparent.png (1280x853, kiri-atas = 0,0). Frame tidak seragam: pakai x,y,w,h per frame. pivot=[px,py] relatif ke rect frame = titik pijakan (tengah kaki di garis tanah), dihitung dari piksel tubuh (bukan aura/beam/bayangan), jadi karakter tidak loncat antar frame. pivotMode: stand = tengah kaki, lying = tengah badan saat rebahan, bbox = tengah-bawah rect (vfx). Sheet Patrick tidak punya baris portrait.",
+ "frames": {
+  "r1_01": {
+   "x": 23,
+   "y": 21,
+   "w": 61,
+   "h": 103,
+   "pivot": [
+    29,
+    102
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_02": {
+   "x": 107,
+   "y": 24,
+   "w": 63,
+   "h": 101,
+   "pivot": [
+    31,
+    100
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_03": {
+   "x": 190,
+   "y": 21,
+   "w": 64,
+   "h": 103,
+   "pivot": [
+    31,
+    102
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_04": {
+   "x": 274,
+   "y": 24,
+   "w": 63,
+   "h": 100,
+   "pivot": [
+    32,
+    99
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_05": {
+   "x": 357,
+   "y": 23,
+   "w": 63,
+   "h": 101,
+   "pivot": [
+    32,
+    100
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_06": {
+   "x": 444,
+   "y": 22,
+   "w": 63,
+   "h": 102,
+   "pivot": [
+    31,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_07": {
+   "x": 526,
+   "y": 22,
+   "w": 62,
+   "h": 102,
+   "pivot": [
+    30,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_08": {
+   "x": 608,
+   "y": 21,
+   "w": 63,
+   "h": 103,
+   "pivot": [
+    31,
+    102
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_09": {
+   "x": 693,
+   "y": 23,
+   "w": 63,
+   "h": 102,
+   "pivot": [
+    31,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_10": {
+   "x": 774,
+   "y": 23,
+   "w": 63,
+   "h": 102,
+   "pivot": [
+    31,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_11": {
+   "x": 856,
+   "y": 23,
+   "w": 63,
+   "h": 102,
+   "pivot": [
+    31,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_12": {
+   "x": 936,
+   "y": 18,
+   "w": 65,
+   "h": 107,
+   "pivot": [
+    32,
+    106
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_13": {
+   "x": 1019,
+   "y": 24,
+   "w": 65,
+   "h": 103,
+   "pivot": [
+    32,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_14": {
+   "x": 1102,
+   "y": 21,
+   "w": 64,
+   "h": 105,
+   "pivot": [
+    30,
+    104
+   ],
+   "pivotMode": "stand"
+  },
+  "r1_15": {
+   "x": 1186,
+   "y": 23,
+   "w": 63,
+   "h": 104,
+   "pivot": [
+    32,
+    103
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_01": {
+   "x": 22,
+   "y": 147,
+   "w": 59,
+   "h": 101,
+   "pivot": [
+    28,
+    100
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_02": {
+   "x": 99,
+   "y": 146,
+   "w": 61,
+   "h": 102,
+   "pivot": [
+    29,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_03": {
+   "x": 185,
+   "y": 146,
+   "w": 58,
+   "h": 101,
+   "pivot": [
+    26,
+    99
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_04": {
+   "x": 272,
+   "y": 147,
+   "w": 62,
+   "h": 101,
+   "pivot": [
+    26,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_05": {
+   "x": 357,
+   "y": 147,
+   "w": 63,
+   "h": 100,
+   "pivot": [
+    27,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_06": {
+   "x": 437,
+   "y": 146,
+   "w": 59,
+   "h": 101,
+   "pivot": [
+    24,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_07": {
+   "x": 513,
+   "y": 146,
+   "w": 71,
+   "h": 102,
+   "pivot": [
+    30,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_08": {
+   "x": 597,
+   "y": 150,
+   "w": 72,
+   "h": 98,
+   "pivot": [
+    30,
+    92
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_09": {
+   "x": 693,
+   "y": 149,
+   "w": 79,
+   "h": 98,
+   "pivot": [
+    29,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_10": {
+   "x": 796,
+   "y": 146,
+   "w": 72,
+   "h": 102,
+   "pivot": [
+    30,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_11": {
+   "x": 887,
+   "y": 150,
+   "w": 63,
+   "h": 98,
+   "pivot": [
+    24,
+    94
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_12": {
+   "x": 970,
+   "y": 150,
+   "w": 62,
+   "h": 98,
+   "pivot": [
+    22,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_13": {
+   "x": 1052,
+   "y": 149,
+   "w": 63,
+   "h": 98,
+   "pivot": [
+    27,
+    95
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_14": {
+   "x": 1130,
+   "y": 148,
+   "w": 57,
+   "h": 98,
+   "pivot": [
+    23,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r2_15": {
+   "x": 1201,
+   "y": 147,
+   "w": 59,
+   "h": 99,
+   "pivot": [
+    27,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_01": {
+   "x": 20,
+   "y": 271,
+   "w": 63,
+   "h": 99,
+   "pivot": [
+    30,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_02": {
+   "x": 108,
+   "y": 271,
+   "w": 72,
+   "h": 99,
+   "pivot": [
+    29,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_03": {
+   "x": 198,
+   "y": 272,
+   "w": 68,
+   "h": 98,
+   "pivot": [
+    27,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_04": {
+   "x": 283,
+   "y": 274,
+   "w": 68,
+   "h": 96,
+   "pivot": [
+    28,
+    95
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_05": {
+   "x": 371,
+   "y": 272,
+   "w": 67,
+   "h": 98,
+   "pivot": [
+    26,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_06": {
+   "x": 452,
+   "y": 272,
+   "w": 69,
+   "h": 98,
+   "pivot": [
+    26,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_07": {
+   "x": 533,
+   "y": 272,
+   "w": 85,
+   "h": 98,
+   "pivot": [
+    28,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_08": {
+   "x": 627,
+   "y": 273,
+   "w": 94,
+   "h": 98,
+   "pivot": [
+    30,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_09": {
+   "x": 734,
+   "y": 270,
+   "w": 89,
+   "h": 103,
+   "pivot": [
+    27,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_10": {
+   "x": 840,
+   "y": 271,
+   "w": 61,
+   "h": 102,
+   "pivot": [
+    27,
+    101
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_11": {
+   "x": 934,
+   "y": 272,
+   "w": 65,
+   "h": 101,
+   "pivot": [
+    26,
+    100
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_12": {
+   "x": 1022,
+   "y": 269,
+   "w": 63,
+   "h": 104,
+   "pivot": [
+    28,
+    102
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_13": {
+   "x": 1105,
+   "y": 273,
+   "w": 61,
+   "h": 100,
+   "pivot": [
+    26,
+    99
+   ],
+   "pivotMode": "stand"
+  },
+  "r3_14": {
+   "x": 1188,
+   "y": 268,
+   "w": 61,
+   "h": 105,
+   "pivot": [
+    30,
+    104
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_01": {
+   "x": 19,
+   "y": 396,
+   "w": 62,
+   "h": 96,
+   "pivot": [
+    29,
+    94
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_02": {
+   "x": 102,
+   "y": 396,
+   "w": 59,
+   "h": 98,
+   "pivot": [
+    26,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_03": {
+   "x": 180,
+   "y": 396,
+   "w": 62,
+   "h": 99,
+   "pivot": [
+    26,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_04": {
+   "x": 263,
+   "y": 396,
+   "w": 58,
+   "h": 99,
+   "pivot": [
+    24,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_05": {
+   "x": 342,
+   "y": 396,
+   "w": 60,
+   "h": 99,
+   "pivot": [
+    20,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_06": {
+   "x": 422,
+   "y": 396,
+   "w": 60,
+   "h": 99,
+   "pivot": [
+    20,
+    98
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_07": {
+   "x": 501,
+   "y": 396,
+   "w": 68,
+   "h": 98,
+   "pivot": [
+    20,
+    97
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_08": {
+   "x": 594,
+   "y": 398,
+   "w": 61,
+   "h": 95,
+   "pivot": [
+    26,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_09": {
+   "x": 676,
+   "y": 396,
+   "w": 57,
+   "h": 97,
+   "pivot": [
+    25,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_10": {
+   "x": 759,
+   "y": 396,
+   "w": 59,
+   "h": 97,
+   "pivot": [
+    20,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_11": {
+   "x": 837,
+   "y": 396,
+   "w": 60,
+   "h": 97,
+   "pivot": [
+    26,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_12": {
+   "x": 914,
+   "y": 396,
+   "w": 58,
+   "h": 97,
+   "pivot": [
+    26,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_13": {
+   "x": 988,
+   "y": 396,
+   "w": 59,
+   "h": 97,
+   "pivot": [
+    27,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_14": {
+   "x": 1071,
+   "y": 396,
+   "w": 58,
+   "h": 96,
+   "pivot": [
+    27,
+    95
+   ],
+   "pivotMode": "stand"
+  },
+  "r4_15": {
+   "x": 1195,
+   "y": 397,
+   "w": 56,
+   "h": 97,
+   "pivot": [
+    27,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_01": {
+   "x": 18,
+   "y": 520,
+   "w": 66,
+   "h": 96,
+   "pivot": [
+    32,
+    96
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_02": {
+   "x": 98,
+   "y": 517,
+   "w": 67,
+   "h": 100,
+   "pivot": [
+    32,
+    99
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_03": {
+   "x": 178,
+   "y": 523,
+   "w": 62,
+   "h": 94,
+   "pivot": [
+    30,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_04": {
+   "x": 254,
+   "y": 525,
+   "w": 60,
+   "h": 93,
+   "pivot": [
+    23,
+    92
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_05": {
+   "x": 330,
+   "y": 525,
+   "w": 59,
+   "h": 93,
+   "pivot": [
+    23,
+    92
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_06": {
+   "x": 408,
+   "y": 522,
+   "w": 92,
+   "h": 96,
+   "pivot": [
+    22,
+    95
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_07": {
+   "x": 508,
+   "y": 525,
+   "w": 98,
+   "h": 93,
+   "pivot": [
+    24,
+    92
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_08": {
+   "x": 610,
+   "y": 524,
+   "w": 85,
+   "h": 94,
+   "pivot": [
+    25,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_09": {
+   "x": 699,
+   "y": 527,
+   "w": 179,
+   "h": 94,
+   "pivot": [
+    27,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_10": {
+   "x": 881,
+   "y": 528,
+   "w": 216,
+   "h": 89,
+   "pivot": [
+    26,
+    88
+   ],
+   "pivotMode": "stand"
+  },
+  "r5_11": {
+   "x": 1100,
+   "y": 545,
+   "w": 76,
+   "h": 67,
+   "pivot": [
+    38,
+    67
+   ],
+   "pivotMode": "bbox"
+  },
+  "r5_12": {
+   "x": 1197,
+   "y": 524,
+   "w": 57,
+   "h": 94,
+   "pivot": [
+    27,
+    93
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_01": {
+   "x": 28,
+   "y": 640,
+   "w": 72,
+   "h": 89,
+   "pivot": [
+    38,
+    88
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_02": {
+   "x": 114,
+   "y": 642,
+   "w": 76,
+   "h": 87,
+   "pivot": [
+    43,
+    86
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_03": {
+   "x": 214,
+   "y": 641,
+   "w": 76,
+   "h": 85,
+   "pivot": [
+    26,
+    84
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_04": {
+   "x": 326,
+   "y": 641,
+   "w": 66,
+   "h": 86,
+   "pivot": [
+    38,
+    85
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_05": {
+   "x": 430,
+   "y": 648,
+   "w": 62,
+   "h": 80,
+   "pivot": [
+    37,
+    80
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_06": {
+   "x": 509,
+   "y": 641,
+   "w": 61,
+   "h": 86,
+   "pivot": [
+    35,
+    85
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_07": {
+   "x": 590,
+   "y": 646,
+   "w": 60,
+   "h": 80,
+   "pivot": [
+    26,
+    79
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_08": {
+   "x": 676,
+   "y": 645,
+   "w": 59,
+   "h": 82,
+   "pivot": [
+    32,
+    81
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_09": {
+   "x": 764,
+   "y": 643,
+   "w": 59,
+   "h": 85,
+   "pivot": [
+    27,
+    84
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_10": {
+   "x": 859,
+   "y": 643,
+   "w": 53,
+   "h": 85,
+   "pivot": [
+    23,
+    84
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_11": {
+   "x": 951,
+   "y": 640,
+   "w": 55,
+   "h": 88,
+   "pivot": [
+    26,
+    87
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_12": {
+   "x": 1043,
+   "y": 639,
+   "w": 51,
+   "h": 90,
+   "pivot": [
+    23,
+    89
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_13": {
+   "x": 1120,
+   "y": 642,
+   "w": 56,
+   "h": 85,
+   "pivot": [
+    26,
+    84
+   ],
+   "pivotMode": "stand"
+  },
+  "r6_14": {
+   "x": 1203,
+   "y": 641,
+   "w": 56,
+   "h": 86,
+   "pivot": [
+    26,
+    85
+   ],
+   "pivotMode": "stand"
+  },
+  "r7_01": {
+   "x": 32,
+   "y": 761,
+   "w": 67,
+   "h": 67,
+   "pivot": [
+    33,
+    66
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_02": {
+   "x": 140,
+   "y": 777,
+   "w": 91,
+   "h": 52,
+   "pivot": [
+    45,
+    51
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_03": {
+   "x": 263,
+   "y": 790,
+   "w": 86,
+   "h": 38,
+   "pivot": [
+    42,
+    36
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_04": {
+   "x": 374,
+   "y": 789,
+   "w": 86,
+   "h": 38,
+   "pivot": [
+    43,
+    37
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_05": {
+   "x": 497,
+   "y": 781,
+   "w": 106,
+   "h": 46,
+   "pivot": [
+    52,
+    45
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_06": {
+   "x": 653,
+   "y": 777,
+   "w": 79,
+   "h": 52,
+   "pivot": [
+    39,
+    51
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_07": {
+   "x": 783,
+   "y": 753,
+   "w": 84,
+   "h": 77,
+   "pivot": [
+    41,
+    76
+   ],
+   "pivotMode": "lying"
+  },
+  "r7_08": {
+   "x": 920,
+   "y": 748,
+   "w": 57,
+   "h": 85,
+   "pivot": [
+    25,
+    84
+   ],
+   "pivotMode": "stand"
+  },
+  "r7_09": {
+   "x": 1031,
+   "y": 752,
+   "w": 61,
+   "h": 84,
+   "pivot": [
+    28,
+    82
+   ],
+   "pivotMode": "stand"
+  },
+  "r7_10": {
+   "x": 1151,
+   "y": 741,
+   "w": 98,
+   "h": 95,
+   "pivot": [
+    40,
+    94
+   ],
+   "pivotMode": "stand"
+  }
+ },
+ "animations": {
+  "idle": {
+   "frames": [
+    "r1_01",
+    "r1_02",
+    "r1_03",
+    "r1_04",
+    "r1_05",
+    "r1_06",
+    "r1_07",
+    "r1_08",
+    "r1_09",
+    "r1_10",
+    "r1_11"
+   ],
+   "fps": 6,
+   "loop": true,
+   "note": "hadap depan, napas pelan"
+  },
+  "idle_alt": {
+   "frames": [
+    "r1_12",
+    "r1_13",
+    "r1_14",
+    "r1_15"
+   ],
+   "fps": 6,
+   "loop": true,
+   "note": "varian idle (badan sedikit menunduk/loncat kecil)"
+  },
+  "walk": {
+   "frames": [
+    "r2_01",
+    "r2_02",
+    "r2_03",
+    "r2_04",
+    "r2_05",
+    "r2_06",
+    "r2_07",
+    "r2_08"
+   ],
+   "fps": 10,
+   "loop": true,
+   "note": "r2_01-02 transisi depan, r2_03-08 jalan menyamping"
+  },
+  "run": {
+   "frames": [
+    "r2_09",
+    "r2_10",
+    "r2_11",
+    "r2_12",
+    "r2_13",
+    "r2_14",
+    "r2_15"
+   ],
+   "fps": 12,
+   "loop": true,
+   "note": "condong ke depan"
+  },
+  "punch": {
+   "frames": [
+    "r3_01",
+    "r3_02",
+    "r3_03",
+    "r3_04",
+    "r3_05",
+    "r3_06",
+    "r3_07",
+    "r3_08"
+   ],
+   "fps": 12,
+   "loop": false,
+   "note": "guard -> jab (r3_07/08 = puncak pukulan)"
+  },
+  "punch_heavy": {
+   "frames": [
+    "r3_04",
+    "r3_05",
+    "r3_06",
+    "r3_07",
+    "r3_08",
+    "r3_09"
+   ],
+   "fps": 12,
+   "loop": false,
+   "note": "windup -> pukulan panjang + teriak (r3_09 puncak)"
+  },
+  "punch_recover": {
+   "frames": [
+    "r3_10",
+    "r3_11",
+    "r3_12",
+    "r3_13",
+    "r3_14"
+   ],
+   "fps": 10,
+   "loop": false,
+   "note": "kembali ke stance"
+  },
+  "kick": {
+   "frames": [
+    "r4_01",
+    "r4_02",
+    "r4_03",
+    "r4_04",
+    "r4_05",
+    "r4_06",
+    "r4_07"
+   ],
+   "fps": 10,
+   "loop": false,
+   "note": "r4_07 = puncak tendangan"
+  },
+  "kick_recover": {
+   "frames": [
+    "r4_08",
+    "r4_09"
+   ],
+   "fps": 10,
+   "loop": false,
+   "note": "kembali ke stance"
+  },
+  "attack_alt": {
+   "frames": [
+    "r4_09",
+    "r4_10",
+    "r4_11"
+   ],
+   "fps": 10,
+   "loop": false,
+   "note": "asumsi: gerakan tangan / poke, bisa dipakai sebagai serangan ringan"
+  },
+  "skill_shot": {
+   "frames": [
+    "r5_04",
+    "r5_05",
+    "r5_06",
+    "r5_07",
+    "r5_08"
+   ],
+   "fps": 12,
+   "loop": false,
+   "note": "bola energi biru: charge -> tahan (belum ditembak)"
+  },
+  "skill_ultimate": {
+   "frames": [
+    "r5_01",
+    "r5_02",
+    "r5_03",
+    "r5_04",
+    "r5_05",
+    "r5_06",
+    "r5_07",
+    "r5_08",
+    "r5_09",
+    "r5_10"
+   ],
+   "fps": 10,
+   "loop": false,
+   "note": "aura -> bola energi -> beam (r5_10 = beam penuh; r5_11 = vfx percikan ujung beam)"
+  },
+  "skill_recover": {
+   "frames": [
+    "r5_12"
+   ],
+   "fps": 6,
+   "loop": false,
+   "note": "berdiri setelah skill"
+  },
+  "hit": {
+   "frames": [
+    "r6_01",
+    "r6_02",
+    "r6_03"
+   ],
+   "fps": 8,
+   "loop": false
+  },
+  "stun": {
+   "frames": [
+    "r6_04",
+    "r6_05",
+    "r6_06"
+   ],
+   "fps": 6,
+   "loop": true,
+   "note": "pusing, ada bintang/sparkle"
+  },
+  "hit_recover": {
+   "frames": [
+    "r6_07",
+    "r6_08",
+    "r6_09",
+    "r6_10",
+    "r6_11",
+    "r6_12",
+    "r6_13",
+    "r6_14"
+   ],
+   "fps": 8,
+   "loop": false,
+   "note": "sempoyongan -> berdiri lagi"
+  },
+  "knockdown": {
+   "frames": [
+    "r7_01",
+    "r7_02",
+    "r7_03",
+    "r7_04",
+    "r7_05",
+    "r7_06"
+   ],
+   "fps": 6,
+   "loop": false,
+   "note": "jatuh -> tergeletak (tahan frame terakhir)"
+  },
+  "getup": {
+   "frames": [
+    "r7_07",
+    "r7_08",
+    "r7_09"
+   ],
+   "fps": 6,
+   "loop": false,
+   "note": "merangkak -> berdiri"
+  },
+  "victory": {
+   "frames": [
+    "r7_09",
+    "r7_10"
+   ],
+   "fps": 3,
+   "loop": true,
+   "note": "angkat tangan + sparkle (cuma 1 pose kemenangan di sheet ini)"
+  }
+ },
+ "vfx": {
+  "beam": [
+   "r5_10"
+  ],
+  "beam_end": [
+   "r5_11"
+  ]
+ },
+ "portraits": []
+}

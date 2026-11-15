@@ -1,0 +1,87 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprite preview (transparan + pivot)</title>
+<style>
+ body{font:14px system-ui,sans-serif;background:#1e2421;color:#eee;padding:12px;margin:0}
+ #b button{margin:2px;padding:4px 8px;cursor:pointer}
+ #b button.on{background:#ffd54a;border-color:#ffd54a}
+ label{margin-right:12px}
+ select{font-size:14px;padding:3px 6px}
+ canvas{border:1px solid #555;display:block;margin-top:8px;image-rendering:pixelated;max-width:100%}
+ #i{font-family:monospace;margin:8px 0}
+ #err{color:#ff8a80}
+</style>
+<p><label>karakter <select id="ch"></select></label></p>
+<div id="b"></div>
+<p>
+ <label><input type="checkbox" id="dbg" checked> debug (rect, pivot, garis tanah)</label>
+ <label><input type="checkbox" id="chk"> latar checker</label>
+ <label>skala <select id="sc"><option>1</option><option selected>2</option><option>3</option></select></label>
+</p>
+<div id="i"></div><div id="err"></div>
+<canvas id="c" width="720" height="360"></canvas>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+const info=document.getElementById('i'),err=document.getElementById('err');
+const sel=document.getElementById('ch'),bar=document.getElementById('b');
+const GX=200, GY=300;                              // titik tanah tetap (pivot semua frame ditaruh di sini)
+let A=null,img=null,cur='idle',t=0,last=0,btns={},loadId=0;
+
+function checker(){const s=16;for(let yy=0;yy<c.height;yy+=s)for(let xx=0;xx<c.width;xx+=s){
+  x.fillStyle=((xx+yy)/s)%2?'#3a3f3c':'#2c312e';x.fillRect(xx,yy,s,s)}}
+
+function setAnim(n){
+  cur=n;t=0;
+  for(const k in btns)btns[k].classList.toggle('on',k===n);
+}
+
+async function loadChar(ch){
+  const my=++loadId; err.textContent='';
+  try{
+    const url=new URL(ch.atlas,location.href);
+    const a=await (await fetch(url,{cache:'no-store'})).json();
+    const im=new Image();
+    await new Promise((ok,bad)=>{im.onload=ok;im.onerror=()=>bad(new Error('gambar gagal dimuat: '+a.image));im.src=new URL(a.image,url).href;});
+    if(my!==loadId)return;                          // pilihan sudah berganti
+    A=a;img=im;bar.innerHTML='';btns={};
+    for(const n in A.animations){
+      const b=document.createElement('button');b.textContent=n;b.onclick=()=>setAnim(n);
+      btns[n]=b;bar.appendChild(b);
+    }
+    setAnim(A.animations.idle?'idle':Object.keys(A.animations)[0]);
+  }catch(e){err.textContent='Gagal memuat '+ch.name+' ('+e+'). Jalankan lewat server lokal: python serve.py';}
+}
+
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(!A||!img)return;
+  const an=A.animations[cur];
+  if(ts-last>1000/an.fps){last=ts;t++}
+  const i=an.loop?t%an.frames.length:Math.min(t,an.frames.length-1);
+  const id=an.frames[i], f=A.frames[id];
+  const s=+document.getElementById('sc').value;
+  x.imageSmoothingEnabled=false;
+  x.clearRect(0,0,c.width,c.height);
+  if(document.getElementById('chk').checked)checker();
+  else{x.fillStyle='#1e2421';x.fillRect(0,0,c.width,c.height)}
+  // posisi digambar = titik tanah - pivot*skala, dibulatkan agar tidak bergetar
+  const dx=Math.round(GX-f.pivot[0]*s), dy=Math.round(GY-f.pivot[1]*s);
+  x.drawImage(img,f.x,f.y,f.w,f.h,dx,dy,f.w*s,f.h*s);
+  if(document.getElementById('dbg').checked){
+    x.strokeStyle='rgba(255,213,74,.6)';x.beginPath();x.moveTo(0,GY+.5);x.lineTo(c.width,GY+.5);x.stroke();
+    x.strokeStyle='rgba(80,200,255,.8)';x.strokeRect(dx+.5,dy+.5,f.w*s,f.h*s);
+    x.strokeStyle='#0ff';x.beginPath();x.moveTo(GX-8,GY+.5);x.lineTo(GX+8,GY+.5);x.moveTo(GX+.5,GY-8);x.lineTo(GX+.5,GY+8);x.stroke();
+  }
+  info.textContent=`${(A.character&&A.character.name)||sel.value} | ${cur} [${i+1}/${an.frames.length}] ${id}  rect=(${f.x},${f.y},${f.w},${f.h})  pivot=(${f.pivot[0]},${f.pivot[1]})`;
+}
+
+fetch('characters.json',{cache:'no-store'}).then(r=>r.json()).then(list=>{
+  list.forEach(ch=>{const o=document.createElement('option');o.value=ch.id;o.textContent=ch.name;sel.appendChild(o)});
+  const pick=id=>list.find(ch=>ch.id===id)||list[0];
+  sel.onchange=()=>{location.hash=sel.value;loadChar(pick(sel.value))};
+  const start=pick(location.hash.slice(1));sel.value=start.id;
+  loadChar(start);
+  requestAnimationFrame(frame);
+}).catch(e=>{err.textContent='Gagal memuat characters.json ('+e+'). Jalankan lewat server lokal: python serve.py';});
+</script>

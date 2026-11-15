@@ -1,0 +1,4 @@
+[
+ {"id": "default", "name": "Karakter 1 (atlas.json asli)", "atlas": "atlas.json"},
+ {"id": "patrick", "name": "Patrick", "atlas": "characters/patrick/atlas.json"}
+]
