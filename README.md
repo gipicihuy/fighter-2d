@@ -24,9 +24,9 @@ Langsung main tanpa menu: `http://localhost:3000/?auto=1&l=hard` (level: easy / 
 
 Tombol lain: **F** fullscreen (atau tombol ⛶), **M** mute (atau tombol 🔊). Suara di-generate lewat WebAudio, tanpa file.
 
-**ULT** (energi penuh): layar freeze + gelap, kebal selama startup, beam jangkauan jauh dan hampir pasti kena. Kalau kena, musuh terkunci kena 6x beam lalu knockdown (total ~38 damage). Kalau diblok cuma chip ~10 damage. Bisa di-cancel dari pukulan yang sudah kena.
+**ULT** (50 energi, garis putih di bar energi): layar freeze + gelap, kebal selama startup, beam jangkauan jauh dan hampir pasti kena. Kalau kena, musuh terkunci kena 6x beam lalu knockdown (total ~38 damage). Kalau diblok cuma chip ~10 damage. Bisa di-cancel dari pukulan yang sudah kena.
 
-Energi naik tiap kena / kasih pukulan. Blok mengurangi damage jadi 20% (chip, tidak bisa membunuh).
+Energi naik cepat tiap kena / kasih pukulan, ngisi sendiri pelan-pelan, dan tiap ronde mulai dengan 25. Blok mengurangi damage jadi 20% (chip, tidak bisa membunuh).
 Kombo makin lemah, dan hit ke-4 selalu knockdown.
 
 ## File

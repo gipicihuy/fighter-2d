@@ -53,7 +53,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
     <select id="selL"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Susah</option></select>
   </label>
   <button class="btn" id="go">MULAI</button>
-  <small>Keyboard: A/D jalan · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (energi penuh) · F fullscreen · M suara<br>
+  <small>Keyboard: A/D jalan · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi) · F fullscreen · M suara<br>
   HP: best of 3 ronde. Energi naik tiap kena/kasih pukulan.</small>
 </div>
 
@@ -69,7 +69,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 'use strict';
 const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
-const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,SPD=1.5,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
+const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=1.5,JUMPV=6.6,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45},normal:{react:[10,20],block:.35,aggr:.65},hard:{react:[4,10],block:.6,aggr:.85}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK'};
@@ -89,7 +89,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:12,hit:[1,1],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
    heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,66],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[0,2,2.2]},
    skill:{anim:A_(rng('r4_',1,6),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,vfx:'beam_small',ph:55}},
-   ult  :{anim:'skill_ultimate',fps:16,hit:[7,8],beam:true,reach:300,ry:[0,140],cost:100,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+   ult  :{anim:'skill_ultimate',fps:16,hit:[7,8],beam:true,reach:300,ry:[0,140],cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -100,7 +100,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:14,hit:[5,6],rx:[10,58],dmg:8,stun:18,kb:2.2,stop:4,end:10},
    heavy:{anim:'punch_heavy',fps:14,hit:[4,5],rx:[10,84],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:12,lunge:[3,5,1.4]},
    skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:12,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
-   ult  :{anim:'skill_ultimate',fps:16,hit:[9,9],beam:true,reach:300,ry:[0,140],cost:100,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+   ult  :{anim:'skill_ultimate',fps:16,hit:[9,9],beam:true,reach:300,ry:[0,140],cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -205,7 +205,7 @@ class Bot{
   const pr=G.projs.find(p=>p.owner!==me&&Math.abs(p.x-me.x)<120&&((p.vx>0)===(me.x>p.x)));
   if(pr&&rnd()<L.block){if(rnd()<.7){I.down=1;this.timer=22}else{I.up=1;I[toward]=1;this.timer=16}return I}
   if(foe.state==='attack'&&d<95&&rnd()<L.block){I.down=1;this.timer=18+rnd()*8;return I}
-  if(has('ult')&&me.en>=MAXEN&&d<230&&rnd()<.6){I.attack='ult';this.timer=50;return I}
+  if(has('ult')&&me.en>=ULTC&&d<230&&rnd()<.6){I.attack='ult';this.timer=50;return I}
   if(d>160){
    if(has('skill')&&me.en>=20&&rnd()<.3){I.attack='skill';this.timer=34}
    else{I[toward]=1;this.timer=next+10}
@@ -232,7 +232,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:0,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
+  Object.assign(this,{x,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -273,7 +273,7 @@ class Fighter{
  update(inp,foe,G){
   const S=this.state,air=this.y>0;
   // super cancel: ULT bisa disambung dari serangan yang sudah kena
-  if(S==='attack'&&this.move!=='ult'&&this.hitDone&&inp.attack==='ult'&&this.en>=MAXEN)this.tryAttack(inp,G);
+  if(S==='attack'&&this.move!=='ult'&&this.hitDone&&inp.attack==='ult'&&this.en>=ULTC)this.tryAttack(inp,G);
   if(S==='idle'||S==='walk'||S==='block'||S==='jump'){
    if(!air&&foe.x!==this.x)this.face=foe.x>this.x?1:-1;
    if(inp.attack&&this.tryAttack(inp,G)){/* mulai serang */}
@@ -366,7 +366,7 @@ const G={
   const sx=def.x-dir*6,sy=def.y+55;
   if(def.state==='block'&&def.y===0){
    def.hp=Math.max(1,def.hp-Math.max(1,Math.round(m.chip||m.dmg*.2)));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
-   def.en=Math.min(MAXEN,def.en+1);att.en=Math.min(MAXEN,att.en+2);
+   def.en=Math.min(MAXEN,def.en+3);att.en=Math.min(MAXEN,att.en+4);
    this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);return true;
   }
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
@@ -378,7 +378,7 @@ const G={
   }
   const d=Math.max(1,Math.round(m.dmg*Math.max(.5,1-.1*def.combo)));
   def.hp=Math.max(0,def.hp-d);def.combo++;
-  att.en=Math.min(MAXEN,att.en+d*.9);def.en=Math.min(MAXEN,def.en+d*.5);
+  att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
   if(m.kd||def.hp<=0||def.combo>=4||def.y>0)def.knockdown(dir,m.kb||3);else def.gotHit(dir,m.kb||1.2,m.stun||16);
   this.stop=Math.max(this.stop,def.hp<=0?14:(m.stop||4));this.shake=Math.max(this.shake,m.shake||(m.kd?5:2));
   this.spark(sx,sy,m.kd?'#ffd54a':'#ffffff');SND.play(m.kd?'heavy':'hit');
@@ -423,7 +423,7 @@ const G={
   if(this.projs.length>1){const[q,r]=this.projs;if(q.owner!==r.owner&&Math.abs(q.x-r.x)<14){q.life=r.life=0;this.spark((q.x+r.x)/2,q.y,'#ffffff')}}
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
-  for(const f of[a,b])f.hpShow+=(f.hp-f.hpShow)*.08;
+  for(const f of[a,b]){f.hpShow+=(f.hp-f.hpShow)*.08;if(live&&f.hp>0)f.en=Math.min(MAXEN,f.en+.07)}
   if(this.phase==='fight'){
    if(--this.timer<=0){this.timer=0;this.endRound(a.hp===b.hp?null:(a.hp>b.hp?a:b))}
    else if(a.hp<=0||b.hp<=0)this.endRound(a.hp>0?a:(b.hp>0?b:null));
@@ -449,9 +449,9 @@ const G={
    const fill=(p,c)=>{const ww=w*p;ctx.fillStyle=c;ctx.fillRect(right?x+w-ww:x,12,ww,9)};
    fill(pd,'#e8e8e8');fill(pct,pct>.5?'#5ee06a':pct>.25?'#f1c232':'#e8453c');
    const ew=w*(f.en/MAXEN);ctx.fillStyle='#000a';ctx.fillRect(x-1,23,w+2,6);
-   ctx.fillStyle=f.en>=MAXEN&&((this.pt>>3)&1)?'#fff':'#4fc3ff';ctx.fillRect(right?x+w-ew:x,24,ew,4);
+   ctx.fillStyle=f.en>=ULTC&&((this.pt>>3)&1)?'#ffd54a':'#4fc3ff';ctx.fillRect(right?x+w-ew:x,24,ew,4);ctx.fillStyle='#fff';ctx.fillRect(right?x+w-w*ULTC/MAXEN:x+w*ULTC/MAXEN,23,1,6);
    ctx.font='bold 8px monospace';ctx.fillStyle='#fff';ctx.textAlign=right?'right':'left';ctx.fillText(f.label,right?x+w:x,9);
-   if(f.en>=MAXEN&&((this.pt>>3)&1)){ctx.fillStyle='#ffd54a';ctx.fillText('ULT READY!',right?x+w:x,43)}
+   if(f.en>=ULTC&&((this.pt>>3)&1)){ctx.fillStyle='#ffd54a';ctx.fillText('ULT READY!',right?x+w:x,43)}
    for(let i=0;i<WIN_ROUNDS;i++){ctx.fillStyle=i<f.wins?'#ffd54a':'#fff3';ctx.beginPath();ctx.arc((right?x+w-4-i*9:x+4+i*9),36,3,0,7);ctx.fill()}
   };
   bar(this.p1,12,false);bar(this.p2,W-12-150,true);
