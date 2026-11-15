@@ -80,7 +80,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 'use strict';
 const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
-const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
+const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2,ATK_TEMPO=.9;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
@@ -105,9 +105,9 @@ const CHARDEF={
    ult  :{anim:'skill_ultimate',fps:12,hit:[8,8],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  sawit:{
-  color:'#ffb300',atk:1.35,def:.72,vs:{patrick:.12}, // damage keluar x1.35, masuk x0.72 (dari Patrick cuma x0.12 = geli doang)
+  color:'#ffb300',atk:1.35,def:.72,vs:{patrick:.12},haki:{chance:.4,cd:70,dur:18}, // damage keluar x1.35, masuk x0.72 (dari Patrick cuma x0.12 = geli doang)
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
-         block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true)},
+         block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true),dodge:A_(['r6_09'],1,true)},
   moves:{
    punch:{anim:'punch',fps:16,hit:[2,3],rx:[10,58],dmg:6,stun:16,kb:1.2,stop:3,end:3},
    kick :{anim:'kick',fps:14,hit:[3,5],rx:[10,66],dmg:8,stun:18,kb:2.2,stop:4,end:6},
@@ -179,6 +179,8 @@ const SND={ctx:null,m:null,muted:false,nb:null,
    case'sawitfire':this.noise(.3,.3,3000,400,'bandpass');this.tone(420,160,.22,'sawtooth',.18);break;
    case'sawitthrow':this.noise(.7,.55,5000,250,'bandpass');this.tone(520,70,.6,'sawtooth',.38);this.tone(200,55,.7,'square',.16);this.say('Sawiiit!');break;
    case'sawitboom':this.noise(.8,.95,3200,60);this.tone(130,26,.8,'sawtooth',.65);this.tone(70,24,.9,'sine',.55);this.noise(.25,.5,6000,800,'highpass',.05);this.tone(300,50,.3,'square',.25,.12);break;
+   case'haki':this.noise(.22,.5,4200,500,'bandpass');this.tone(1100,260,.2,'sine',.2);this.tone(1760,1760,.3,'triangle',.1,.04);this.tone(2349,2349,.35,'triangle',.07,.1);break;
+   case'sense':this.tone(1500,2100,.12,'sine',.06);break;
    case'ulthit':this.noise(.35,.8,3500,100);this.tone(90,30,.4,'sawtooth',.6);break;
    case'down':this.tone(100,30,.3,'sine',.6);this.noise(.15,.3,1200,150);break;
    case'ko':this.tone(420,60,.9,'sawtooth',.3);this.noise(.5,.4,2000,100);break;
@@ -303,7 +305,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
+  Object.assign(this,{x,ox:x,oy:0,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -316,7 +318,7 @@ class Fighter{
  frameId(){return this.an.frames[this.frameIdx()]}
  vulnerable(){
   if(this.drain||(this.state==='attack'&&this.mdef&&this.mdef.armor))return false; // ult: kebal
-  return this.state!=='down'&&this.state!=='getup'&&this.state!=='win';
+  return this.state!=='down'&&this.state!=='getup'&&this.state!=='win'&&this.state!=='dodge';
  }
  hurtbox(){return this.vulnerable()?{x0:this.x-14,x1:this.x+14,y0:this.y,y1:this.y+92}:null}
  hitbox(){
@@ -332,8 +334,19 @@ class Fighter{
   if(m.cost)this.en-=m.cost;
   const base=typeof m.anim==='string'?this.A.animations[m.anim]:m.anim;
   this.move=a;this.mdef=m;this.hitDone=false;this.fired=false;
-  this.state='attack';this.an={frames:base.frames,fps:m.fps||base.fps,loop:false};this.t=0;this.beamed=false;
+  this.state='attack';this.an={frames:base.frames,fps:(m.fps||base.fps)*(a==='ult'?1:ATK_TEMPO),loop:false};this.t=0;this.beamed=false;
   if(a==='ult')G.startFreeze(this);else if(a!=='skill')SND.play('swing');
+  return true;
+ }
+ tryHaki(att,m,dir){
+  const h=this.def.haki,st=this.state;
+  if(!h||this.hakiCd>0||att.mdef!==m||m.beam||m.drain)return false;
+  if(st!=='idle'&&st!=='walk'&&st!=='jump'&&st!=='hit')return false;
+  if(Math.random()>=h.chance)return false;
+  const wall=dir>0?this.x>W-70:this.x<70,mv=wall?-dir:dir;
+  this.setState('dodge','dodge');this.dT=h.dur;this.hakiCd=h.cd;this.hakiT=h.dur+36;
+  this.stun=0;this.combo=0;this.move=null;this.face=wall?mv:-mv;this.vx=mv*3.4;
+  G.hakiFx(this,true);SND.play('haki');
   return true;
  }
  knockdown(dir,kb){
@@ -343,6 +356,15 @@ class Fighter{
  gotHit(dir,kb,stun){this.setState('hit','hit');this.vx=dir*kb;this.stun=stun;this.move=null}
  update(inp,foe,G){
   const S=this.state,air=this.y>0;
+  this.ox=this.x;this.oy=this.y;
+  if(this.ghosts.length){for(const g of this.ghosts)g.t++;this.ghosts=this.ghosts.filter(g=>g.t<16)}
+  if(this.def.haki){
+   if(this.hakiCd>0)this.hakiCd--;
+   if(this.hakiT>0)this.hakiT--;
+   const near=foe.state==='attack'&&foe.move!=='ult'&&Math.abs(foe.x-this.x)<110;
+   if(near&&!this.sensed&&this.state!=='down'&&this.state!=='getup'){this.sensed=true;this.hakiT=Math.max(this.hakiT,26);G.hakiFx(this,false);SND.play('sense')}
+   if(!near)this.sensed=false;
+  }
   // super cancel: ULT bisa disambung dari serangan yang sudah kena
   if(S==='attack'&&this.move!=='ult'&&this.hitDone&&inp.attack==='ult'&&this.en>=ULTC)this.tryAttack(inp,G);
   if(S==='idle'||S==='walk'||S==='block'||S==='jump'){
@@ -352,8 +374,8 @@ class Fighter{
    if(inp.attack&&this.tryAttack(inp,G)){/* mulai serang */}
    else if(!air){
     if(inp.up){SND.play('jump');this.vy=JUMPV;const dj=mvx(inp);this.vx=Math.abs(dj)>.25?Math.sign(dj)*JUMPX:0;this.setState('jump','jump')}
-    else if(inp.down){this.vx=0;if(S!=='block')this.setState('block','block')}
-    else{const d=mvx(inp);this.vx=d*SPD;const ns=Math.abs(d)>.15?'walk':'idle';if(S!==ns)this.setState(ns,ns)}
+    else if(inp.down){this.vx*=.6;if(S!=='block')this.setState('block','block')}
+    else{const d=mvx(inp);this.vx+=(d*SPD-this.vx)*.3;if(Math.abs(this.vx)<.03&&!d)this.vx=0;const ns=Math.abs(d)>.15?'walk':'idle';if(S!==ns)this.setState(ns,ns)}
    }else if(S==='jump'){const d=mvx(inp);if(Math.abs(d)>.25)this.vx+=(Math.sign(d)*JUMPX-this.vx)*.25} // kontrol di udara
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
@@ -370,6 +392,10 @@ class Fighter{
    if(this.state==='attack'&&this.t>=animTicks(this.an)+(m.end||8)){
     this.move=null;const k=this.y>0?'jump':'idle';this.setState(k,k);
    }
+  }else if(S==='dodge'){
+   this.vx*=.9;
+   if(this.t%2===0)this.ghosts.push({x:this.x,y:this.y,face:this.face,fid:this.frameId(),t:0});
+   if(--this.dT<=0){const k=this.y>0?'jump':'idle';this.setState(k,k)}
   }else if(S==='hit'){
    this.vx*=.88;if(--this.stun<=0){this.combo=0;this.setState('idle','idle')}
   }else if(S==='down'){
@@ -387,10 +413,26 @@ class Fighter{
   this.t++;
  }
  draw(ctx){
-  const f=this.A.frames[this.frameId()],px=Math.round(this.x),py=Math.round(GROUND-this.y);
-  const sh=Math.max(.3,1-this.y/120);
+  const f=this.A.frames[this.frameId()],k=G.interp?G.alpha:1;
+  const lx=(u,v)=>Math.round((u+(v-u)*k)*S)/S;
+  const px=lx(this.ox,this.x),fy=lx(this.oy,this.y),py=GROUND-fy;
+  const sh=Math.max(.3,1-fy/120);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(px,GROUND+1,(f.w>70?26:20)*sh,4*sh,0,0,7);ctx.fill();
+  if(this.hakiT>0){
+   const al=Math.min(1,this.hakiT/24),cy=py-52,pr=42+4*Math.sin(G.pt*.4);
+   const g=ctx.createRadialGradient(px,cy,6,px,cy,pr);
+   g.addColorStop(0,'rgba(190,235,255,0)');g.addColorStop(.72,'rgba(150,215,255,'+(.24*al)+')');g.addColorStop(1,'rgba(150,215,255,0)');
+   ctx.fillStyle=g;ctx.fillRect(px-pr,cy-pr,pr*2,pr*2);
+  }
+  for(const gh of this.ghosts){
+   const gf=this.A.frames[gh.fid];
+   ctx.save();ctx.globalAlpha=.42*(1-gh.t/16);ctx.globalCompositeOperation='lighter';
+   ctx.translate(Math.round(gh.x*S)/S,GROUND-Math.round(gh.y*S)/S);if(gh.face<0)ctx.scale(-1,1);
+   ctx.drawImage(this.img,gf.x,gf.y,gf.w,gf.h,-gf.pivot[0],-gf.pivot[1],gf.w,gf.h);
+   ctx.restore();
+  }
   ctx.save();ctx.translate(px,py);if(this.face<0)ctx.scale(-1,1);
+  if(this.state==='dodge')ctx.rotate(-.2*Math.sin(Math.PI*Math.min(1,this.t/this.def.haki.dur)));
   ctx.drawImage(this.img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);
   ctx.restore();
  }
@@ -421,7 +463,7 @@ function drawBG(){
 
 const G={
  phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',
- chars:{},
+ chars:{},fx:[],interp:false,alpha:1,
  begin(p1id,bid,level){
   const mk=(id,ctrl,label)=>{const c=this.chars[id];return new Fighter(id,c.def,c.atlas,c.img,label,ctrl)};
   this.p1=mk(p1id,PlayerInput,SHORT[p1id]||p1id.toUpperCase());
@@ -431,14 +473,23 @@ const G={
  },
  newRound(){
   this.p1.reset(110,1);this.p2.reset(290,-1);this.p1.ctrl.timer=0;this.p2.ctrl.timer=0;
-  this.projs=[];this.sparks=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
+  this.projs=[];this.sparks=[];this.fx=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
  },
  sfx(n){SND.play(n)},
  startFreeze(o){this.freeze=this.freezeMax;this.freezeOwner=o;SND.play('charge')},
- spawnProj(o,pd){SND.play(pd.sfx||'fire');if(pd.big)this.shake=Math.max(this.shake,8);this.projs.push({owner:o,x:o.x+o.face*28,y:o.y+(pd.ph||55),vx:o.face*pd.vx,dir:o.face,pd,life:150})},
+ spawnProj(o,pd){SND.play(pd.sfx||'fire');if(pd.big)this.shake=Math.max(this.shake,8);this.projs.push({owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:o.y+(pd.ph||55),vx:o.face*pd.vx,dir:o.face,pd,life:150})},
+ hakiFx(f,big){
+  const y=f.y+(big?60:84);
+  this.fx.push({k:'ring',x:f.x,y,t:0,max:big?26:18,r0:big?6:4,r1:big?58:34});
+  if(big){
+   this.fx.push({k:'ring',x:f.x,y,t:-4,max:30,r0:4,r1:78});
+   this.fx.push({k:'txt',x:f.x,y:f.y+104,t:0,max:44,s:'HAKI!'});
+  }
+ },
  spark(x,y,c){this.sparks.push({x,y,c,t:0})},
  applyHit(att,def,m,dir){
   if(!def.vulnerable())return false;
+  if(def.tryHaki(att,m,dir))return true;
   const sx=def.x-dir*6,sy=def.y+55;
   if(def.state==='block'&&def.y===0&&!m.pierce){
    def.hp=Math.max(1,def.hp-scl(att,def,Math.max(1,Math.round(m.chip||m.dmg*.2))));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
@@ -467,10 +518,12 @@ const G={
  },
  tick(){
   tickBuf();
+  this.interp=false;
   if(this.phase==='menu'||!this.p1)return;
   const a=this.p1,b=this.p2;
   if(this.freeze>0){this.freeze--;return}
   if(this.stop>0){this.stop--;return}
+  this.interp=true;
   if(this.shake>0)this.shake--;
   if(this.flash>0)this.flash--;
   this.pt++;
@@ -494,7 +547,7 @@ const G={
   for(const p of this.projs){
    const foe=p.owner===a?b:a;
    if(p.pd.homing){const dx=foe.x-p.x;if(Math.abs(dx)>3){p.dir=dx>0?1:-1;p.vx=p.dir*Math.abs(p.pd.vx)}p.y+=(foe.y+45-p.y)*.2}
-   p.x+=p.vx;p.life--;
+   p.ox=p.x;p.x+=p.vx;p.life--;
    const hu=foe.hurtbox();
    if(hu&&Math.abs(p.x-foe.x)<(p.pd.homing?24:20)&&(p.pd.homing||(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,foe,p.pd,p.dir);p.life=0}
    if(p.x<-40||p.x>W+40)p.life=0;
@@ -502,6 +555,8 @@ const G={
   if(this.projs.length>1){const[q,r]=this.projs;if(q.owner!==r.owner&&Math.abs(q.x-r.x)<14){if(q.pd.big&&!r.pd.big)r.life=0;else if(r.pd.big&&!q.pd.big)q.life=0;else q.life=r.life=0;this.spark((q.x+r.x)/2,q.y,'#ffffff')}}
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
+  for(const e of this.fx)e.t++;
+  this.fx=this.fx.filter(e=>e.t<e.max);
   for(const f of[a,b]){f.hpShow+=(f.hp-f.hpShow)*.08;if(live&&f.hp>0)f.en=Math.min(MAXEN,f.en+.07)}
   if(this.phase==='fight'){
    if(--this.timer<=0){this.timer=0;this.endRound(a.hp===b.hp?null:(a.hp>b.hp?a:b))}
@@ -554,12 +609,29 @@ const G={
   }
   this.p1.draw(ctx);this.p2.draw(ctx);
   for(const p of this.projs){
-   const A=p.owner.A,py=Math.round(GROUND-p.y);
+   const A=p.owner.A,py=Math.round(GROUND-p.y),pxx=Math.round((p.ox+(p.x-p.ox)*(G.interp?G.alpha:1))*S)/S;
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];
-   if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(Math.round(p.x),py);if(p.dir<0)ctx.scale(-1,1);
+   if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(pxx,py);if(p.dir<0)ctx.scale(-1,1);
     ctx.drawImage(p.owner.img,vf.x,vf.y,vf.w,vf.h,-vf.w*s/2,-vf.h*s/2,vf.w*s,vf.h*s);ctx.restore()}
-   else{const c=p.pd.orb||'#fff',g=ctx.createRadialGradient(p.x,py,1,p.x,py,11);g.addColorStop(0,'#fff');g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,py,11,0,7);ctx.fill()}
+   else{const c=p.pd.orb||'#fff',g=ctx.createRadialGradient(pxx,py,1,pxx,py,11);g.addColorStop(0,'#fff');g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(pxx,py,11,0,7);ctx.fill()}
+  }
+  for(const e of this.fx){
+   if(e.t<0)continue;
+   const pg=e.t/e.max,ey=GROUND-e.y;
+   ctx.save();
+   if(e.k==='ring'){
+    const r=e.r0+(e.r1-e.r0)*(1-(1-pg)*(1-pg));
+    ctx.globalAlpha=(1-pg)*.8;ctx.strokeStyle='#d6f3ff';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.ellipse(e.x,ey,r,r*.62,0,0,7);ctx.stroke();
+    ctx.globalAlpha=(1-pg)*.35;ctx.strokeStyle='#7fd0ff';ctx.lineWidth=3;
+    ctx.beginPath();ctx.ellipse(e.x,ey,r*.82,r*.5,0,0,7);ctx.stroke();
+   }else{
+    const ty=ey-pg*14;
+    ctx.globalAlpha=Math.min(1,(1-pg)*2);ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.lineWidth=2.5;ctx.strokeStyle='#05202e';ctx.fillStyle='#d6f3ff';
+    ctx.strokeText(e.s,e.x,ty);ctx.fillText(e.s,e.x,ty);
+   }
+   ctx.restore();
   }
   for(const s of this.sparks){const r=3+s.t*1.6,y=GROUND-s.y;ctx.strokeStyle=s.c;ctx.lineWidth=2;ctx.globalAlpha=1-s.t/10;
    ctx.beginPath();for(let i=0;i<8;i++){const an=i*Math.PI/4;ctx.moveTo(s.x+Math.cos(an)*r*.5,y+Math.sin(an)*r*.5);ctx.lineTo(s.x+Math.cos(an)*r,y+Math.sin(an)*r)}ctx.stroke();ctx.globalAlpha=1}
@@ -636,7 +708,7 @@ function loop(now){
  requestAnimationFrame(loop);
  acc+=Math.min(100,now-prev);prev=now;
  while(acc>=1000/60){acc-=1000/60;G.tick()}
- G.draw();padState();
+ G.alpha=Math.min(1,acc/(1000/60));G.draw();padState();
 }
 resize();requestAnimationFrame(loop);boot();
 window.FIGHTER=G; // untuk debug

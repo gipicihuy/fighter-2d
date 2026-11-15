@@ -1,7 +1,7 @@
 # Fighter 2D
 
 Game fighting 2D sederhana (HTML5 canvas, tanpa dependensi) dari sprite sheet.
-Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT homing: ngejar target, tidak bisa dihindari/diblok, menembus proyektil kecil, bikin lawan sisa sekitar 5 HP). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
+Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara; damage keluar x1.35, damage masuk x0.72, dari Patrick cuma x0.12 (geli doang); sawit ULT homing: ngejar target, tidak bisa dihindari/diblok, menembus proyektil kecil, bikin lawan sisa sekitar 5 HP). CEO SAWIT punya **Kenbunshoku Haki**: kadang (sekitar 40%) menghindar otomatis dari pukulan/tendangan lawan, lengkap dengan aura, afterimage, dan suara hindaran. Gerakan semua karakter dihaluskan (render interpolasi, akselerasi jalan, tempo animasi serang sedikit diperlambat). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
 
 ## Jalankan
 ```
