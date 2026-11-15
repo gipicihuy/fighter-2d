@@ -1,4 +1,17 @@
 [
- {"id": "default", "name": "Karakter 1 (atlas.json asli)", "atlas": "atlas.json"},
- {"id": "patrick", "name": "Patrick", "atlas": "characters/patrick/atlas.json"}
+ {
+  "id": "default",
+  "name": "Karakter 1 (atlas.json asli)",
+  "atlas": "atlas.json"
+ },
+ {
+  "id": "patrick",
+  "name": "Patrick",
+  "atlas": "characters/patrick/atlas.json"
+ },
+ {
+  "id": "sawit",
+  "name": "CEO SAWIT",
+  "atlas": "characters/sawit/atlas.json"
+ }
 ]

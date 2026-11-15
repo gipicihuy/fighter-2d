@@ -83,7 +83,7 @@ const $=id=>document.getElementById(id);
 const W=400,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
-const SHORT={default:'KARAKTER 1',patrick:'PATRICK'};
+const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
 
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
@@ -101,6 +101,20 @@ const CHARDEF={
    heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,66],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[0,2,2.2]},
    skill:{anim:A_(rng('r4_',1,6),12),fire:5,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:3.8,vfx:'beam_small',ph:55}},
    ult  :{anim:'skill_ultimate',fps:12,hit:[8,8],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+  }},
+ sawit:{
+  color:'#ffb300',
+  anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
+         block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true)},
+  moves:{
+   punch:{anim:'punch',fps:16,hit:[2,3],rx:[10,58],dmg:6,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:14,hit:[3,5],rx:[10,66],dmg:8,stun:18,kb:2.2,stop:4,end:6},
+   heavy:{anim:'punch_heavy',fps:14,hit:[3,5],rx:[10,86],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[2,5,1.4]},
+   // skill: lempar sawit kecil
+   skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:46,ph:50,sfx:'sawitfire'}},
+   // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
+   ult  :{anim:'skill_ultimate',fps:10,fire:5,cost:ULTC,armor:true,end:34,
+          proj:{vfx:'sawit_big',size:120,ph:42,vx:6.2,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -148,6 +162,7 @@ const SND={ctx:null,m:null,muted:false,nb:null,
   s.buffer=this.nb;fl.type=type||'lowpass';fl.frequency.setValueAtTime(f0,t);fl.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);
   g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(fl);fl.connect(g);g.connect(this.m);s.start(t);s.stop(t+dur+.02);
  },
+ say(t){try{if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='id-ID';u.pitch=.55;u.rate=1.1;u.volume=1;speechSynthesis.speak(u)}catch(_){}},
  play(n){
   if(!this.ctx||this.muted)return;
   switch(n){
@@ -159,6 +174,9 @@ const SND={ctx:null,m:null,muted:false,nb:null,
    case'fire':this.tone(300,900,.25,'sawtooth',.14);this.noise(.25,.15,800,3000,'bandpass');break;
    case'charge':this.tone(80,1000,.8,'sawtooth',.22);this.noise(.8,.2,200,4000,'bandpass');this.tone(60,60,.8,'sine',.3);break;
    case'beam':this.noise(.8,.55,4000,200);this.tone(220,45,.8,'sawtooth',.45);this.tone(110,40,.8,'square',.2);break;
+   case'sawitfire':this.noise(.3,.3,3000,400,'bandpass');this.tone(420,160,.22,'sawtooth',.18);break;
+   case'sawitthrow':this.noise(.7,.55,5000,250,'bandpass');this.tone(520,70,.6,'sawtooth',.38);this.tone(200,55,.7,'square',.16);this.say('Sawiiit!');break;
+   case'sawitboom':this.noise(.8,.95,3200,60);this.tone(130,26,.8,'sawtooth',.65);this.tone(70,24,.9,'sine',.55);this.noise(.25,.5,6000,800,'highpass',.05);this.tone(300,50,.3,'square',.25,.12);break;
    case'ulthit':this.noise(.35,.8,3500,100);this.tone(90,30,.4,'sawtooth',.6);break;
    case'down':this.tone(100,30,.3,'sine',.6);this.noise(.15,.3,1200,150);break;
    case'ko':this.tone(420,60,.9,'sawtooth',.3);this.noise(.5,.4,2000,100);break;
@@ -406,7 +424,7 @@ const G={
  },
  sfx(n){SND.play(n)},
  startFreeze(o){this.freeze=this.freezeMax;this.freezeOwner=o;SND.play('charge')},
- spawnProj(o,pd){SND.play('fire');this.projs.push({owner:o,x:o.x+o.face*28,y:o.y+(pd.ph||55),vx:o.face*pd.vx,dir:o.face,pd,life:150})},
+ spawnProj(o,pd){SND.play(pd.sfx||'fire');if(pd.big)this.shake=Math.max(this.shake,8);this.projs.push({owner:o,x:o.x+o.face*28,y:o.y+(pd.ph||55),vx:o.face*pd.vx,dir:o.face,pd,life:150})},
  spark(x,y,c){this.sparks.push({x,y,c,t:0})},
  applyHit(att,def,m,dir){
   if(!def.vulnerable())return false;
@@ -420,7 +438,8 @@ const G={
    def.hp=Math.max(0,def.hp-m.dmg);
    if(def.hp<=0)def.knockdown(dir,m.kb);
    else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att}}
-   this.flash=8;this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,6);SND.play('ulthit');
+   this.flash=8;this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,6);SND.play('ulthit');if(m.hitSfx)SND.play(m.hitSfx);
+   if(m.boom)for(let i=0;i<6;i++)this.spark(sx+(Math.random()-.5)*34,sy+(Math.random()-.5)*44,i%2?'#ffb347':'#ff5c3c');
    this.spark(sx,sy,att.def.color);return true;
   }
   const d=Math.max(1,Math.round(m.dmg*Math.max(.5,1-.1*def.combo)));
@@ -524,7 +543,7 @@ const G={
   for(const p of this.projs){
    const A=p.owner.A,py=Math.round(GROUND-p.y);
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];
-   if(vf){const s=Math.min(1,60/vf.w);ctx.save();ctx.translate(Math.round(p.x),py);if(p.dir<0)ctx.scale(-1,1);
+   if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(Math.round(p.x),py);if(p.dir<0)ctx.scale(-1,1);
     ctx.drawImage(p.owner.img,vf.x,vf.y,vf.w,vf.h,-vf.w*s/2,-vf.h*s/2,vf.w*s,vf.h*s);ctx.restore()}
    else{const c=p.pd.orb||'#fff',g=ctx.createRadialGradient(p.x,py,1,p.x,py,11);g.addColorStop(0,'#fff');g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,py,11,0,7);ctx.fill()}

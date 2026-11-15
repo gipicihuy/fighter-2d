@@ -1,7 +1,7 @@
 # Fighter 2D
 
 Game fighting 2D sederhana (HTML5 canvas, tanpa dependensi) dari sprite sheet.
-Kamu pakai **Karakter 1 (default)**, lawan bot **Patrick**. Best of 3 ronde.
+Karakter: **Karakter 1**, **Patrick**, dan **CEO SAWIT** (ULT & skill = lempar sawit, ada suara). Default: kamu Karakter 1 lawan bot Patrick. Best of 3 ronde.
 
 ## Jalankan
 ```
