@@ -22,13 +22,23 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 #pad{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));z-index:5;pointer-events:none}
 #pad.show{display:flex}
 #pad .grp{display:grid;gap:6px;pointer-events:auto}
-#stick{width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid #fff4;position:relative;pointer-events:auto;touch-action:none}
-#knob{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid #fff7;pointer-events:none}
-#pad .r{grid-template-columns:repeat(3,64px)}
-#pad button{height:56px;border-radius:12px;border:1px solid #fff5;background:rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:13px;touch-action:none}
-#pad button.on{background:rgba(255,213,74,.6);color:#111}
-#pad [data-k=up]{background:rgba(120,200,255,.28);font-size:15px}
-#pad [data-k=ult]{background:rgba(255,80,80,.3)}
+#stick{width:clamp(110px,36vh,140px);height:clamp(110px,36vh,140px);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1));border:2px solid #fff4;position:relative;pointer-events:auto;touch-action:none;margin:0 0 4px 10px}
+#stick svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;color:#fff;opacity:.35}
+#knob{position:absolute;left:50%;top:50%;width:42%;height:42%;transform-origin:center;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.32);border:2px solid #fff8;pointer-events:none}
+#pad .r{--u:clamp(46px,15.5vh,62px);position:relative;width:calc(var(--u)*4.1);height:calc(var(--u)*3.75);pointer-events:none;margin:0 6px 2px 0}
+#pad button{--c:#ffd54a;--s:1;position:absolute;width:calc(var(--u)*var(--s));height:calc(var(--u)*var(--s));right:calc(var(--u)*(var(--x) - var(--s)/2));bottom:calc(var(--u)*(var(--y) - var(--s)/2));padding:0;border-radius:50%;border:2px solid var(--c);background:rgba(20,24,38,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);color:var(--c);display:flex;align-items:center;justify-content:center;touch-action:none;pointer-events:auto;transition:transform .06s,opacity .15s,box-shadow .15s}
+#pad button svg{width:54%;height:54%;pointer-events:none}
+#pad button.on{background:var(--c);color:#10131d;transform:scale(.92)}
+#pad [data-k=punch]{--x:.8;--y:.8;--s:1.2;--c:#ff9f43}
+#pad [data-k=kick]{--x:2.05;--y:.65;--s:1;--c:#7bed9f}
+#pad [data-k=heavy]{--x:.95;--y:2.05;--s:1;--c:#c78bff}
+#pad [data-k=up]{--x:2.2;--y:1.85;--s:1.05;--c:#74c7ff}
+#pad [data-k=skill]{--x:2.1;--y:3.05;--s:.9;--c:#4fe3ff}
+#pad [data-k=ult]{--x:3.3;--y:1.3;--s:.9;--c:#ff5c5c}
+#pad button.cd::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p,0)*1%),transparent 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));pointer-events:none}
+#pad button.dim{opacity:.5}
+#pad button.ready{box-shadow:0 0 14px 2px var(--c)}
+@media (prefers-reduced-motion:no-preference){#pad button.ready{animation:rdy 1s ease-in-out infinite alternate}@keyframes rdy{to{box-shadow:0 0 22px 5px var(--c)}}}
 #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0e14;z-index:30;font-size:18px;text-align:center;padding:20px}
 #load.hide{display:none}
 </style>
@@ -37,11 +47,8 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 <div id="top"><button id="sndBtn" title="Suara (M)">🔊</button><button id="fsBtn" title="Fullscreen (F)">⛶</button><button id="menuBtn" style="display:none">☰ Menu</button></div>
 
 <div id="pad">
-  <div id="stick"><div id="knob"></div></div>
-  <div class="grp r">
-    <button data-k="punch">PUNCH</button><button data-k="kick">KICK</button><button data-k="heavy">HEAVY</button>
-    <button data-k="skill">SKILL</button><button data-k="ult">ULT</button><button data-k="up">LOMPAT</button>
-  </div>
+  <div id="stick"><svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 50l9-7M16 50l9 7"/><path d="M84 50l-9-7M84 50l-9 7"/><path d="M50 84l-7-9M50 84l7-9"/></svg><div id="knob"></div></div>
+  <div class="grp r"><button data-k="punch" aria-label="Pukul" title="Pukul"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="6" width="4.2" height="8" rx="2.1"/><rect x="7.9" y="4" width="4.2" height="9" rx="2.1"/><rect x="11.9" y="4" width="4.2" height="9" rx="2.1"/><rect x="15.8" y="6" width="4.2" height="8" rx="2.1"/><path d="M4 12h16v3.5a5.5 5.5 0 0 1-5.5 5.5h-5A5.5 5.5 0 0 1 4 15.5z"/><path d="M8 9.5v3.5M12 8.5v4.5M16 9.5v3.5M6.5 17h6" stroke="rgba(0,0,0,.4)" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg></button><button data-k="kick" aria-label="Tendang" title="Tendang"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 3h5.5v8.5l5.7 3.3a2 2 0 0 1 1 1.7V20H7.5v-5.2L9 12.5z"/><path d="M1.5 9h4M2.5 13h3.5M1.5 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg></button><button data-k="heavy" aria-label="Pukulan berat" title="Pukulan berat"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,1.5 14.4,8 20.5,5 17.4,11 22.5,13.5 16.2,15.4 17.6,22 12,17.6 6.4,22 7.8,15.4 1.5,13.5 6.6,11 3.5,5 9.6,8"/></svg></button><button data-k="up" aria-label="Lompat" title="Lompat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 11.5L12 5l6.5 6.5"/><path d="M5.5 19L12 12.5 18.5 19"/></svg></button><button data-k="skill" aria-label="Skill" title="Skill"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 1.5c.8 4.2 5.5 6.3 5.5 11.7a6 6 0 0 1-12 0c0-2.3 1.1-3.8 2.4-4.9.1 2 .9 3 1.9 3.3-.6-4 .2-7.3 2.2-10.1z"/></svg></button><button data-k="ult" aria-label="ULT" title="ULT"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="13.5,1.5 4.5,13.5 11,13.5 9.5,22.5 19.5,9.5 13,9.5"/></svg></button></div>
 </div>
 
 <div id="menu" class="ov hide">
@@ -52,7 +59,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
     <select id="selL"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Susah</option></select>
   </label>
   <button class="btn" id="go">MULAI</button>
-  <small>Keyboard: A/D jalan (HP: stick analog kiri, tombol LOMPAT di kanan) · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
+  <small>Keyboard: A/D jalan (HP: stick analog kiri, tombol ikon di kanan) · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
   HP: best of 3 ronde. Energi naik tiap kena/kasih pukulan.</small>
 </div>
 
@@ -174,9 +181,19 @@ addEventListener('keyup',e=>{codes.delete(e.code)});
 addEventListener('blur',()=>{codes.clear();for(const k in touch)touch[k]=k==='ax'?0:false});
 document.querySelectorAll('#pad .r button').forEach(b=>{
  const k=b.dataset.k;
- b.addEventListener('pointerdown',e=>{e.preventDefault();touch[k]=true;b.classList.add('on');if(ATK.includes(k))buf[k]=10;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+ b.addEventListener('pointerdown',e=>{e.preventDefault();touch[k]=true;try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}b.classList.add('on');if(ATK.includes(k))buf[k]=10;try{b.setPointerCapture(e.pointerId)}catch(_){}});
  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,()=>{touch[k]=false;b.classList.remove('on')}));
 });
+const padSkill=document.querySelector('#pad [data-k=skill]'),padUlt=document.querySelector('#pad [data-k=ult]');
+padSkill.classList.add('cd');padUlt.classList.add('cd');
+function padState(){
+ const p=G.p1,en=p&&G.phase!=='menu'?p.en:0;
+ for(const[b,c]of[[padSkill,20],[padUlt,ULTC]]){
+  const pr=Math.min(100,Math.round(en/c*100));
+  if(b._p!==pr){b._p=pr;b.style.setProperty('--p',pr)}
+  const rd=en>=c;if(b._r!==rd){b._r=rd;b.classList.toggle('ready',rd);b.classList.toggle('dim',!rd)}
+ }
+}
 const stick=$('stick'),knob=$('knob');let sid=null;
 function stSet(e){
  const r=stick.getBoundingClientRect(),R_=r.width/2;let dx=e.clientX-(r.left+R_),dy=e.clientY-(r.top+R_);
@@ -582,7 +599,7 @@ function loop(now){
  requestAnimationFrame(loop);
  acc+=Math.min(100,now-prev);prev=now;
  while(acc>=1000/60){acc-=1000/60;G.tick()}
- G.draw();
+ G.draw();padState();
 }
 resize();requestAnimationFrame(loop);boot();
 window.FIGHTER=G; // untuk debug

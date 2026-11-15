@@ -11,16 +11,16 @@ Termux: `pkg install python`, `python serve.py`, buka `http://localhost:3000` di
 Langsung main tanpa menu: `http://localhost:3000/?auto=1&l=hard` (level: easy / normal / hard).
 
 ## Kontrol
-| Aksi | Keyboard | HP (tombol layar) |
+| Aksi | Keyboard | HP (tombol ikon) |
 |---|---|---|
-| Jalan | A / D atau ← → | ◀ ▶ |
-| Lompat | W / ↑ / Spasi | ▲ |
-| Blok | S / ↓ | BLOK |
-| Pukul | J (atau Z) | PUNCH |
-| Tendang | K (atau X) | KICK |
-| Pukulan berat (knockdown) | L (atau C) | HEAVY |
-| Skill / proyektil (20 energi) | U (atau V) | SKILL |
-| ULT (energi penuh) | I (atau B) | ULT |
+| Jalan | A / D atau ← → | stick kiri geser kiri/kanan |
+| Lompat | W / ↑ / Spasi | ikon panah ganda |
+| Blok | S / ↓ | stick tarik ke bawah |
+| Pukul | J (atau Z) | ikon kepalan (terbesar, di bawah jempol) |
+| Tendang | K (atau X) | ikon sepatu |
+| Pukulan berat (knockdown) | L (atau C) | ikon ledakan ungu |
+| Skill / proyektil (20 energi) | U (atau V) | ikon api (ring = isi energi) |
+| ULT (50 energi) | I (atau B) | ikon petir merah (menyala kalau siap) |
 
 Tombol lain: **F** fullscreen (atau tombol ⛶), **M** mute (atau tombol 🔊). Suara di-generate lewat WebAudio, tanpa file.
 
