@@ -120,7 +120,7 @@ const CHARDEF={
    skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:46,ph:50,sfx:'sawitfire'}},
    // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
    ult  :{anim:A_(['r5_02','r5_03','r5_04','r5_05','r5_06','r5_07','r5_01'],10),fire:5,cost:ULTC,armor:true,end:12,
-          proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
+          proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,spread:true,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -312,7 +312,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
+  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -356,7 +356,8 @@ class Fighter{
   }
   this.lastDir=dr;
   if(inp.dash)go=true;
-  if(!go||this.dashCd>0||this.y>0||this.state==='block')return false;
+  if(!go||this.dashCd>0||this.state==='block'||(this.y>0&&this.airDashed))return false;
+  if(this.y>0)this.airDashed=true;
   const bk=!dr&&this.state==='hit';
   this.startDash(dr||(bk?-this.face:this.face),bk);
   return true;
@@ -414,7 +415,7 @@ class Fighter{
     const ahead=(foe.x-this.x)*this.face;this.vx=ahead>m.ideal?this.face*Math.min(4.5,1+(ahead-m.ideal)*.12):0;
    }
    if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;this.actStart=this.t;SND.play('beam');G.shake=Math.max(G.shake,10)}
-   if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.spawnProj(this,m.proj)}
+   if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.fireProj(this,m)}
    if(!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
     const hb=this.hitbox();
     for(const o of G.opps(this).slice().sort((u,v)=>Math.abs(u.x-this.x)-Math.abs(v.x-this.x))){
@@ -427,9 +428,10 @@ class Fighter{
    }
   }else if(S==='dash'){
    this.vx=this.dDir*Math.min(9,this.dT*1.5);
+   if(this.y>0)this.vy=0;
    this.ghosts.push({x:this.x,y:this.y,face:this.face,fid:this.frameId(),t:0,a:.3});
    if(inp.attack&&this.tryAttack(inp,G)){}
-   else if(--this.dT<=0)this.setState('idle','idle');
+   else if(--this.dT<=0){const k=this.y>0?'jump':'idle';this.setState(k,k)}
   }else if(S==='dodge'){
    this.vx*=.9;
    if(this.t%2===0)this.ghosts.push({x:this.x,y:this.y,face:this.face,fid:this.frameId(),t:0});
@@ -448,7 +450,7 @@ class Fighter{
   if(this.x<16){this.x=16;this.vx=0}else if(this.x>WW-16){this.x=WW-16;this.vx=0}
   if(this.y>0||this.vy>0){
    this.y+=this.vy;this.vy-=GRAV;
-   if(this.y<=0){this.y=0;this.vy=0;this.vx*=.5;if(this.state==='jump')this.setState('idle','idle')}
+   if(this.y<=0){this.y=0;this.vy=0;this.airDashed=false;this.vx*=.5;if(this.state==='jump')this.setState('idle','idle')}
   }
   this.t++;
  }
@@ -529,7 +531,23 @@ const G={
  },
  sfx(n){SND.play(n)},
  startFreeze(o){this.freeze=this.freezeMax;this.freezeOwner=o;SND.play('charge')},
- spawnProj(o,pd){SND.play(pd.sfx||'fire');if(pd.big)this.shake=Math.max(this.shake,8);this.projs.push({owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:o.y+(pd.ph||55),vx:o.face*pd.vx,dir:o.face,pd,life:150})},
+ spawnProj(o,pd,quiet,tgt,i,n){
+  if(!quiet)SND.play(pd.sfx||'fire');
+  if(pd.big)this.shake=Math.max(this.shake,8);
+  this.projs.push({owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:o.y+(pd.ph||55)+(n>1?(i-(n-1)/2)*10:0),vx:o.face*pd.vx,dir:o.face,pd,life:150,tgt});
+ },
+ fireProj(o,m){
+  const pd=m.proj;
+  if(!pd.spread){this.spawnProj(o,pd);return}
+  const all=this.opps(o),live=all.filter(e=>e.hp>0),ts=live.length?live:all.slice(0,1),n=ts.length;
+  const ms=ts.map((_,i)=>n>1?.55+.45*i/(n-1):1);
+  for(let i=ms.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ms[i],ms[j]]=[ms[j],ms[i]]}
+  ts.forEach((t,i)=>{
+   const k=n>1?ms[i]+(Math.random()-.5)*.06:1;
+   const q=n>1?Object.assign({},pd,{dmg:Math.max(1,Math.round(pd.dmg*k)),drain:Object.assign({},pd.drain,{dmg:Math.max(1,Math.round(pd.drain.dmg*k))})}):pd;
+   this.spawnProj(o,q,i>0,t,i,n);
+  });
+ },
  opps(f){return f===this.p1?this.enemies:[this.p1]},
  nearest(f){
   let b=null,bd=1e9;
@@ -541,8 +559,8 @@ const G={
   return Math.max(0,Math.min(WW-W,p.x-W/2+look));
  },
  dashFx(f){
-  this.fx.push({k:'ring',x:f.x,y:6,t:0,max:14,r0:4,r1:26});
-  this.spark(f.x-f.face*10,10,'#cfe8ff');
+  this.fx.push({k:'ring',x:f.x,y:f.y+6,t:0,max:14,r0:4,r1:26});
+  this.spark(f.x-f.face*10,f.y+10,'#cfe8ff');
  },
  enemyBars(){
   const n=this.enemies.length,w=110,x=W-12-w;
@@ -629,11 +647,11 @@ const G={
   }
   // proyektil
   for(const p of this.projs){
-   const os=this.opps(p.owner),foe=os.reduce((m,o)=>(Math.abs(o.x-p.x)+(o.hp<=0?1000:0))<(Math.abs(m.x-p.x)+(m.hp<=0?1000:0))?o:m,os[0]);
+   const os=this.opps(p.owner),foe=p.tgt&&p.tgt.hp>0?p.tgt:os.reduce((m,o)=>(Math.abs(o.x-p.x)+(o.hp<=0?1000:0))<(Math.abs(m.x-p.x)+(m.hp<=0?1000:0))?o:m,os[0]);
    if(p.pd.homing){const dx=foe.x-p.x;if(Math.abs(dx)>3){p.dir=dx>0?1:-1;p.vx=p.dir*Math.abs(p.pd.vx)}p.y+=(foe.y+45-p.y)*.2}
    p.ox=p.x;p.x+=p.vx;p.life--;
    let done=false;
-   for(const o of os){
+   for(const o of (p.tgt&&p.tgt.hp>0?[p.tgt]:os)){
     const hu=o.hurtbox();
     if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?24:20)&&(p.pd.homing||(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
    }
