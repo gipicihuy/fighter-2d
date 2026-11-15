@@ -307,9 +307,8 @@ class Fighter{
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
    if(m.lunge&&idx>=m.lunge[0]&&idx<=m.lunge[1])this.vx=this.face*m.lunge[2];else if(!air)this.vx*=.8;
-   if(m.beam&&!this.beamed){ // ult mengejar musuh: hadap ke musuh dan maju sampai jarak ideal
-    if(foe.x!==this.x)this.face=foe.x>this.x?1:-1;
-    const dist=Math.abs(foe.x-this.x);this.vx=dist>m.ideal?this.face*Math.min(4.5,1+(dist-m.ideal)*.12):0;
+   if(m.beam&&!this.beamed){ // arah ult DIKUNCI saat dipencet (tidak ikut musuh); hanya maju kalau musuh masih di depan
+    const ahead=(foe.x-this.x)*this.face;this.vx=ahead>m.ideal?this.face*Math.min(4.5,1+(ahead-m.ideal)*.12):0;
    }
    if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;this.actStart=this.t;SND.play('beam');G.shake=Math.max(G.shake,10)}
    if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.spawnProj(this,m.proj)}
