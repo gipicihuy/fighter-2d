@@ -1012,9 +1012,11 @@ const G={
    ctx.globalAlpha=a*.5;ctx.strokeStyle='#ff3a18';ctx.lineWidth=2+9*(1-t);ctx.beginPath();ctx.arc(tx,ty,r-2,0,7);ctx.stroke()}
   ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
   const dt0=(u-.70)/.55; // distorsi: cincin refraksi yang memuai dari pusat (menyalin & memperbesar frame yang sudah tergambar)
-  if(dt0>0&&dt0<1&&cv.width>0){const r=20+W*.7*kE4(dt0),th=20*(1-dt0)+5;
-   ctx.save();ctx.beginPath();ctx.arc(tx,ty,r+th,0,6.2832);ctx.arc(tx,ty,Math.max(1,r-th),0,6.2832,true);ctx.clip();
-   ctx.translate(tx,ty);ctx.scale(1.045,1.045);ctx.translate(-tx,-ty);ctx.globalAlpha=.95;ctx.drawImage(cv,0,0,cv.width,cv.height,0,0,W,H);ctx.restore()}
+  if(dt0>0&&dt0<1){const r=20+W*.7*kE4(dt0),th=20*(1-dt0)+5,fa=1-dt0; // cincin refraksi: murni garis (dulu: menyalin SELURUH kanvas ke dirinya tiap frame = sangat berat di HP)
+   ctx.save();ctx.globalCompositeOperation='lighter';
+   ctx.globalAlpha=fa*.16;ctx.strokeStyle='#ff9a6a';ctx.lineWidth=th*1.7;ctx.beginPath();ctx.arc(tx,ty,r,0,6.2832);ctx.stroke();
+   ctx.globalAlpha=fa*.5;ctx.strokeStyle='#ffe2c0';ctx.lineWidth=th*.45;ctx.beginPath();ctx.arc(tx,ty,r,0,6.2832);ctx.stroke();
+   ctx.globalAlpha=fa*.8;ctx.strokeStyle='#fff';ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(tx,ty,r+th*.5,0,6.2832);ctx.stroke();ctx.restore()}
   kpDraw(false);
   ctx.restore();
  },
