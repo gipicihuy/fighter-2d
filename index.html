@@ -165,8 +165,8 @@ const CHARDEF={
           spec:{speed:10.5,maxRun:640,dmg:11,chip:4,carryDmg:2,every:9,wallDmg:13,maxCarry:140,stop:6,scale:1.1,text:'BADAK JAWA RAMPAGE!',comboMul:1.6,comboText:'SAWIT + BADAK COMBO!'}},
    // ULT: JAWA BEAST RAMPAGE COMBO - sawit meletus di bawah musuh (tak bisa dihindari/diblok), badak menghantam saat masih melayang
    ult  :{anim:'skill_ultimate',fps:8,fire:3,cost:ULTC,armor:true,end:16,summon:'combo',banner:'JAWA BEAST RAMPAGE!',
-          spec:{tree:{delay:10,life:96,fdur:4.5,w:62,dmg:17,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,noKill:true,flash:6,text:'SAWIT ERUPTION!'},
-                rhino:{delay:36,speed:12,maxRun:900,dmg:18,carryDmg:3,every:8,wallDmg:24,maxCarry:150,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,noKill:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
+          spec:{tree:{delay:10,life:96,fdur:4.5,w:62,dmg:14,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,flash:6,text:'SAWIT ERUPTION!'},
+                rhino:{delay:36,speed:12,maxRun:900,dmg:14,carryDmg:2,every:8,wallDmg:18,maxCarry:150,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -801,6 +801,7 @@ const G={
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:36,h:170,w:60,c:'#ffb300'});
  },
 /* ---------- HASHIM: summon pohon sawit & badak jawa ---------- */
+ canUlt(f,sp){return f.hp>0&&!f.carried&&f.state!=='win'&&(sp.pierce||f.vulnerable())},
  hurt(att,o,v,spec){const d=scl(att,o,v),fl=spec&&spec.noKill?Math.min(o.hp,5):0;o.hp=Math.max(fl,o.hp-d);att.en=Math.min(MAXEN,att.en+d*1.5);o.en=Math.min(MAXEN,o.en+d*1.1);return d},
  banner2(x,y,s,sz,c){this.fx.push({k:'banner',x,y,t:0,max:56,s,sz:sz||16,c:c||'#ffd54a'})},
  castSummon(o,m){
@@ -849,7 +850,7 @@ const G={
    SND.play('treeboom');this.shake=Math.max(this.shake,sp.shake);this.stop=Math.max(this.stop,3);
    this.treeFx(s);
    for(const f of this.opps(o)){
-    if(f.hp<=0||f.carried||Math.abs(f.x-s.x)>sp.w||!f.vulnerable())continue;
+    if(!this.canUlt(f,sp)||Math.abs(f.x-s.x)>sp.w)continue;
     const side=f.x>=s.x?1:-1;
     if(f.state==='block'&&f.y===0&&!sp.pierce){
      f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=side*3;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');this.stop=Math.max(this.stop,4);continue;
@@ -886,6 +887,7 @@ const G={
   s.ox=s.x;s.t++;
   if(s.t<0)return;
   if(s.t===0){
+   if(sp.combo){const fs=this.opps(o).filter(e=>e.hp>0);if(fs.length){const tg=fs.reduce((a,b)=>Math.abs(b.x-s.x)<Math.abs(a.x-s.x)?b:a);s.x=s.ox=Math.max(40,Math.min(WW-40,tg.x-dir*170))}}
    SND.play('rhinoroar');this.shake=Math.max(this.shake,sp.big?12:8);
    this.fx.push({k:'ring',x:s.x,y:5,t:0,max:24,r0:6,r1:sp.big?120:80,c:'#d6ff6a',c2:'#ffb300',fl:.16,lw:3,lw2:6});
    this.fx.push({k:'glow',x:s.x,y:40,t:0,max:20,r0:14,r1:sp.big?100:70,c:'#ffd54a'});
@@ -905,7 +907,7 @@ const G={
      if(f.hp<=0||f.carried||s.hit.has(f))continue;
      const rn=(f.x-s.x)*dir,rp=(f.x-(s.x-dir*s.spd))*dir;
      if(!(rn<=36&&rp>=-22))continue;
-     if(!(sp.antiAir?(f.juggle||f.vulnerable()):(f.vulnerable()&&f.y<56)))continue;
+     if(!(sp.pierce?this.canUlt(f,sp):(sp.antiAir?(f.juggle||f.vulnerable()):(f.vulnerable()&&f.y<56))))continue;
      if(!sp.pierce&&f.state==='block'&&f.y===0){ // diblok: badak mental
       f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*5;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');
       this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,6);s.state='stop';s.st=0;this.banner2(f.x,110,'BLOK!',12,'#8ecbff');break;
@@ -933,9 +935,9 @@ const G={
      this.fx.push({k:'glow',x:f.x,y:f.y+40,t:0,max:12,r0:8,r1:30,c:'#ffd54a'});
     }
     if(s.t%2===1){const ps=[];for(let i=0;i<4;i++)ps.push({vx:dir*(1+rd()*3),vy:2+rd()*4,r:rd()*6.28,vr:(rd()-.5)*.6,s:2+rd()*3,c:i%2?'#ffd54a':'#ff8a1a'});this.fx.push({k:'shards',x:s.x+dir*20,y:f.y+20,t:0,max:20,ps})}
-    if((dir>0?s.x>=WW-48:s.x<=48)||s.ct>=sp.maxCarry||f.hp<=0)this.wallBounce(s);
+    if((dir>0?s.x>=WW-20:s.x<=20)||s.ct>=sp.maxCarry||f.hp<=0)this.wallBounce(s);
    }
-   if(s.state==='run'&&(s.run>sp.maxRun||(dir>0?s.x>=WW-48:s.x<=48))){s.state='fade';s.st=0}
+   if(s.state==='run'&&(s.run>sp.maxRun||(dir>0?s.x>=WW-20:s.x<=20))){s.state='fade';s.st=0}
   }else{
    s.st++;
    if(s.state==='stop')s.x+=dir*Math.max(0,3-s.st*.12);
