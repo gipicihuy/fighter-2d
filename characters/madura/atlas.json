@@ -6,7 +6,7 @@
  "image": "spritesheet_transparent.png",
  "sheetSize": [
   1500,
-  636
+  720
  ],
  "notes": "Sprite RAJA MADURA, di-key dari background hijau. Frame menghadap kanan. pivot=titik pijakan (kaki).",
  "frames": {
@@ -581,6 +581,23 @@
     144
    ],
    "pivotMode": "stand"
+  },
+  "sarung": {
+   "x": 0,
+   "y": 638,
+   "w": 569,
+   "h": 82,
+   "pivot": [
+    0,
+    41
+   ],
+   "pivotMode": "center",
+   "ends": [
+    3.0,
+    25.1,
+    563.0,
+    54.3
+   ]
   }
  },
  "animations": {
@@ -713,6 +730,10 @@
    "loop": true
   }
  },
- "vfx": {},
+ "vfx": {
+  "sarung": [
+   "sarung"
+  ]
+ },
  "portraits": []
 }

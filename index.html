@@ -1169,6 +1169,20 @@ const G={
   }
  },
  spark(x,y,c){this.sparks.push({x,y,c,t:0})},
+ drawSarung(a,hx,hy,tx,ty,p){
+  const A=a.A,vf=A.vfx&&A.vfx.sarung&&A.frames[A.vfx.sarung[0]];
+  if(!vf)return false;
+  const dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
+  if(L<30)return true;
+  const e=vf.ends,px=e[2]-e[0],py=e[3]-e[1],D=Math.hypot(px,py),ux=px/D,uy=py/D,k=L/D,sy=.4;
+  const rx=dx/L,ry=dy/L,nx=dx>=0?-ry:ry,ny=dx>=0?rx:-rx;
+  const aa=rx*ux*k+nx*(-uy)*sy,bb=ry*ux*k+ny*(-uy)*sy,cc=rx*uy*k+nx*ux*sy,dd=ry*uy*k+ny*ux*sy;
+  ctx.save();
+  ctx.transform(aa,bb,cc,dd,hx-(aa*e[0]+cc*e[1]),hy-(bb*e[0]+dd*e[1]));
+  ctx.drawImage(a.img,vf.x,vf.y,vf.w,vf.h,0,0,vf.w,vf.h);
+  ctx.restore();
+  return true;
+ },
  applyHit(att,def,m,dir){
   if(!def.vulnerable())return false;
   if(!m.antiMeleset&&def.tryHaki(att,m,dir))return true;
@@ -1188,7 +1202,7 @@ const G={
    if(m.spread)this.auraHit(def,false);
    this.spark(sx,sy,att.def.color);return true;
   }
-  if(m.pull)def.x+=(att.x+dir*(m.pullDist||50)-def.x)*.55;
+  if(m.pull){this.fx.push({k:'whip',t:0,max:18,att,def});def.x+=(att.x+dir*(m.pullDist||50)-def.x)*.55}
   const d=scl(att,def,m.dmg*Math.max(.5,1-.1*def.combo));
   def.hp=Math.max(0,def.hp-d);if(!(def.armorT>0))def.combo++;
   att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
@@ -1489,11 +1503,16 @@ const G={
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.drain&&f.drain.sarung&&f.drain.att){
    const a=f.drain.att,hx=a.x+a.face*22,hy=GROUND-a.y-48,tx=f.x,ty=GROUND-f.y-50;
    ctx.save();
-   ctx.lineWidth=5;ctx.strokeStyle='#d32f2f';ctx.beginPath();ctx.moveTo(hx,hy);
-   ctx.quadraticCurveTo((hx+tx)/2,Math.min(hy,ty)-14*Math.sin(f.drain.t*.4),tx,ty);ctx.stroke();
-   ctx.lineWidth=2;ctx.strokeStyle='#ffd54a';ctx.stroke();
-   ctx.lineWidth=6;ctx.strokeStyle='#b71c1c';ctx.strokeRect(tx-15,ty-24,30,48);
-   ctx.lineWidth=2;ctx.strokeStyle='#ffd54a';ctx.strokeRect(tx-13,ty-22,26,44);
+   const ex=Math.min(1,(f.drain.t+2)/6);
+   if(!this.drawSarung(a,hx,hy,tx,ty,1-Math.pow(1-ex,2))){
+    ctx.lineWidth=5;ctx.strokeStyle='#d32f2f';ctx.beginPath();ctx.moveTo(hx,hy);
+    ctx.quadraticCurveTo((hx+tx)/2,Math.min(hy,ty)-14*Math.sin(f.drain.t*.4),tx,ty);ctx.stroke();
+    ctx.lineWidth=2;ctx.strokeStyle='#ffd54a';ctx.stroke();
+   }
+   for(let i=0;i<3;i++){
+    ctx.lineWidth=5;ctx.strokeStyle='#7a1414';ctx.beginPath();ctx.ellipse(tx,ty-16+i*14,15,4.5,0,0,7);ctx.stroke();
+    ctx.lineWidth=2;ctx.strokeStyle='#d32f2f';ctx.beginPath();ctx.ellipse(tx,ty-16+i*14,15,4.5,0,0,7);ctx.stroke();
+   }
    ctx.restore();
   }
   for(const p of this.projs){
@@ -1576,6 +1595,10 @@ const G={
     ctx.globalAlpha=Math.min(1,(1-pg)*2.4);ctx.translate(e.x,ey-pg*14);ctx.scale(k,k);ctx.textAlign='center';ctx.font='bold '+sz+'px monospace';
     ctx.lineWidth=4;ctx.lineJoin='round';ctx.strokeStyle='#1a0d00';ctx.strokeText(e.s,0,0);ctx.fillStyle=e.c||'#ffd54a';ctx.fillText(e.s,0,0);
     ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.45;ctx.fillStyle='#fff3b0';ctx.fillText(e.s,0,-1);
+   }else if(e.k==='whip'){
+    const a=e.att,o=e.def,pr=Math.min(1,e.t/3);
+    ctx.globalAlpha=Math.min(1,(e.max-e.t)/6);
+    this.drawSarung(a,a.x+a.face*22,GROUND-a.y-48,o.x,GROUND-o.y-50,1-Math.pow(1-pr,2));
    }else if(e.k==='shards'){
     ctx.fillStyle='#fff';
     for(const pc of e.ps){
