@@ -968,7 +968,8 @@ const G={
       f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*5;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');
       this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,6);s.state='stop';s.st=0;this.banner2(f.x,110,'BLOK!',12,'#8ecbff');break;
      }
-     if(!sp.pierce&&f.tryHaki(o,o.mdef,dir)){s.hit.add(f);continue}
+     // FIX: badak (skill dasar) tidak bisa di-haki dodge lagi. Sebelumnya CEO Sawit punya haki 55% yang bikin badak 'tembus' tanpa damage,
+     // dan f masuk s.hit sehingga badak tidak pernah mencoba lagi. Badak sudah bisa dihindari lewat lompat/blok.
      s.hit.add(f);
      this.hurt(o,f,s.car?sp.dmg*.6:sp.dmg,sp);
      for(let i=0;i<8;i++)this.spark(f.x+(rd()-.5)*30,f.y+15+rd()*70,i%2?'#fff3b0':'#ff9a3a');
