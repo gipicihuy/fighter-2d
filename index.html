@@ -150,7 +150,7 @@ const CHARDEF={
  // HASHIM MA'JUJ: sepadan CEO SAWIT. Skill (U) = ATM Sawit / Sawit Eruption, Berat (L) = Badak Jawa Rampage (corner carry + wall bounce),
  // ULT (I) = JAWA BEAST RAMPAGE COMBO (sawit melontarkan musuh, badak menghantam saat masih melayang). Efek summon: G.castSummon / treeTick / rhinoTick.
  hashim:{
-  color:'#3fae49',djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08},spd:1.3,ultGuard:{chance:.5,cd:300,dmgMul:.3,armor:50},dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
+  color:'#3fae49',djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08},spd:1.3,ultGuard:{parryWin:14,parryMul:.15,luck:.2,dmgMul:.3,cd:300,armor:50},dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r3_01'],1,true),jump:A_(['r2_09'],1,true),dash:A_(['r2_09','r2_10','r2_11'],12,true)},
   moves:{
@@ -323,6 +323,14 @@ class Bot{
    if(this.dodgeRoll&&tl<=14&&tl>=9){I.left=I.right=I.down=0;I.up=1;this.timer=20;return I}
    if(!this.dodgeRoll&&tl<=14){I.left=I.right=I.up=0;I.down=1;this.timer=12;return I}
   }
+  if(me.def.ultGuard){ // bot Hashim: kadang parry ULT sawit homing (blok tepat sebelum kena)
+   const hp=G.projs.find(p=>p.owner===foe&&p.pd.big&&p.pd.homing&&Math.abs(p.x-me.x)<130);
+   if(!hp)this.parryRoll=null;
+   else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
+    if(this.parryRoll==null)this.parryRoll=Math.random()<L.dodge;
+    if(this.parryRoll&&Math.abs(hp.x-me.x)<=75){I.left=I.right=I.up=0;I.down=1;this.timer=14;return I}
+   }
+  }
   // sawit raksasa (proyektil ULT): bot lompat pas jaraknya pas (kalau lolos roll dodge), atau blok
   const big=G.projs.find(p=>p.owner===foe&&p.pd.big&&!p.pd.homing&&((p.vx>0)===(me.x>p.x))&&Math.abs(p.x-me.x)<150);
   if(!big)this.bigRoll=null;
@@ -440,18 +448,21 @@ class Fighter{
   G.hakiFx(this,true);SND.play('haki');
   return true;
  }
- tryUltGuard(att,m,dir){ // KULIT BADAK: peluang selamat dari ULT (50%, cooldown panjang, tetap kena damage kecil)
+ tryUltGuard(att,m,dir){ // KULIT BADAK: PARRY (blok tepat waktu) = selamat, atau 20% beruntung; keduanya tetap kena damage kecil
   const g=this.def.ultGuard,st=this.state;
   if(!g||this.guardCd>0||this.drain||this.hp<=0)return false;
-  if(st!=='idle'&&st!=='walk'&&st!=='jump'&&st!=='hit'&&st!=='block'&&st!=='dash'&&st!=='dodge')return false;
-  if(Math.random()>=g.chance)return false;
-  this.guardCd=g.cd;this.armorT=g.armor;this.hp=Math.max(1,this.hp-scl(att,this,Math.max(1,Math.round(m.dmg*g.dmgMul))));
-  this.setState('hit','hit');this.vx=dir*3;this.stun=8;this.move=null;this.combo=0;
+  const parry=st==='block'&&this.y===0&&this.t<=g.parryWin;
+  if(!parry){
+   if(st!=='idle'&&st!=='walk'&&st!=='jump'&&st!=='hit'&&st!=='block'&&st!=='dash'&&st!=='dodge')return false;
+   if(Math.random()>=g.luck)return false;
+  }
+  this.guardCd=g.cd;this.armorT=g.armor;this.hp=Math.max(1,this.hp-scl(att,this,Math.max(1,Math.round(m.dmg*(parry?g.parryMul:g.dmgMul)))));
+  this.setState('hit','hit');this.vx=dir*(parry?2:3);this.stun=parry?4:8;this.move=null;this.combo=0;
   const y=this.y+60;
-  G.fx.push({k:'ring',x:this.x,y,t:0,max:24,r0:8,r1:90,c:'#d6ff6a',c2:'#ffd54a'});
+  G.fx.push({k:'ring',x:this.x,y,t:0,max:24,r0:8,r1:parry?110:90,c:parry?'#ffffff':'#d6ff6a',c2:'#ffd54a'});
   G.fx.push({k:'glow',x:this.x,y,t:0,max:20,r0:12,r1:70,c:'#9cff3a'});
-  G.fx.push({k:'txt',x:this.x,y:this.y+110,t:0,max:50,s:'KULIT BADAK!'});
-  G.shake=Math.max(G.shake,14);G.stop=Math.max(G.stop,6);SND.play('block');
+  G.fx.push({k:'txt',x:this.x,y:this.y+110,t:0,max:50,s:parry?'PARRY! KULIT BADAK!':'KULIT BADAK!'});
+  G.shake=Math.max(G.shake,parry?18:14);G.stop=Math.max(G.stop,parry?9:6);SND.play('block');
   return true;
  }
  knockdown(dir,kb){
@@ -897,6 +908,17 @@ const G={
   this.fx.push({k:'shards',x,y:12,t:0,max:56,ps:ro});this.fx.push({k:'shards',x,y:20,t:0,max:48,ps:lf});
   this.banner2(x,big?150:132,sp.text||'SAWIT ERUPTION!',big?17:14,'#b8ff4a');
  },
+ treeHitFx(s,x,y,pierce){
+  const rd=Math.random,cr=['#6b4423','#8d5a2b','#3f2a16','#a67c3d'],ln=['#4aa31f','#7ee021','#ffd54a'],ps=[],n=pierce?34:12;
+  for(let i=0;i<n;i++){const an=rd()*6.2832,sp2=2+rd()*(pierce?7:4);ps.push({vx:Math.cos(an)*sp2,vy:Math.sin(an)*sp2+2,r:rd()*6.28,vr:(rd()-.5)*.5,s:2+rd()*5,c:i%3?cr[i%4]:ln[i%3]})}
+  this.fx.push({k:'shards',x:s.x,y:Math.max(20,y),t:0,max:44,ps});
+  this.fx.push({k:'glow',x:s.x,y:Math.max(20,y),t:0,max:16,r0:10,r1:pierce?90:50,c:'#9cff3a'});
+  if(pierce){
+   this.fx.push({k:'ring',x:s.x,y:Math.max(20,y),t:0,max:22,r0:6,r1:100,c:'#ffffff',c2:'#ffd54a',fl:1,lw:3,lw2:6});
+   this.fx.push({k:'rays',x:s.x,y:Math.max(20,y),t:0,max:18,n:16,r0:10,r1:110,c:'#e8ff9a'});
+   this.shake=Math.max(this.shake,16);this.stop=Math.max(this.stop,3);SND.play('treeboom');
+  }else SND.play('treecrack');
+ },
  rhinoTick(s){
   const o=s.owner,sp=s.sp,dir=s.dir,rd=Math.random;
   s.ox=s.x;s.t++;
@@ -1177,6 +1199,18 @@ const G={
     if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?26:20)&&(p.pd.homing?Math.abs(p.y-(o.y+45))<50:(p.y>=hu.y0&&p.y<=hu.y1))){if(p.pd.blast)this.blast(p,o);else this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
    }
    if(p.x<-40||p.x>WW+40)p.life=0;
+  }
+  // pohon sawit Hashim vs proyektil lawan: sawit kecil pecah, ULT sawit raksasa menembus + pohon pecah berkeping (pohon tetap berdiri)
+  for(const p of this.projs){
+   if(p.life<=0)continue;
+   for(const s of this.summons){
+    if(s.k!=='tree'||s.t<0||s.dead||s.owner===p.owner||!this.opps(p.owner).includes(s.owner))continue;
+    const big=!!s.sp.big;
+    if(Math.abs(p.x-s.x)>(big?34:26)||p.y>(big?270:200))continue;
+    if(!p.pd.big){p.life=0;this.treeHitFx(s,p.x,p.y,false);this.shatter(p,null);break}
+    p.treeHit=p.treeHit||new Set();
+    if(!p.treeHit.has(s)){p.treeHit.add(s);this.treeHitFx(s,p.x,p.y,true)}
+   }
   }
   const rh=pr=>pr.pd.big?45:(pr.pd.size?pr.pd.size*.3:11),cp=[];
   for(let i=0;i<this.projs.length;i++)for(let j=i+1;j<this.projs.length;j++){

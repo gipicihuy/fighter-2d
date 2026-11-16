@@ -67,4 +67,4 @@ Font: **`road-rage.otf`** (taruh di root repo, sejajar `index.html`). `@font-fac
 Unduh: `curl -L -o road-rage.otf https://cdn.zass.in/X6Kjo95583.otf`
 
 
-HASHIM MA'JUJ rival sepadan CEO SAWIT: stat disamakan (damage keluar x1.35, masuk x0.72, speed +30%). Punya **Kulit Badak**: saat kena ULT CEO SAWIT ada peluang 50% selamat (damage cuma 30%, tidak terkunci beam, tidak knockdown, armor sebentar, muncul teks KULIT BADAK!). Cooldown ±5 detik, jadi tidak kebal, tetap bisa mati kalau sial atau ULT dispam.
+HASHIM MA'JUJ rival sepadan CEO SAWIT: stat disamakan (damage keluar x1.35, masuk x0.72, speed +30%). Punya **Kulit Badak**: saat kena ULT CEO SAWIT, **PARRY** (blok tepat sebelum kena, jendela sekitar 0,2 detik sejak mulai blok; menahan blok lama tidak berguna) = selamat dengan damage 15% tanpa terkunci/knockdown. Tanpa parry masih ada peluang 20% beruntung (damage 30%). Cooldown ±5 detik, jadi tidak kebal. **Pohon sawit** Hashim (skill & ULT): sawit kecil CEO SAWIT pecah kena pohon; ULT sawit raksasa menembus pohon dengan efek pohon pecah berkeping, tapi pohonnya tetap berdiri sampai durasinya habis.
