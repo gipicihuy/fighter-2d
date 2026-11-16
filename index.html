@@ -132,7 +132,7 @@ const CHARDEF={
    skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:38,ph:50,lanes:[80,50,20],laneDmg:.75,sfx:'sawitfire'}},
    // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
    ult  :{anim:A_(['r5_02','r5_03','r5_04','r5_05','r5_06','r5_07','r5_01'],10),fire:5,cost:ULTC,armor:true,end:12,
-          proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,spread:true,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
+          proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,spread:true,blast:200,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
   }},
  patrick:{
   color:'#4fc3ff',
@@ -549,7 +549,7 @@ const G={
   if(pd.big)this.shake=Math.max(this.shake,8);
   const y0=o.y+(pd.ph||55)+(n>1?(i-(n-1)/2)*10:0),p={owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:y0,oy:y0,vx:o.face*pd.vx,vy:0,dir:o.face,pd,life:pd.homing?230:150,tgt,age:0,av:0,ang:o.face>0?0:Math.PI};
   if(pd.homing){
-   const el=(o.y>2?.22:.62)+(n>1?(i%2?-1:1)*.14:0);
+   const el=o.y>2?.22:.62;
    p.ang=o.face>0?el:Math.PI-el;
    p.vx=Math.cos(p.ang)*pd.vx*.8;
    p.vy=Math.sin(p.ang)*pd.vx*.8;
@@ -567,14 +567,8 @@ const G={
   }
   if(!pd.spread){this.spawnProj(o,pd);return}
   this.castAura(o);
-  const all=this.opps(o),live=all.filter(e=>e.hp>0),ts=live.length?live:all.slice(0,1),n=ts.length;
-  const ms=ts.map((_,i)=>n>1?.55+.45*i/(n-1):1);
-  for(let i=ms.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ms[i],ms[j]]=[ms[j],ms[i]]}
-  ts.forEach((t,i)=>{
-   const k=n>1?ms[i]+(Math.random()-.5)*.06:1;
-   const q=n>1?Object.assign({},pd,{dmg:Math.max(1,Math.round(pd.dmg*k)),drain:Object.assign({},pd.drain,{dmg:Math.max(1,Math.round(pd.drain.dmg*k))})}):pd;
-   this.spawnProj(o,q,i>0,t,i,n);
-  });
+  const all=this.opps(o),live=all.filter(e=>e.hp>0),t=live.length?live.reduce((m,e)=>Math.abs(e.x-o.x)<Math.abs(m.x-o.x)?e:m):all[0];
+  this.spawnProj(o,pd,false,t,0,1);
  },
  shatter(p,by){
   const big=!!(by&&by.pd.big),c=p.pd.orb||p.owner.def.color||'#ffffff',x=p.x,y=p.y,ps=[];
@@ -592,6 +586,29 @@ const G={
   this.fx.push({k:'ring',x:f.x,y:6,t:0,max:34,r0:10,r1:240,c:'#ffb300',c2:'#ff7a1a',fl:.14,lw:3,lw2:6});
   this.fx.push({k:'ring',x:f.x,y:6,t:-6,max:36,r0:10,r1:300,c:'#ffd54a',c2:'#ff9a1a',fl:.14,lw:3,lw2:6});
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:36,h:170,w:60,c:'#ffb300'});
+ },
+ blastFx(x,R){
+  this.fx.push({k:'glow',x,y:40,t:0,max:26,r0:20,r1:R*.9,c:'#ffd54a'});
+  this.fx.push({k:'rays',x,y:45,t:0,max:22,n:24,r0:16,r1:R*1.1,c:'#fff3b0'});
+  this.fx.push({k:'ring',x,y:45,t:0,max:24,r0:10,r1:R*.7,c:'#ffffff',c2:'#ffd54a',fl:1,lw:3,lw2:6});
+  for(let w=0;w<3;w++)this.fx.push({k:'ring',x,y:6,t:-w*5,max:34,r0:10,r1:R*(1.05+w*.12),c:w%2?'#ffb300':'#fff3b0',c2:'#ff7a1a',fl:.14,lw:3,lw2:7});
+  for(let i=-3;i<=3;i++)this.fx.push({k:'pillar',x:x+i*R/3.2,y:0,t:-Math.abs(i)*3,max:42,h:130+(3-Math.abs(i))*28,w:34,c:'#ffb300'});
+  for(let i=0;i<16;i++)this.fx.push({k:'glow',x:x+(Math.random()*2-1)*R,y:4+Math.random()*10,vy:.8,t:-Math.floor(Math.random()*10),max:24,r0:8,r1:26,c:i%2?'#ffd54a':'#ff9a1a'});
+  const cs=['#ff9a1a','#7a1f0e','#ffd54a','#ffffff'],ps=[];
+  for(let i=0;i<30;i++){const an=Math.random()*6.2832,sp=2+Math.random()*4.5;ps.push({vx:Math.cos(an)*sp,vy:1.5+Math.abs(Math.sin(an))*sp,r:Math.random()*6.28,vr:(Math.random()-.5)*.5,s:3+Math.random()*4,c:cs[i%4]})}
+  this.fx.push({k:'shards',x,y:30,t:0,max:40,ps});
+ },
+ blast(p,prim){
+  const pd=p.pd,R=pd.blast,x=prim.x;
+  for(const o of this.opps(p.owner)){
+   const d=Math.abs(o.x-x);
+   if(o!==prim&&(d>R||o.hp<=0))continue;
+   const k=o===prim?1:Math.max(.6,1-.4*d/R),q=k<1?Object.assign({},pd,{dmg:Math.max(1,Math.round(pd.dmg*k)),drain:Object.assign({},pd.drain,{dmg:Math.max(1,Math.round(pd.drain.dmg*k))})}):pd;
+   this.applyHit(p.owner,o,q,o===prim?p.dir:(o.x>=x?1:-1));
+  }
+  for(const q of this.projs)if(q.owner!==p.owner&&q.life>0&&Math.abs(q.x-x)<R){q.life=0;this.shatter(q,p)}
+  this.blastFx(x,R);
+  this.shake=Math.max(this.shake,22);this.flash=Math.max(this.flash,12);
  },
  auraHit(f,end){
   const m=end?1.35:1,y=f.y+50;
@@ -713,7 +730,7 @@ const G={
    let done=false;
    for(const o of (p.tgt&&p.tgt.hp>0?[p.tgt]:os)){
     const hu=o.hurtbox();
-    if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?26:20)&&(p.pd.homing?Math.abs(p.y-(o.y+45))<50:(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
+    if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?26:20)&&(p.pd.homing?Math.abs(p.y-(o.y+45))<50:(p.y>=hu.y0&&p.y<=hu.y1))){if(p.pd.blast)this.blast(p,o);else this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
    }
    if(p.x<-40||p.x>WW+40)p.life=0;
   }
