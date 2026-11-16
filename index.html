@@ -524,7 +524,7 @@ function drawBG(cam,zm){
 }
 
 const G={
- phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',
+ phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',
  chars:{},fx:[],interp:false,alpha:1,enemies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
  begin(p1id,bid,level,n){
   const mk=(id,ctrl,label)=>{const c=this.chars[id];return new Fighter(id,c.def,c.atlas,c.img,label,ctrl)};
@@ -540,7 +540,7 @@ const G={
   this.p1.reset(WW/2-90,1);this.p1.ctrl.timer=0;
   this.enemies.forEach((e,i)=>{e.reset(WW/2+90+i*46,-1);e.ctrl.timer=0});
   this.camZ=this.camOZ=this.zoomTarget();this.camX=this.camOX=this.camTarget();
-  this.projs=[];this.sparks=[];this.fx=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
+  this.projs=[];this.sparks=[];this.fx=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.glare=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
  },
  sfx(n){SND.play(n)},
  startFreeze(o){this.freeze=this.freezeMax;this.freezeOwner=o;SND.play('charge')},
@@ -599,8 +599,8 @@ const G={
   this.fx.push({k:'mushroom',x,y:0,t:0,max:110,h:R*.62,cr:R*.3,sw:R*.05});
   for(let i=0;i<30;i++)this.fx.push({k:'glow',x:x+(rd()*2-1)*R,y:4+rd()*14,vy:.9,t:-Math.floor(rd()*14),max:28,r0:10,r1:34,c:gold[i%4]});
   const ps=[];
-  for(let i=0;i<26;i++){const an=Math.PI*(.12+.76*rd()),sp=4+rd()*7.5;ps.push({vx:Math.cos(an)*sp*(rd()<.5?1:-1)*.9,vy:3+Math.sin(an)*sp,r:rd()*6.28,vr:(rd()-.5)*.35,s:26+rd()*26,d:0,g:.13})}
-  for(let i=0;i<18;i++)ps.push({vx:(rd()-.5)*2.2,vy:-2-rd()*2,r:rd()*6.28,vr:(rd()-.5)*.3,s:24+rd()*22,d:16+Math.floor(rd()*30),g:.02,sx:(rd()*2-1)*R*.9,sy:260+rd()*140});
+  for(let i=0;i<16;i++){const an=Math.PI*(.12+.76*rd()),sp=4+rd()*7.5;ps.push({vx:Math.cos(an)*sp*(rd()<.5?1:-1)*.9,vy:3+Math.sin(an)*sp,r:rd()*6.28,vr:(rd()-.5)*.35,s:20+rd()*20,d:0,g:.13})}
+  for(let i=0;i<10;i++)ps.push({vx:(rd()-.5)*2.2,vy:-2-rd()*2,r:rd()*6.28,vr:(rd()-.5)*.3,s:20+rd()*18,d:16+Math.floor(rd()*30),g:.02,sx:(rd()*2-1)*R*.9,sy:260+rd()*140});
   this.fx.push({k:'sawits',x,y:25,t:0,max:100,ps,A:ow.A,img:ow.img});
   const cs=['#ff9a1a','#7a1f0e','#ffd54a','#ffffff'],sh=[];
   for(let i=0;i<48;i++){const an=rd()*6.2832,sp=2.5+rd()*6;sh.push({vx:Math.cos(an)*sp,vy:1.5+Math.abs(Math.sin(an))*sp,r:rd()*6.28,vr:(rd()-.5)*.5,s:3+rd()*5,c:cs[i%4]})}
@@ -617,8 +617,11 @@ const G={
    this.applyHit(p.owner,o,q,o===prim?p.dir:(o.x>=x?1:-1));
   }
   for(const q of this.projs)if(q.owner!==p.owner&&q.life>0&&Math.abs(q.x-x)<R){q.life=0;this.shatter(q,p)}
+  const k=Math.max(0,Math.min(1,1-(Math.abs(x-p.owner.x)-120)/380));
   this.blastFx(x,R,p.owner);
-  this.shake=Math.max(this.shake,42);this.flash=Math.max(this.flash,20);this.stop=Math.max(this.stop,14);
+  this.shake=Math.max(this.shake,Math.round(10+24*k));
+  this.stop=Math.max(this.stop,Math.round(5+8*k));
+  if(k>0.02){this.glareMax=26;this.glare=26;this.glareA=.32*k}
  },
  auraHit(f,end){
   const m=end?1.35:1,y=f.y+50;
@@ -679,7 +682,7 @@ const G={
    def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
    else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread}}
-   this.flash=8;this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,6);SND.play('ulthit');if(m.hitSfx)SND.play(m.hitSfx);
+   if(!m.blast)this.flash=8;this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,6);SND.play('ulthit');if(m.hitSfx)SND.play(m.hitSfx);
    if(m.boom)for(let i=0;i<6;i++)this.spark(sx+(Math.random()-.5)*34,sy+(Math.random()-.5)*44,i%2?'#ffb347':'#ff5c3c');
    if(m.spread)this.auraHit(def,false);
    this.spark(sx,sy,att.def.color);return true;
@@ -708,6 +711,7 @@ const G={
   this.interp=true;
   if(this.shake>0)this.shake--;
   if(this.flash>0)this.flash--;
+  if(this.glare>0)this.glare--;
   this.pt++;
   const live=this.phase==='fight';
   if(this.phase==='intro'){if(this.pt===1)SND.play('round');if(this.pt===56)SND.play('fight')}
@@ -729,7 +733,7 @@ const G={
    const d=f.drain;d.t++;
    if(d.aura&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*26,y:f.y+10+Math.random()*30,vy:1.5,t:0,max:20,r0:6,r1:18,c:Math.random()<.5?'#ffd54a':'#ff9a1a'});
    if(d.t%d.every===0){f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);SND.play('hit');this.shake=Math.max(this.shake,6)}
-   if(d.left<=0||f.hp<=0){if(d.aura)this.auraHit(f,true);f.drain=null;f.knockdown(d.dir,5);this.flash=10;this.shake=16;this.stop=10;SND.play('heavy')}
+   if(d.left<=0||f.hp<=0){if(d.aura)this.auraHit(f,true);f.drain=null;f.knockdown(d.dir,5);if(!d.aura)this.flash=10;this.shake=16;this.stop=10;SND.play('heavy')}
   }
   // proyektil
   for(const p of this.projs){
@@ -859,7 +863,7 @@ const G={
     ctx.fillRect(e.x-w/2,ey-e.h,w,e.h);
    }else if(e.k==='dome'){
     const r=e.r1*(1-Math.pow(1-pg,3)),g=ctx.createRadialGradient(e.x,ey,0,e.x,ey,r);
-    g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.45,'rgba(255,213,74,.55)');g.addColorStop(.8,'rgba(255,122,26,.25)');g.addColorStop(1,'rgba(255,122,26,0)');
+    g.addColorStop(0,'rgba(255,244,214,.7)');g.addColorStop(.45,'rgba(255,213,74,.45)');g.addColorStop(.8,'rgba(255,122,26,.25)');g.addColorStop(1,'rgba(255,122,26,0)');
     ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.min(1,(1-pg)*1.5);ctx.fillStyle=g;
     ctx.beginPath();ctx.arc(e.x,ey,r,Math.PI,0);ctx.fill();
    }else if(e.k==='mushroom'){
@@ -921,6 +925,7 @@ const G={
    ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText(o.label,W-bx,70);
   }
   if(this.flash>0){ctx.fillStyle='rgba(255,255,255,'+(this.flash/10*.7)+')';ctx.fillRect(0,0,W,H)}
+  if(this.glare>0){ctx.fillStyle='rgba(255,232,180,'+(this.glareA*Math.pow(this.glare/this.glareMax,1.6))+')';ctx.fillRect(0,0,W,H)}
   this.hud();
   if(this.phase==='intro')this.banner(this.pt<55?'ROUND '+this.round:'FIGHT!',30);
   else if(this.phase==='ko')this.banner(this.msg,30);
