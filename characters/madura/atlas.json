@@ -8,7 +8,7 @@
   1200,
   896
  ],
- "notes": "Sprite RAJA MADURA. Animasi ulti carok: sarung stun/tarik + sabet celurit.",
+ "notes": "Sprite RAJA MADURA. Peci selalu terpasang (tidak dilepas). Ulti Carok anti meleset: tarik sarung dari jauh + sabetan celurit brutal.",
  "frames": {
   "r6_01": {
    "x": 37,
@@ -397,8 +397,8 @@
   },
   "run": {
    "frames": [
-    "r3_03",
-    "r1_04"
+    "r1_04",
+    "r1_05"
    ],
    "fps": 12,
    "loop": true
@@ -433,19 +433,19 @@
   },
   "skill_shot": {
    "frames": [
-    "r2_01",
-    "r2_03",
-    "r4_05"
+    "r1_04",
+    "r4_05",
+    "r4_06"
    ],
-   "fps": 10,
+   "fps": 11,
    "loop": false
   },
   "skill_ultimate": {
    "frames": [
     "r1_01",
     "r1_02",
-    "r2_01",
-    "r2_03",
+    "r1_03",
+    "r4_04",
     "r4_05",
     "r4_06",
     "r5_01",
@@ -453,37 +453,35 @@
     "r5_03",
     "r5_04"
    ],
-   "fps": 10,
+   "fps": 9,
    "loop": false
   },
   "hit": {
    "frames": [
-    "r3_01",
-    "r6_04"
+    "r4_01",
+    "r6_08"
    ],
    "fps": 10,
    "loop": false
   },
   "knockdown": {
    "frames": [
-    "r3_01",
-    "r4_01",
-    "r5_01"
+    "r5_01",
+    "r4_01"
    ],
    "fps": 7,
    "loop": false
   },
   "getup": {
    "frames": [
-    "r6_04",
-    "r6_05"
+    "r6_08",
+    "r6_01"
    ],
    "fps": 6,
    "loop": false
   },
   "victory": {
    "frames": [
-    "r6_04",
     "r6_05",
     "r6_06",
     "r6_07",
