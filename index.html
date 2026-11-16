@@ -521,15 +521,38 @@ class Fighter{
 
 /* ================= game ================= */
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-let S=2;
+let S=2,SCAP=3; // SCAP = batas resolusi kanvas; turun otomatis kalau FPS jelek (perfWatch)
 function resize(){
  const sc=Math.min(innerWidth/W,innerHeight/H),dpr=window.devicePixelRatio||1;
- S=Math.max(1,Math.min(3,Math.round(sc*dpr))); // dibatasi 3: kanvas lebih kecil = jauh lebih ringan di HP
+ S=Math.max(1,Math.min(SCAP,Math.round(sc*dpr))); // dibatasi 3: kanvas lebih kecil = jauh lebih ringan di HP
  cv.width=W*S;cv.height=H*S;cv.style.width=Math.floor(W*sc)+'px';cv.style.height=Math.floor(H*sc)+'px';
+}
+let WINC=null; // cache teks "KAMU MENANG!" / "KAMU KALAH" (outline + emas + gradasi) -> tidak ada strokeText per frame
+function winBuild(win){
+ const R=Math.max(1,S),key=R+'|'+koFontOK;if(!WINC||WINC.key!==key)WINC={key};
+ const id=win?'w':'l';if(WINC[id])return WINC[id];
+ const txt=win?'KAMU MENANG!':'KAMU KALAH',gold=win?['#fff1b8','#e0a823','#8a5a08']:['#ffd5cf','#e8483a','#7a1010'];
+ const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.ceil(w*R);c.height=Math.ceil(h*R);const x=c.getContext('2d');x.setTransform(R,0,0,R,0,0);x.font='25px '+KOSTACK;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.miterLimit=2;return[c,x]};
+ let tw=mk(8,8)[1].measureText(txt).width;if(typeof tw!=='number'||!isFinite(tw))tw=120;
+ const w=Math.ceil(tw+44),h=52,[c,x]=mk(w,h);x.translate(w/2,h/2);x.transform(1,0,-.1,1,0,0);
+ x.globalAlpha=.35;x.lineWidth=12;x.strokeStyle='#000';x.strokeText(txt,0,2);x.globalAlpha=1;x.lineWidth=8;x.strokeText(txt,0,0);
+ x.lineWidth=4;x.strokeStyle=gold[2];x.strokeText(txt,0,0);x.lineWidth=1.6;x.strokeStyle=gold[1];x.strokeText(txt,0,0);
+ const fg=x.createLinearGradient(0,-11,0,11);fg.addColorStop(0,'#fffef6');fg.addColorStop(.5,gold[0]);fg.addColorStop(1,gold[1]);x.fillStyle=fg;x.fillText(txt,0,0);
+ const[sh,sx]=mk(w,h);sx.translate(w/2,h/2);sx.transform(1,0,-.1,1,0,0);sx.fillStyle='#fff';sx.fillText(txt,0,0);
+ return WINC[id]={c,sh,w,h,tw,gold};
+}
+let pwLast=0,pwEma=16.7,pwSlow=0,pwPend=false;
+function perfWatch(now){ // kualitas adaptif: frame rata-rata > ~26ms (di bawah ~38fps) cukup lama -> turunkan resolusi kanvas 1 tingkat.
+ // Selama K.O. penurunan hanya DITANDAI dan baru diterapkan setelah animasi K.O. selesai (resize di tengah sinematik malah bikin patah).
+ const d=now-pwLast;pwLast=now;
+ if(d>100||d<=0||document.hidden||!G.p1||G.phase==='menu'||G.phase==='end')return;
+ const ko=!!G.koFx;pwEma+=(d-pwEma)*.08;
+ if(pwEma>26&&S>1){if(++pwSlow>(ko?40:120))pwPend=true}else pwSlow=Math.max(0,pwSlow-2);
+ if(pwPend&&!ko&&S>1){pwPend=false;pwSlow=0;pwEma=16.7;SCAP=S-1;resize();clearTimeout(koWarmT);koWarmT=setTimeout(koWarm,100);console.info('[perf] FPS rendah, resolusi kanvas diturunkan ke',SCAP)}
 }
 let koWarmT=0;
 function koWarm(){ // build huruf K.O. + paksa upload kanvas ke GPU sekarang, bukan pas K.O. (hindari patah di frame awal)
- try{const C=koBuild();ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.004;for(const c of[C.A,C.g1,C.g2,C.g3])if(c&&c.width)ctx.drawImage(c,0,0,2,2);ctx.restore()}catch(e){}
+ try{const C=koBuild(),a=winBuild(true),b=winBuild(false);ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=.004;for(const c of[C.A,C.g1,C.g2,C.g3,a.c,a.sh,b.c,b.sh])if(c&&c.width)ctx.drawImage(c,0,0,2,2);ctx.restore()}catch(e){}
 }
 addEventListener('resize',()=>{resize();clearTimeout(koWarmT);koWarmT=setTimeout(koWarm,250)});
 
@@ -1053,19 +1076,16 @@ const G={
    ctx.fillStyle=fg1;ctx.beginPath();ctx.ellipse(tx,ty,w2*.7,2+6*(1-f),0,0,7);ctx.fill();
    const fg2=ctx.createLinearGradient(tx-w2/2,0,tx+w2/2,0);fg2.addColorStop(0,'rgba(255,255,255,0)');fg2.addColorStop(.5,'rgba(255,255,255,1)');fg2.addColorStop(1,'rgba(255,255,255,0)');
    ctx.fillStyle=fg2;ctx.beginPath();ctx.ellipse(tx,ty,w2/2,.5+1.6*(1-f),0,0,7);ctx.fill();ctx.restore()}
-  const su=u-1.1; // teks kemenangan: slide-up + scale-in, premium (emas) / kalah (merah)
+  const su=u-1.1; // teks kemenangan: slide-up + scale-in. Teksnya dirender SEKALI ke kanvas offscreen (winBuild); per frame hanya drawImage
   if(su>0&&fo>0){
-   const t=kClamp(su/.5,0,1),e=kBack(t),al=kClamp(su/.2,0,1)*fo,sy=ty+C.F*.37+13+(1-kE3(t))*20,s2=.55+.45*e,win=!k.victimIsP1,tx2=win?'KAMU MENANG!':'KAMU KALAH';
-   ctx.save();ctx.translate(W/2,sy);ctx.scale(s2,s2);ctx.globalAlpha=al;ctx.font='25px '+KOSTACK;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.miterLimit=2;
-   let tw=ctx.measureText(tx2).width;if(typeof tw!=='number'||!isFinite(tw))tw=120;
-   const half=tw/2+12,ln=(26+Math.min(54,tw*.3))*kE3((su-.15)/.5),gold=win?['#fff1b8','#e0a823','#8a5a08']:['#ffd5cf','#e8483a','#7a1010'];
+   const V=winBuild(!k.victimIsP1),t=kClamp(su/.5,0,1),e=kBack(t),al=kClamp(su/.2,0,1)*fo,sy=ty+C.F*.37+13+(1-kE3(t))*20,s2=.55+.45*e;
+   ctx.save();ctx.translate(W/2,sy);ctx.scale(s2,s2);ctx.globalAlpha=al;
+   const half=V.tw/2+12,ln=(26+Math.min(54,V.tw*.3))*kE3((su-.15)/.5),gold=V.gold;
    const lg=ctx.createLinearGradient(half,0,half+ln,0);lg.addColorStop(0,gold[1]);lg.addColorStop(1,'rgba(255,200,80,0)');
    for(const sg of[-1,1]){ctx.save();ctx.scale(sg,1);ctx.fillStyle=lg;ctx.fillRect(half,-.8,ln,1.6);ctx.fillStyle=gold[0];ctx.beginPath();ctx.moveTo(half-1,0);ctx.lineTo(half+3,-3.4);ctx.lineTo(half+7,0);ctx.lineTo(half+3,3.4);ctx.fill();ctx.restore()}
-   ctx.transform(1,0,-.1,1,0,0);
-   ctx.globalAlpha=al*.35;ctx.lineWidth=12;ctx.strokeStyle='#000';ctx.strokeText(tx2,0,2);ctx.globalAlpha=al;ctx.lineWidth=8;ctx.strokeText(tx2,0,0); // outline hitam tebal + bayangan murah (tanpa shadowBlur)
-   ctx.lineWidth=4;ctx.strokeStyle=gold[2];ctx.strokeText(tx2,0,0);ctx.lineWidth=1.6;ctx.strokeStyle=gold[1];ctx.strokeText(tx2,0,0); // aksen emas
-   const fg=ctx.createLinearGradient(0,-11,0,11);fg.addColorStop(0,'#fffef6');fg.addColorStop(.5,gold[0]);fg.addColorStop(1,gold[1]);ctx.fillStyle=fg;ctx.fillText(tx2,0,0);
-   const ph=((su-.5)%2)/.7;if(su>.5&&ph<1){const sx=-tw/2-20+ph*(tw+40),sg2=ctx.createLinearGradient(sx-16,0,sx+16,0);sg2.addColorStop(0,'rgba(255,255,255,0)');sg2.addColorStop(.5,'rgba(255,255,255,.9)');sg2.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=sg2;ctx.fillText(tx2,0,0)}
+   ctx.drawImage(V.c,-V.w/2,-V.h/2,V.w,V.h);
+   const ph=((su-.5)%2)/.7;if(su>.5&&ph<1){const sx=-V.tw/2-20+ph*(V.tw+40); // kilau berjalan: pita sempit dari salinan teks putih
+    ctx.save();ctx.beginPath();ctx.rect(sx-12,-V.h/2,24,V.h);ctx.clip();ctx.globalAlpha=al*.75;ctx.drawImage(V.sh,-V.w/2,-V.h/2,V.w,V.h);ctx.restore()}
    ctx.restore();
   }
   const bf=kE3((u-(k.dur-.35))/.6);
@@ -1254,7 +1274,7 @@ $('menuBtn').onclick=showMenu;
 
 let prev=performance.now(),acc=0;
 function loop(now){
- requestAnimationFrame(loop);
+ requestAnimationFrame(loop);perfWatch(now);
  acc+=Math.min(100,now-prev)*G.koTimeScale();prev=now;
  while(acc>=1000/60){acc-=1000/60;G.tick()}
  G.alpha=Math.min(1,acc/(1000/60));G.draw();padState();
