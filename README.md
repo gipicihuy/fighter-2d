@@ -42,5 +42,12 @@ Tambah folder `characters/<id>/` (atlas.json + png) dan satu baris di `character
 Karakter baru otomatis dapat punch/kick dasar; untuk heavy/skill/ult tambahkan entri di `CHARDEF` (di `index.html`).
 
 ## Efek K.O. (cinematic)
-Saat salah satu karakter benar-benar kalah (HP habis; bukan time-up): flash putih, screen shake, slow-mo singkat, gelombang kejut + percikan + garis kecepatan, bar sinematik, teks **K.O.** menghantam layar dengan kilau, lalu fade ke ronde berikutnya.
-Suara memakai `ko.wav` (dimainkan tepat saat K.O. mulai). Durasi animasi mengikuti durasi asli audio (±5,7 detik) dan ronde berikutnya baru mulai setelah audio selesai, jadi audio tidak terpotong.
+Muncul hanya saat ada karakter yang benar-benar kalah (HP habis; bukan time-up). Semua Canvas 2D, tanpa video/GIF/sprite eksternal:
+- Flash putih 0-150ms, huruf **K.O.** 3D (extrude, bevel, outline berlapis, inner shadow, gloss, retakan, glow 3 lapis) membesar dengan impact 150-400ms, overshoot 400-700ms, ledakan serpihan + shockwave + distorsi 700-1500ms, fase tahan 1,5-4 detik, lalu meredup halus 4-5 detik.
+- Radial burst, garis impact, vignette merah (arena tetap terlihat), screen shake kuat hanya di awal, kilatan energi di sekitar huruf, partikel dari pool (tanpa alokasi per frame).
+- Teks kemenangan/kekalahan emas/merah dengan slide-up + scale-in.
+- Audio `ko.wav` tidak diubah; ronde berikutnya mulai setelah audio selesai.
+
+### Font K.O.
+Font: **`road-rage.otf`** (taruh di root repo, sejajar `index.html`). `@font-face` memakai file lokal dulu, CDN `https://cdn.zass.in/X6Kjo95583.otf` hanya cadangan. Game menunggu font siap (maks 3 detik) sebelum Canvas menggambar K.O.; kalau tidak ada sama sekali, otomatis fallback ke Impact/Arial Black. Cek console: `[K.O.] font RoadRage dimuat`.
+Unduh: `curl -L -o road-rage.otf https://cdn.zass.in/X6Kjo95583.otf`
