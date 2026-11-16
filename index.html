@@ -96,6 +96,18 @@ const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
 const scl=(att,def,v)=>{const d=def.def,r=d.vs&&d.vs[att.id]!=null?d.vs[att.id]:(d.def||1);return Math.max(1,Math.round(v*(att.def.atk||1)*r))};
 const A_=(frames,fps,loop)=>({frames,fps:fps||1,loop:!!loop});
 const rng=(p,a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(p+String(i).padStart(2,'0'));return o};
+const angWrap=a=>{while(a>Math.PI)a-=6.2832;while(a<-Math.PI)a+=6.2832;return a};
+const steerProj=(p,tx,ty)=>{
+ const age=p.age++,dx=tx-p.x,dy=ty-p.y,dist=Math.hypot(dx,dy),diff=angWrap(Math.atan2(dy,dx)-p.ang);
+ const lim=(.05+.11*Math.min(1,age/45))*(dist<110?1+(110-dist)/110*1.6:1);
+ const want=Math.max(-lim,Math.min(lim,diff*.6));
+ p.av+=(want-p.av)*.22;
+ p.ang+=p.av;
+ const spd=p.pd.vx*(.8+.2*Math.min(1,age/25));
+ p.vx=Math.cos(p.ang)*spd;
+ p.vy=Math.sin(p.ang)*spd;
+ p.dir=p.vx>=0?1:-1;
+};
 const CHARDEF={
  default:{
   color:'#ff5a4f',
@@ -535,7 +547,14 @@ const G={
  spawnProj(o,pd,quiet,tgt,i,n){
   if(!quiet)SND.play(pd.sfx||'fire');
   if(pd.big)this.shake=Math.max(this.shake,8);
-  this.projs.push({owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:o.y+(pd.ph||55)+(n>1?(i-(n-1)/2)*10:0),vx:o.face*pd.vx,dir:o.face,pd,life:150,tgt});
+  const y0=o.y+(pd.ph||55)+(n>1?(i-(n-1)/2)*10:0),p={owner:o,x:o.x+o.face*28,ox:o.x+o.face*28,y:y0,oy:y0,vx:o.face*pd.vx,vy:0,dir:o.face,pd,life:pd.homing?230:150,tgt,age:0,av:0,ang:o.face>0?0:Math.PI};
+  if(pd.homing){
+   const el=(o.y>2?.22:.62)+(n>1?(i%2?-1:1)*.14:0);
+   p.ang=o.face>0?el:Math.PI-el;
+   p.vx=Math.cos(p.ang)*pd.vx*.8;
+   p.vy=Math.sin(p.ang)*pd.vx*.8;
+  }
+  this.projs.push(p);
  },
  fireProj(o,m){
   const pd=m.proj;
@@ -688,13 +707,13 @@ const G={
   // proyektil
   for(const p of this.projs){
    const os=this.opps(p.owner),foe=p.tgt&&p.tgt.hp>0?p.tgt:os.reduce((m,o)=>(Math.abs(o.x-p.x)+(o.hp<=0?1000:0))<(Math.abs(m.x-p.x)+(m.hp<=0?1000:0))?o:m,os[0]);
-   if(p.pd.homing){const dx=foe.x-p.x;if(Math.abs(dx)>3){p.dir=dx>0?1:-1;p.vx=p.dir*Math.abs(p.pd.vx)}p.y+=(foe.y+45-p.y)*.2}
-   p.ox=p.x;p.x+=p.vx;p.life--;
+   if(p.pd.homing)steerProj(p,foe.x,foe.y+45);
+   p.ox=p.x;p.oy=p.y;p.x+=p.vx;p.y=Math.max(8,p.y+p.vy);p.life--;
    if(p.pd.spread)this.fx.push({k:'glow',x:p.x,y:p.y+(Math.random()-.5)*14,t:0,max:14,r0:8,r1:26,c:this.pt%2?'#ffd54a':'#ff9a1a'});
    let done=false;
    for(const o of (p.tgt&&p.tgt.hp>0?[p.tgt]:os)){
     const hu=o.hurtbox();
-    if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?24:20)&&(p.pd.homing||(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
+    if(!done&&hu&&Math.abs(p.x-o.x)<(p.pd.homing?26:20)&&(p.pd.homing?Math.abs(p.y-(o.y+45))<50:(p.y>=hu.y0&&p.y<=hu.y1))){this.applyHit(p.owner,o,p.pd,p.dir);p.life=0;done=true}
    }
    if(p.x<-40||p.x>WW+40)p.life=0;
   }
@@ -777,9 +796,9 @@ const G={
   }
   for(const f of[this.p1,...this.enemies])f.draw(ctx);
   for(const p of this.projs){
-   const A=p.owner.A,py=Math.round(GROUND-p.y),pxx=Math.round((p.ox+(p.x-p.ox)*(G.interp?G.alpha:1))*S)/S;
+   const A=p.owner.A,ia=G.interp?G.alpha:1,py=Math.round(GROUND-(p.oy+(p.y-p.oy)*ia)),pxx=Math.round((p.ox+(p.x-p.ox)*ia)*S)/S;
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];
-   if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(pxx,py);if(p.dir<0)ctx.scale(-1,1);
+   if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(pxx,py);if(p.dir<0)ctx.scale(-1,1);if(p.pd.homing)ctx.rotate(p.dir<0?Math.atan2(-Math.sin(p.ang),-Math.cos(p.ang)):-p.ang);
     ctx.drawImage(p.owner.img,vf.x,vf.y,vf.w,vf.h,-vf.w*s/2,-vf.h*s/2,vf.w*s,vf.h*s);ctx.restore()}
    else{const c=p.pd.orb||'#fff',g=ctx.createRadialGradient(pxx,py,1,pxx,py,11);g.addColorStop(0,'#fff');g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(pxx,py,11,0,7);ctx.fill()}
