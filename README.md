@@ -68,3 +68,5 @@ Unduh: `curl -L -o road-rage.otf https://cdn.zass.in/X6Kjo95583.otf`
 
 
 HASHIM MA'JUJ rival sepadan CEO SAWIT: stat disamakan (damage keluar x1.35, masuk x0.72, speed +30%). Punya **Kulit Badak**: saat kena ULT CEO SAWIT, **PARRY** (blok tepat sebelum kena, jendela sekitar 0,2 detik sejak mulai blok; menahan blok lama tidak berguna) = selamat dengan damage 15% tanpa terkunci/knockdown. Tanpa parry masih ada peluang 20% beruntung (damage 30%). Cooldown ±5 detik, jadi tidak kebal. **Pohon sawit** Hashim (skill & ULT): sawit kecil CEO SAWIT pecah kena pohon; ULT sawit raksasa menembus pohon dengan efek pohon pecah berkeping, tapi pohonnya tetap berdiri sampai durasinya habis.
+
+Badak Hashim (skill, combo, dan ULT) **bisa dihindari dengan melompat**: kalau kamu sudah di udara (ketinggian ≥ 40 px) saat badak lewat, badak lewat di bawah dan tidak kena. Pengecualian: musuh yang sedang melayang karena sawit tetap kena (itu inti combo). Pohon sawit Hashim sekarang **permanen** sampai ronde berakhir (maksimal 3 pohon per pemilik; pohon paling lama hilang kalau muncul pohon ke-4).

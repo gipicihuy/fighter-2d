@@ -331,6 +331,15 @@ class Bot{
     if(this.parryRoll&&Math.abs(hp.x-me.x)<=75){I.left=I.right=I.up=0;I.down=1;this.timer=14;return I}
    }
   }
+  { // badak lawan menyeruduk: bot kadang lompat menghindar
+   const rn=G.summons.find(q=>q.k==='rhino'&&q.owner===foe&&q.t>=0&&q.state==='run'&&((q.dir>0)===(me.x>q.x))&&Math.abs(q.x-me.x)<260);
+   if(!rn)this.rhRoll=null;
+   else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
+    if(this.rhRoll==null)this.rhRoll=Math.random()<L.dodge;
+    const rd2=Math.abs(rn.x-me.x);
+    if(this.rhRoll&&rd2<=170&&rd2>=90){I.left=I.right=I.down=0;I.up=1;this.timer=24;return I}
+   }
+  }
   // sawit raksasa (proyektil ULT): bot lompat pas jaraknya pas (kalau lolos roll dodge), atau blok
   const big=G.projs.find(p=>p.owner===foe&&p.pd.big&&!p.pd.homing&&((p.vx>0)===(me.x>p.x))&&Math.abs(p.x-me.x)<150);
   if(!big)this.bigRoll=null;
@@ -833,7 +842,7 @@ const G={
  castSummon(o,m){
   const sp=m.spec,face=o.face,foes=this.opps(o).filter(e=>e.hp>0),cx=x=>Math.max(40,Math.min(WW-40,x));
   const near=foes.length?foes.reduce((a,b)=>Math.abs(b.x-o.x)<Math.abs(a.x-o.x)?b:a):null;
-  const tree=(x,s)=>{this.summons.push({k:'tree',owner:o,x:cx(x),dir:face,t:-s.delay,sp:s});SND.play('treecrack')};
+  const tree=(x,s)=>{this.summons.push({k:'tree',owner:o,x:cx(x),dir:face,t:-s.delay,sp:s});const ts=this.summons.filter(q=>q.k==='tree'&&q.owner===o&&!q.dead);while(ts.length>3)ts.shift().dead=true;SND.play('treecrack')};
   const rhino=(x,s,delay)=>this.summons.push({k:'rhino',owner:o,x:cx(x),ox:cx(x),dir:face,t:-delay,sp:s,state:'run',spd:3,hit:new Set(),car:null,ct:0,st:0,run:0});
   if(m.summon==='sawit'){
    const ahead=near&&(near.x-o.x)*face>-30&&Math.abs(near.x-o.x)<320;
@@ -890,7 +899,7 @@ const G={
     this.stop=Math.max(this.stop,sp.stop);this.flash=Math.max(this.flash,sp.flash||0);SND.play('heavy');
    }
   }
-  if(s.t>=sp.life)s.dead=true;
+  // pohon permanen: tidak hilang sampai ronde berakhir
  },
  treeFx(s){
   const x=s.x,sp=s.sp,big=!!sp.big,rd=Math.random;
@@ -944,7 +953,8 @@ const G={
      if(f.hp<=0||f.carried||s.hit.has(f))continue;
      const rn=(f.x-s.x)*dir,rp=(f.x-(s.x-dir*s.spd))*dir;
      if(!(rn<=36&&rp>=-22))continue;
-     if(!(sp.pierce?this.canUlt(f,sp):(sp.antiAir?(f.juggle||f.vulnerable()):(f.vulnerable()&&f.y<56))))continue;
+     if(f.y>=40&&!f.juggle)continue; // lompat = badak lewat di bawah (kecuali lagi melayang gara-gara sawit)
+     if(!(sp.pierce?this.canUlt(f,sp):(sp.antiAir?(f.juggle||f.vulnerable()):f.vulnerable())))continue;
      if(!sp.pierce&&f.state==='block'&&f.y===0){ // diblok: badak mental
       f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*5;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');
       this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,6);s.state='stop';s.st=0;this.banner2(f.x,110,'BLOK!',12,'#8ecbff');break;
@@ -1005,7 +1015,7 @@ const G={
    const A=s.owner.A,img=s.owner.img,sp=s.sp;
    if(s.k==='tree'){
     const seq=A.vfx.tree,fi=Math.min(seq.length-1,Math.floor(s.t/sp.fdur)),f=A.frames[seq[fi]];
-    const fade=Math.min(1,(sp.life-s.t)/18),pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
+    const fade=1,pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
     ctx.save();ctx.globalAlpha=Math.max(0,fade);ctx.translate(s.x,GROUND+3);ctx.scale(sc,sc*rise);
     ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
    }else{
