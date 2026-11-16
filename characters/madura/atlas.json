@@ -19,7 +19,11 @@
     40,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    57,
+    84
+   ]
   },
   "w01": {
    "x": 78,
@@ -30,7 +34,11 @@
     41,
     139
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    69,
+    79
+   ]
   },
   "w02": {
    "x": 156,
@@ -41,7 +49,11 @@
     38,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    54,
+    83
+   ]
   },
   "w03": {
    "x": 234,
@@ -52,7 +64,11 @@
     38,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    66,
+    79
+   ]
   },
   "w04": {
    "x": 312,
@@ -63,7 +79,11 @@
     29,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    47,
+    81
+   ]
   },
   "w05": {
    "x": 369,
@@ -74,7 +94,11 @@
     36,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    60,
+    80
+   ]
   },
   "w06": {
    "x": 441,
@@ -85,7 +109,11 @@
     31,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    49,
+    82
+   ]
   },
   "w07": {
    "x": 500,
@@ -96,7 +124,11 @@
     40,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    56,
+    84
+   ]
   },
   "w08": {
    "x": 575,
@@ -107,7 +139,11 @@
     40,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    58,
+    83
+   ]
   },
   "w09": {
    "x": 653,
@@ -118,7 +154,11 @@
     39,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    69,
+    76
+   ]
   },
   "w10": {
    "x": 731,
@@ -129,7 +169,11 @@
     41,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    69,
+    76
+   ]
   },
   "w11": {
    "x": 809,
@@ -140,7 +184,11 @@
     42,
     140
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    64,
+    81
+   ]
   },
   "u00": {
    "x": 887,
@@ -151,7 +199,11 @@
     52,
     136
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    84,
+    61
+   ]
   },
   "u01": {
    "x": 980,
@@ -162,7 +214,11 @@
     61,
     135
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    94,
+    60
+   ]
   },
   "u02": {
    "x": 1083,
@@ -173,7 +229,11 @@
     65,
     136
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    98,
+    61
+   ]
   },
   "u03": {
    "x": 1190,
@@ -184,7 +244,11 @@
     59,
     135
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    91,
+    62
+   ]
   },
   "u04": {
    "x": 1290,
@@ -195,7 +259,11 @@
     58,
     135
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    91,
+    62
+   ]
   },
   "u05": {
    "x": 1390,
@@ -206,7 +274,11 @@
     59,
     135
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    95,
+    59
+   ]
   },
   "i0": {
    "x": 0,
@@ -217,7 +289,11 @@
     49,
     125
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    75,
+    77
+   ]
   },
   "i1": {
    "x": 90,
@@ -228,7 +304,11 @@
     48,
     117
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    83,
+    67
+   ]
   },
   "i2": {
    "x": 182,
@@ -239,7 +319,11 @@
     50,
     127
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    85,
+    66
+   ]
   },
   "jump": {
    "x": 275,
@@ -250,7 +334,11 @@
     45,
     136
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    59,
+    31
+   ]
   },
   "blk": {
    "x": 361,
@@ -261,7 +349,11 @@
     56,
     120
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    91,
+    56
+   ]
   },
   "p0": {
    "x": 461,
@@ -272,7 +364,11 @@
     44,
     133
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    84,
+    53
+   ]
   },
   "p1": {
    "x": 553,
@@ -283,7 +379,11 @@
     54,
     129
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    110,
+    38
+   ]
   },
   "p2": {
    "x": 675,
@@ -294,7 +394,11 @@
     37,
     144
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    66,
+    43
+   ]
   },
   "k0": {
    "x": 751,
@@ -305,7 +409,11 @@
     34,
     147
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    71,
+    69
+   ]
   },
   "k1": {
    "x": 853,
@@ -316,7 +424,11 @@
     51,
     129
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    79,
+    38
+   ]
   },
   "k2": {
    "x": 969,
@@ -327,7 +439,11 @@
     69,
     136
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    136,
+    32
+   ]
   },
   "k3": {
    "x": 1115,
@@ -338,7 +454,11 @@
     30,
     134
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    67,
+    58
+   ]
   },
   "h0": {
    "x": 1197,
@@ -349,7 +469,11 @@
     62,
     128
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    98,
+    60
+   ]
   },
   "h1": {
    "x": 1319,
@@ -360,7 +484,11 @@
     56,
     145
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    94,
+    65
+   ]
   },
   "h2": {
    "x": 0,
@@ -371,7 +499,11 @@
     60,
     143
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    141,
+    48
+   ]
   },
   "h3": {
    "x": 151,
@@ -382,7 +514,11 @@
     69,
     125
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    121,
+    60
+   ]
   },
   "s1": {
    "x": 304,
@@ -393,7 +529,11 @@
     59,
     145
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    120,
+    43
+   ]
   },
   "hit0": {
    "x": 433,
@@ -404,7 +544,11 @@
     38,
     139
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    67,
+    30
+   ]
   },
   "hit1": {
    "x": 522,
@@ -415,7 +559,11 @@
     38,
     138
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    74,
+    38
+   ]
   },
   "kd0": {
    "x": 620,
@@ -426,7 +574,11 @@
     48,
     121
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    112,
+    73
+   ]
   },
   "kd1": {
    "x": 748,
@@ -437,7 +589,11 @@
     87,
     109
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    152,
+    24
+   ]
   },
   "kd2": {
    "x": 911,
@@ -448,7 +604,11 @@
     104,
     43
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    134,
+    25
+   ]
   },
   "gu0": {
    "x": 1078,
@@ -459,7 +619,11 @@
     54,
     123
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    84,
+    47
+   ]
   },
   "v0": {
    "x": 1173,
@@ -470,7 +634,11 @@
     37,
     146
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    63,
+    32
+   ]
   },
   "v1": {
    "x": 1252,
@@ -481,7 +649,11 @@
     38,
     139
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    56,
+    84
+   ]
   },
   "v2": {
    "x": 1325,
@@ -492,7 +664,11 @@
     36,
     139
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    66,
+    32
+   ]
   },
   "ua": {
    "x": 0,
@@ -503,7 +679,11 @@
     100,
     150
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    134,
+    68
+   ]
   },
   "ub": {
    "x": 187,
@@ -514,7 +694,11 @@
     72,
     157
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    106,
+    75
+   ]
   },
   "uc": {
    "x": 365,
@@ -525,7 +709,11 @@
     79,
     152
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    113,
+    70
+   ]
   },
   "uaura": {
    "x": 578,
@@ -536,7 +724,11 @@
     77,
     164
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    110,
+    74
+   ]
   },
   "uf": {
    "x": 718,
@@ -547,7 +739,11 @@
     34,
     138
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    68,
+    56
+   ]
   },
   "ud": {
    "x": 793,
@@ -558,7 +754,11 @@
     78,
     193
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    112,
+    111
+   ]
   },
   "ue": {
    "x": 962,
@@ -569,7 +769,11 @@
     39,
     152
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    73,
+    70
+   ]
   },
   "s0": {
    "x": 675,
@@ -580,7 +784,11 @@
     37,
     144
    ],
-   "pivotMode": "stand"
+   "pivotMode": "stand",
+   "hand": [
+    66,
+    43
+   ]
   },
   "sarung": {
    "x": 0,
@@ -735,5 +943,7 @@
    "sarung"
   ]
  },
- "portraits": []
+ "portraits": [],
+ "hd": "spritesheet_hd.webp",
+ "hs": 2
 }

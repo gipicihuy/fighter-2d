@@ -423,6 +423,10 @@ class Fighter{
   return a;
  }
  setState(s,key){this.state=s;this.an=this.resolve(key);this.t=0}
+ handPos(){
+  const f=this.A.frames[this.frameId()],sc=this.def.sc||1,hd=f.hand||[f.pivot[0]+30,f.pivot[1]-78],px=this.dpx==null?this.x:this.dpx,py=this.dpy==null?GROUND-this.y:this.dpy;
+  return {x:px+this.face*(hd[0]-f.pivot[0])*sc,y:py+(hd[1]-f.pivot[1])*sc};
+ }
  frameIdx(){const n=this.an.frames.length,k=Math.floor(this.t*this.an.fps/60);return this.an.loop?k%n:Math.min(k,n-1)}
  frameId(){return this.an.frames[this.frameIdx()]}
  vulnerable(){
@@ -593,9 +597,10 @@ class Fighter{
   this.t++;
  }
  draw(ctx){
-  const f=this.A.frames[this.frameId()],k=G.interp?G.alpha:1,sc=this.def.sc||1;
+  const f=this.A.frames[this.frameId()],k=G.interp?G.alpha:1,sc=this.def.sc||1,hs=this.A.hs||1;
   const lx=(u,v)=>Math.round((u+(v-u)*k)*S)/S;
   const px=lx(this.ox,this.x),fy=lx(this.oy,this.y),py=GROUND-fy;
+  this.dpx=px;this.dpy=py;
   const sh=Math.max(.3,1-fy/120);
   ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(px,GROUND+1,(f.w*sc>70?26:20)*sh,4*sh,0,0,7);ctx.fill();
   if(this.hakiT>0){
@@ -608,13 +613,13 @@ class Fighter{
    const gf=this.A.frames[gh.fid];
    ctx.save();ctx.globalAlpha=(gh.a||.42)*(1-gh.t/16);ctx.globalCompositeOperation='lighter';
    ctx.translate(Math.round(gh.x*S)/S,GROUND-Math.round(gh.y*S)/S);if(gh.face<0)ctx.scale(-1,1);ctx.scale(sc,sc);
-   ctx.drawImage(this.img,gf.x,gf.y,gf.w,gf.h,-gf.pivot[0],-gf.pivot[1],gf.w,gf.h);
+   ctx.drawImage(this.img,gf.x*hs,gf.y*hs,gf.w*hs,gf.h*hs,-gf.pivot[0],-gf.pivot[1],gf.w,gf.h);
    ctx.restore();
   }
   ctx.save();ctx.translate(px,py);if(this.face<0)ctx.scale(-1,1);
   if(this.state==='dodge')ctx.rotate(-.2*Math.sin(Math.PI*Math.min(1,this.t/this.def.haki.dur)));
   ctx.scale(sc,sc);
-  ctx.drawImage(this.img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);
+  ctx.drawImage(this.img,f.x*hs,f.y*hs,f.w*hs,f.h*hs,-f.pivot[0],-f.pivot[1],f.w,f.h);
   ctx.restore();
  }
 }
@@ -1054,12 +1059,12 @@ const G={
   const ia=this.interp?this.alpha:1;
   for(const s of this.summons){
    if(s.t<0)continue;
-   const A=s.owner.A,img=s.owner.img,sp=s.sp;
+   const A=s.owner.A,img=s.owner.img,sp=s.sp,hh=A.hs||1;
    if(s.k==='tree'){
     const seq=A.vfx.tree,fi=Math.min(seq.length-1,Math.floor(s.t/sp.fdur)),f=A.frames[seq[fi]];
     const fade=sp.stay?Math.min(1,(sp.stay-s.t)/40):1,pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
     ctx.save();ctx.globalAlpha=Math.max(0,fade);ctx.translate(s.x,GROUND+3);ctx.scale(sc,sc*rise);
-    ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
+    ctx.drawImage(img,f.x*hh,f.y*hh,f.w*hh,f.h*hh,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
    }else{
     const run=A.vfx.rhino_run,hitF=A.vfx.rhino_hit[0],px=Math.round((s.ox+(s.x-s.ox)*ia)*S)/S,sc=sp.scale||1;
     let id,al=1;
@@ -1069,7 +1074,7 @@ const G={
     const f=A.frames[id];
     ctx.save();ctx.globalAlpha=.35*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(px-s.dir*60*sc,GROUND+3,90*sc,5,0,0,7);ctx.fill();
     ctx.globalAlpha=al;ctx.translate(px,GROUND+5);if(s.dir<0)ctx.scale(-1,1);ctx.scale(sc,sc);
-    ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
+    ctx.drawImage(img,f.x*hh,f.y*hh,f.w*hh,f.h*hh,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
    }
   }
  },
@@ -1169,18 +1174,31 @@ const G={
   }
  },
  spark(x,y,c){this.sparks.push({x,y,c,t:0})},
- drawSarung(a,hx,hy,tx,ty,p){
+ drawSarung(a,hx,hy,tx,ty,p,ph){
   const A=a.A,vf=A.vfx&&A.vfx.sarung&&A.frames[A.vfx.sarung[0]];
   if(!vf)return false;
-  const dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
-  if(L<30)return true;
-  const e=vf.ends,px=e[2]-e[0],py=e[3]-e[1],D=Math.hypot(px,py),ux=px/D,uy=py/D,k=L/D,sy=.4;
+  const h=A.hs||1,dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
+  if(L<24)return true;
+  const e=vf.ends,px=e[2]-e[0],py=e[3]-e[1],D=Math.hypot(px,py),ux=px/D,uy=py/D,k=L/D,sy=.68+.2*Math.sin(this.pt*.55+(ph||0));
   const rx=dx/L,ry=dy/L,nx=dx>=0?-ry:ry,ny=dx>=0?rx:-rx;
   const aa=rx*ux*k+nx*(-uy)*sy,bb=ry*ux*k+ny*(-uy)*sy,cc=rx*uy*k+nx*ux*sy,dd=ry*uy*k+ny*ux*sy;
-  ctx.save();
-  ctx.transform(aa,bb,cc,dd,hx-(aa*e[0]+cc*e[1]),hy-(bb*e[0]+dd*e[1]));
-  ctx.drawImage(a.img,vf.x,vf.y,vf.w,vf.h,0,0,vf.w,vf.h);
-  ctx.restore();
+  const ox=hx-(aa*e[0]+cc*e[1]),oy=hy-(bb*e[0]+dd*e[1]);
+  const pass=(al,mode,wid,blur)=>{
+   ctx.save();ctx.globalAlpha*=al;ctx.globalCompositeOperation=mode;
+   if(blur){ctx.shadowColor='rgba(255,50,40,.95)';ctx.shadowBlur=blur*S}
+   ctx.transform(aa,bb,cc,dd,ox,oy);ctx.translate(0,e[1]);ctx.scale(1,wid);ctx.translate(0,-e[1]);
+   ctx.drawImage(a.img,vf.x*h,vf.y*h,vf.w*h,vf.h*h,0,0,vf.w,vf.h);
+   ctx.restore();
+  };
+  pass(.9,'source-over',1.5,9);
+  pass(.6,'lighter',1.2,0);
+  pass(.22,'lighter',2,0);
+  const tipx=hx+dx,tipy=hy+dy;
+  for(const q of[[hx,hy,9],[tipx,tipy,p>=.98?16:9]]){
+   const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],q[2]);
+   g.addColorStop(0,'#ffffff');g.addColorStop(.4,'#ff6a5a');g.addColorStop(1,'rgba(0,0,0,0)');
+   ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.8;ctx.fillStyle=g;ctx.beginPath();ctx.arc(q[0],q[1],q[2],0,7);ctx.fill();ctx.restore();
+  }
   return true;
  },
  applyHit(att,def,m,dir){
@@ -1480,7 +1498,7 @@ const G={
   ctx.strokeText(txt,W/2,100);ctx.fillText(txt,W/2,100);
  },
  draw(){
-  ctx.setTransform(S,0,0,S,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='medium';
+  ctx.setTransform(S,0,0,S,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
   if(!this.p1){drawBG(0,ZMAX);return}
   const kk=this.interp?this.alpha:1,Zr=this.camOZ+(this.camZ-this.camOZ)*kk,camR=Math.round((this.camOX+(this.camX-this.camOX)*kk)*Zr*S)/(Zr*S),VWr=W/Zr;
   this.camView={x:camR,w:VWr};
@@ -1492,18 +1510,22 @@ const G={
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
    const m=f.mdef,x0=f.face>0?f.x+10:f.x-m.reach,hh=m.ry[1],pl=.18+.14*Math.sin(this.pt*.5);
    ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
-   if(m.sarung){
-    ctx.save();ctx.strokeStyle='#d32f2f';ctx.lineWidth=4;ctx.beginPath();
-    ctx.moveTo(f.x+f.face*10,GROUND-48);ctx.lineTo(f.face>0?f.x+m.reach:f.x-m.reach,GROUND-48);ctx.stroke();ctx.restore();
-   }
    if(f.side!==1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
   }
   this.drawSummons(ctx);
   for(const f of[this.p1,...this.allies,...this.enemies])f.draw(ctx);
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
+   const m=f.mdef,hp=f.handPos(),L=m.sarung?460:m.rx[1],pr=Math.min(1,f.t/(m.sarung?12:7)),e1=1-Math.pow(1-pr,2);
+   ctx.save();
+   this.drawSarung(f,hp.x,hp.y+4,hp.x+f.face*L,hp.y+6,e1,2.4);
+   this.drawSarung(f,hp.x,hp.y,hp.x+f.face*L,hp.y,e1);
+   ctx.restore();
+  }
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.drain&&f.drain.sarung&&f.drain.att){
-   const a=f.drain.att,hx=a.x+a.face*22,hy=GROUND-a.y-48,tx=f.x,ty=GROUND-f.y-50;
+   const a=f.drain.att,hp=a.handPos(),hx=hp.x,hy=hp.y,tx=f.x,ty=GROUND-f.y-50;
    ctx.save();
    const ex=Math.min(1,(f.drain.t+2)/6);
+   this.drawSarung(a,hx,hy+5,tx,ty+6,1-Math.pow(1-ex,2),2.4);
    if(!this.drawSarung(a,hx,hy,tx,ty,1-Math.pow(1-ex,2))){
     ctx.lineWidth=5;ctx.strokeStyle='#d32f2f';ctx.beginPath();ctx.moveTo(hx,hy);
     ctx.quadraticCurveTo((hx+tx)/2,Math.min(hy,ty)-14*Math.sin(f.drain.t*.4),tx,ty);ctx.stroke();
@@ -1519,7 +1541,7 @@ const G={
    const A=p.owner.A,ia=G.interp?G.alpha:1,py=Math.round(GROUND-(p.oy+(p.y-p.oy)*ia)),pxx=Math.round((p.ox+(p.x-p.ox)*ia)*S)/S;
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];
    if(vf){const s=Math.min(1,(p.pd.size||60)/vf.w);ctx.save();ctx.translate(pxx,py);if(p.dir<0)ctx.scale(-1,1);if(p.pd.homing)ctx.rotate(p.dir<0?Math.atan2(-Math.sin(p.ang),-Math.cos(p.ang)):-p.ang);
-    ctx.drawImage(p.owner.img,vf.x,vf.y,vf.w,vf.h,-vf.w*s/2,-vf.h*s/2,vf.w*s,vf.h*s);ctx.restore()}
+    ctx.drawImage(p.owner.img,vf.x*(A.hs||1),vf.y*(A.hs||1),vf.w*(A.hs||1),vf.h*(A.hs||1),-vf.w*s/2,-vf.h*s/2,vf.w*s,vf.h*s);ctx.restore()}
    else{const c=p.pd.orb||'#fff',g=ctx.createRadialGradient(pxx,py,1,pxx,py,11);g.addColorStop(0,'#fff');g.addColorStop(.4,c);g.addColorStop(1,'rgba(0,0,0,0)');
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(pxx,py,11,0,7);ctx.fill()}
   }
@@ -1575,7 +1597,7 @@ const G={
      g.addColorStop(0,'rgba(255,243,176,.95)');g.addColorStop(.45,'rgba(255,179,0,.5)');g.addColorStop(1,'rgba(255,122,26,0)');
      ctx.globalCompositeOperation='lighter';ctx.globalAlpha=al*.8;ctx.fillStyle=g;ctx.beginPath();ctx.arc(hx,py,pc.s*1.15,0,7);ctx.fill();
      ctx.globalCompositeOperation='source-over';ctx.globalAlpha=al;
-     if(vf){const sc=pc.s/vf.w;ctx.save();ctx.translate(hx,py);ctx.rotate(pc.r+pc.vr*tt);ctx.drawImage(e.img,vf.x,vf.y,vf.w,vf.h,-vf.w*sc/2,-vf.h*sc/2,vf.w*sc,vf.h*sc);ctx.restore()}
+     if(vf){const sc=pc.s/vf.w;ctx.save();ctx.translate(hx,py);ctx.rotate(pc.r+pc.vr*tt);ctx.drawImage(e.img,vf.x*(e.A.hs||1),vf.y*(e.A.hs||1),vf.w*(e.A.hs||1),vf.h*(e.A.hs||1),-vf.w*sc/2,-vf.h*sc/2,vf.w*sc,vf.h*sc);ctx.restore()}
      else{ctx.fillStyle='#7a1f0e';ctx.beginPath();ctx.arc(hx,py,pc.s*.4,0,7);ctx.fill()}
     }
    }else if(e.k==='crack'){
@@ -1598,7 +1620,7 @@ const G={
    }else if(e.k==='whip'){
     const a=e.att,o=e.def,pr=Math.min(1,e.t/3);
     ctx.globalAlpha=Math.min(1,(e.max-e.t)/6);
-    this.drawSarung(a,a.x+a.face*22,GROUND-a.y-48,o.x,GROUND-o.y-50,1-Math.pow(1-pr,2));
+    const hp=a.handPos();this.drawSarung(a,hp.x,hp.y+4,o.x,GROUND-o.y-48,1-Math.pow(1-pr,2),2.4);this.drawSarung(a,hp.x,hp.y,o.x,GROUND-o.y-50,1-Math.pow(1-pr,2));
    }else if(e.k==='shards'){
     ctx.fillStyle='#fff';
     for(const pc of e.ps){
@@ -1663,7 +1685,11 @@ async function boot(){
  try{
   list=await loadJSON('characters.json');
   for(const ch of list){
-   const atlas=await loadJSON(ch.atlas),img=await loadImg(new URL(atlas.image,new URL(ch.atlas,location.href)).href);
+   const atlas=await loadJSON(ch.atlas),base=new URL(ch.atlas,location.href);
+   let img=null,hs=1;
+   if(atlas.hd){try{img=await loadImg(new URL(atlas.hd,base).href);hs=atlas.hs||2}catch(e){img=null}}
+   if(!img)img=await loadImg(new URL(atlas.image,base).href);
+   atlas.hs=hs;
    G.chars[ch.id]={atlas,img,def:CHARDEF[ch.id]||genericDef(atlas),name:ch.name};
   }
  }catch(e){$('load').textContent='Gagal memuat: '+e.message+' — jalankan lewat server lokal: python serve.py';return}
