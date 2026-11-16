@@ -74,6 +74,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
   <button class="btn" id="go">MULAI</button>
   <small>Keyboard: A/D jalan (HP: stick analog kiri, tombol ikon di kanan) · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
   HASHIM MA'JUJ: U = ATM Sawit, L = Badak Jawa Rampage (U lalu L = combo), I = Jawa Beast Rampage Combo.<br>
+  RAJA MADURA: J = Tebasan Celurit, K = Sabetan Ganda, L = Sabetan Badai Api, U = Cambuk Sarung (tarik musuh), I = ULTI CAROK (jerat & tarik sarung + sabet celurit).<br>
   HP: best of 3 ronde. Energi naik tiap kena/kasih pukulan.</small>
 </div>
 
@@ -92,7 +93,7 @@ const $=id=>document.getElementById(id);
 const W=400,WW=2400,ZMAX=.9,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2,ATK_TEMPO=.9;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
-const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ"};
+const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ",madura:'RAJA MADURA'};
 
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
@@ -170,6 +171,20 @@ const CHARDEF={
    ult  :{anim:'skill_ultimate',fps:8,fire:3,cost:ULTC,armor:true,end:16,summon:'combo',banner:'JAWA BEAST RAMPAGE!',
           spec:{tree:{delay:28,life:96,stay:300,fdur:4.5,w:62,dmg:14,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,flash:6,text:'SAWIT ERUPTION!'},
                 rhino:{delay:54,speed:12,maxRun:900,dmg:14,carryDmg:1.5,every:8,wallDmg:16,maxCarry:120,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
+  }},
+ madura:{
+  color:'#d32f2f',djump:1,atk:1.25,def:.82,spd:1.2,dash:true,dashCd:32,stunMul:.6,comboKd:5,armorAfter:40,sc:0.9,
+  anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
+         block:A_(['r6_08'],1,true),jump:A_(['r1_06'],1,true),dash:A_(['r3_03'],1,true)},
+  moves:{
+   punch:{anim:'punch',fps:15,hit:[1,2],rx:[10,65],dmg:7,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:14,hit:[1,3],rx:[10,75],dmg:9,stun:18,kb:2.2,stop:4,end:5},
+   heavy:{anim:'punch_heavy',fps:12,hit:[1,3],rx:[10,88],dmg:13,kd:true,kb:3.5,stop:6,shake:7,end:8,lunge:[1,3,2.4]},
+   // Special: Cambuk Sarung Sakti - menyentak dan menarik musuh mendekat
+   skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,135],dmg:8,stun:22,pull:true,pullDist:50,kb:0.5,stop:5,shake:4,end:7,cost:20,sfx:'swing'},
+   // ULT: ULTI CAROK - menjerat musuh dengan sarung sakti, menariknya mendekat (stunt & pull), lalu menyabetnya dengan celurit beruntun & tebasan pamungkas!
+   ult  :{anim:'skill_ultimate',fps:10,hit:[2,4],ideal:70,reach:280,ry:[0,45],beam:true,sarung:true,cost:ULTC,dmg:10,
+          drain:{n:6,every:4,dmg:8,pull:true,sarung:true},chip:12,armor:true,kd:true,kb:6,end:35,banner:'ULTI CAROK!'}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -1160,12 +1175,13 @@ const G={
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
    def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
-   else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread}}
+   else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread,pull:!!m.drain.pull,sarung:!!m.drain.sarung}}
    if(!m.blast)this.flash=8;this.shake=Math.max(this.shake,12);if(!m.blast)this.stop=Math.max(this.stop,6);SND.play('ulthit');if(m.hitSfx)SND.play(m.hitSfx);
    if(m.boom)for(let i=0;i<6;i++)this.spark(sx+(Math.random()-.5)*34,sy+(Math.random()-.5)*44,i%2?'#ffb347':'#ff5c3c');
    if(m.spread)this.auraHit(def,false);
    this.spark(sx,sy,att.def.color);return true;
   }
+  if(m.pull)def.x+=(att.x+dir*(m.pullDist||50)-def.x)*.55;
   const d=scl(att,def,m.dmg*Math.max(.5,1-.1*def.combo));
   def.hp=Math.max(0,def.hp-d);if(!(def.armorT>0))def.combo++;
   att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
@@ -1225,9 +1241,22 @@ const G={
   // ULT drain: beam beruntun ke musuh yang terkunci
   for(const f of all)if(f.drain){
    const d=f.drain;d.t++;
+   if(d.pull&&d.att){const tx=d.att.x+d.dir*44;f.x+=(tx-f.x)*.24}
    if(d.aura&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*26,y:f.y+10+Math.random()*30,vy:1.5,t:0,max:20,r0:6,r1:18,c:Math.random()<.5?'#ffd54a':'#ff9a1a'});
-   if(d.t%d.every===0){f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);SND.play('hit');this.shake=Math.max(this.shake,6)}
-   if(d.left<=0||f.hp<=0){if(d.aura)this.auraHit(f,true);f.drain=null;f.knockdown(d.dir,5);if(!d.aura)this.flash=10;this.shake=16;this.stop=d.aura?2:10;SND.play('heavy')}
+   if(d.sarung&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*20,y:f.y+20+Math.random()*40,vy:1,t:0,max:16,r0:4,r1:14,c:'#d32f2f'});
+   if(d.t%d.every===0){
+    f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;
+    this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);
+    if(d.sarung){SND.play('swing');SND.play('hit')}else SND.play('hit');
+    this.shake=Math.max(this.shake,6);
+   }
+   if(d.left<=0||f.hp<=0){
+    if(d.aura)this.auraHit(f,true);
+    f.drain=null;f.knockdown(d.dir,d.sarung?6:5);
+    if(!d.aura)this.flash=10;this.shake=16;this.stop=d.aura?2:10;
+    SND.play('heavy');
+    if(d.sarung)for(let i=0;i<8;i++)this.spark(f.x+(Math.random()-.5)*40,f.y+25+Math.random()*50,i%2?'#d32f2f':'#ffd54a');
+   }
   }
   this.updateSummons();
   // proyektil
@@ -1427,10 +1456,20 @@ const G={
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
    const m=f.mdef,x0=f.face>0?f.x+10:f.x-m.reach,hh=m.ry[1],pl=.18+.14*Math.sin(this.pt*.5);
    ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
+   if(m.sarung){
+    ctx.save();ctx.strokeStyle='#d32f2f';ctx.lineWidth=4;ctx.beginPath();
+    ctx.moveTo(f.x+f.face*10,GROUND-48);ctx.lineTo(f.face>0?f.x+m.reach:f.x-m.reach,GROUND-48);ctx.stroke();ctx.restore();
+   }
    if(f.side!==1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
   }
   this.drawSummons(ctx);
   for(const f of[this.p1,...this.allies,...this.enemies])f.draw(ctx);
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.drain&&f.drain.sarung&&f.drain.att){
+   const a=f.drain.att,hx=a.x+a.face*22,hy=GROUND-a.y-48,tx=f.x,ty=GROUND-f.y-50;
+   ctx.save();ctx.lineWidth=4;ctx.strokeStyle='#d32f2f';ctx.beginPath();ctx.moveTo(hx,hy);
+   ctx.quadraticCurveTo((hx+tx)/2,Math.min(hy,ty)-16*Math.sin(f.drain.t*.3),tx,ty);ctx.stroke();
+   ctx.lineWidth=5;ctx.strokeStyle='#b71c1c';ctx.strokeRect(tx-14,ty-22,28,44);ctx.restore();
+  }
   for(const p of this.projs){
    const A=p.owner.A,ia=G.interp?G.alpha:1,py=Math.round(GROUND-(p.oy+(p.y-p.oy)*ia)),pxx=Math.round((p.ox+(p.x-p.ox)*ia)*S)/S;
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];

@@ -18,5 +18,10 @@
   "id": "hashim",
   "name": "HASHIM MA'JUJ",
   "atlas": "characters/hashim/atlas.json"
+ },
+ {
+  "id": "madura",
+  "name": "RAJA MADURA",
+  "atlas": "characters/madura/atlas.json"
  }
 ]
