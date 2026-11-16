@@ -313,7 +313,7 @@ function tickBuf(){for(const a of ATK)if(buf[a]>0)buf[a]--}
 class Bot{
  constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,autoFace:true,consume(){}};this.timer=0}
  get(me,foe,G){
-  const I=this.I,L=this.lv;I.attack=null;I.dash=0;
+  const I=this.I,L=this.lv;I.attack=null;I.dash=0;if(this.cCd>0)this.cCd--;
   if(me.state==='hit'&&me.def.dash&&!me.drain){I.left=I.right=I.up=I.down=0;if(Math.random()<.12)I.dash=1;return I}
   const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed&&!foe.fired&&!!foe.mdef.hit;
   if(!fu)this.dodgeRoll=null;
@@ -354,6 +354,15 @@ class Bot{
   const rnd=Math.random,dx=foe.x-me.x,d=Math.abs(dx),toward=dx>0?'right':'left',away=dx>0?'left':'right';
   const next=L.react[0]+rnd()*(L.react[1]-L.react[0]),has=m=>!!me.def.moves[m];
   const pr=G.projs.find(p=>p.owner===foe&&Math.abs(p.x-me.x)<120&&((p.vx>0)===(me.x>p.x)));
+  { // Hashim bot: kadang nangkis serangan/proyektil kecil lawan dengan serudukan badak (counter, 20 energi, cooldown ±3 detik)
+   const hb=me.def.moves.heavy&&me.def.moves.heavy.summon==='badak';
+   const trig=hb&&me.en>=20&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')&&(dx>0)===(me.face>0)&&((foe.state==='attack'&&foe.move!=='ult'&&d<150)||(pr&&!pr.pd.big&&d<220));
+   if(!trig||this.cCd>0)this.cRoll=null;
+   else{
+    if(this.cRoll==null)this.cRoll=rnd()<L.dodge*.5;
+    if(this.cRoll){I.attack='heavy';this.timer=34;this.cCd=180;this.cRoll=null;return I}
+   }
+  }
   if(pr&&rnd()<L.block){if(rnd()<.7){I.down=1;this.timer=22}else{I.up=1;I[toward]=1;this.timer=16}return I}
   if(foe.state==='attack'&&d<95&&rnd()<L.block){I.down=1;this.timer=18+rnd()*8;return I}
   if(has('ult')&&me.en>=ULTC&&d<230&&rnd()<.6){I.attack='ult';this.timer=50;return I}
@@ -1220,6 +1229,14 @@ const G={
     if(!p.pd.big){p.life=0;this.treeHitFx(s,p.x,p.y,false);this.shatter(p,null);break}
     p.treeHit=p.treeHit||new Set();
     if(!p.treeHit.has(s)){p.treeHit.add(s);this.treeHitFx(s,p.x,p.y,true)}
+   }
+  }
+  // badak vs proyektil kecil lawan: badak menabrak dan memecahkannya (ULT sawit raksasa tidak)
+  for(const p of this.projs){
+   if(p.life<=0||p.pd.big)continue;
+   for(const s of this.summons){
+    if(s.k!=='rhino'||s.t<0||s.dead||(s.state!=='run'&&s.state!=='carry')||s.owner===p.owner||!this.opps(p.owner).includes(s.owner))continue;
+    if(Math.abs(p.x-s.x)<40&&p.y<130){p.life=0;this.shatter(p,null);break}
    }
   }
   const rh=pr=>pr.pd.big?45:(pr.pd.size?pr.pd.size*.3:11),cp=[];
