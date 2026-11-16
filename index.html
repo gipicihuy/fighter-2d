@@ -117,7 +117,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:14,hit:[3,5],rx:[10,66],dmg:8,stun:18,kb:2.2,stop:4,end:6},
    heavy:{anim:'punch_heavy',fps:14,hit:[3,5],rx:[10,86],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[2,5,1.4]},
    // skill: lempar sawit kecil
-   skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:46,ph:50,sfx:'sawitfire'}},
+   skill:{anim:'skill_shot',fps:12,fire:3,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:4.4,vfx:'sawit_small',size:38,ph:50,lanes:[80,50,20],laneDmg:.75,sfx:'sawitfire'}},
    // ULT: lempar SAWIT RAKSASA (proyektil cepat & rendah -> bisa dihindari dengan lompat atau diblok)
    ult  :{anim:A_(['r5_02','r5_03','r5_04','r5_05','r5_06','r5_07','r5_01'],10),fire:5,cost:ULTC,armor:true,end:12,
           proj:{vfx:'sawit_big',size:120,ph:42,vx:7,dmg:8,drain:{n:6,every:5,dmg:10},homing:true,spread:true,pierce:true,chip:10,kd:true,kb:5,big:true,boom:true,sfx:'sawitthrow',hitSfx:'sawitboom'}}
@@ -539,6 +539,13 @@ const G={
  },
  fireProj(o,m){
   const pd=m.proj;
+  if(pd.lanes){
+   pd.lanes.forEach((h,i)=>{
+    const q=Object.assign({},pd,{ph:h,dmg:Math.max(1,Math.round(pd.dmg*(pd.laneDmg||1)))});
+    this.spawnProj(o,q,i>0);
+   });
+   return;
+  }
   if(!pd.spread){this.spawnProj(o,pd);return}
   this.castAura(o);
   const all=this.opps(o),live=all.filter(e=>e.hp>0),ts=live.length?live:all.slice(0,1),n=ts.length;
@@ -691,13 +698,18 @@ const G={
    }
    if(p.x<-40||p.x>WW+40)p.life=0;
   }
+  const rh=pr=>pr.pd.big?45:(pr.pd.size?pr.pd.size*.3:11),cp=[];
   for(let i=0;i<this.projs.length;i++)for(let j=i+1;j<this.projs.length;j++){
-   const q=this.projs[i],r=this.projs[j];
-   if(q.life>0&&r.life>0&&(q.owner===a)!==(r.owner===a)&&Math.abs(q.x-r.x)<14&&Math.abs(q.y-r.y)<((q.pd.big||r.pd.big)?60:30)){
-    if(q.pd.big&&!r.pd.big){r.life=0;this.shatter(r,q)}
-    else if(r.pd.big&&!q.pd.big){q.life=0;this.shatter(q,r)}
-    else{q.life=r.life=0;this.shatter(q,r);this.shatter(r,q)}
-   }
+   const q=this.projs[i],r=this.projs[j],dy=Math.abs(q.y-r.y);
+   if(q.life>0&&r.life>0&&(q.owner===a)!==(r.owner===a)&&Math.abs(q.x-r.x)<14&&dy<rh(q)+rh(r))cp.push({q,r,dy});
+  }
+  cp.sort((u,v)=>u.dy-v.dy);
+  for(const c of cp){
+   const q=c.q,r=c.r;
+   if(q.life<=0||r.life<=0)continue;
+   if(q.pd.big&&!r.pd.big){r.life=0;this.shatter(r,q)}
+   else if(r.pd.big&&!q.pd.big){q.life=0;this.shatter(q,r)}
+   else{q.life=r.life=0;this.shatter(q,r);this.shatter(r,q)}
   }
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
