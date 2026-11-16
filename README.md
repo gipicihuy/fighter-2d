@@ -40,3 +40,7 @@ Kombo makin lemah, dan hit ke-4 selalu knockdown.
 ## Nambah karakter
 Tambah folder `characters/<id>/` (atlas.json + png) dan satu baris di `characters.json`.
 Karakter baru otomatis dapat punch/kick dasar; untuk heavy/skill/ult tambahkan entri di `CHARDEF` (di `index.html`).
+
+## Efek K.O. (cinematic)
+Saat salah satu karakter benar-benar kalah (HP habis; bukan time-up): flash putih, screen shake, slow-mo singkat, gelombang kejut + percikan + garis kecepatan, bar sinematik, teks **K.O.** menghantam layar dengan kilau, lalu fade ke ronde berikutnya.
+Suara memakai `ko.wav` (dimainkan tepat saat K.O. mulai). Durasi animasi mengikuti durasi asli audio (±5,7 detik) dan ronde berikutnya baru mulai setelah audio selesai, jadi audio tidak terpotong.
