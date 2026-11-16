@@ -65,3 +65,6 @@ Muncul hanya saat ada karakter yang benar-benar kalah (HP habis; bukan time-up).
 ### Font K.O.
 Font: **`road-rage.otf`** (taruh di root repo, sejajar `index.html`). `@font-face` memakai file lokal dulu, CDN `https://cdn.zass.in/X6Kjo95583.otf` hanya cadangan. Game menunggu font siap (maks 3 detik) sebelum Canvas menggambar K.O.; kalau tidak ada sama sekali, otomatis fallback ke Impact/Arial Black. Cek console: `[K.O.] font RoadRage dimuat`.
 Unduh: `curl -L -o road-rage.otf https://cdn.zass.in/X6Kjo95583.otf`
+
+
+HASHIM MA'JUJ rival sepadan CEO SAWIT: stat disamakan (damage keluar x1.35, masuk x0.72, speed +30%). Punya **Kulit Badak**: saat kena ULT CEO SAWIT ada peluang 50% selamat (damage cuma 30%, tidak terkunci beam, tidak knockdown, armor sebentar, muncul teks KULIT BADAK!). Cooldown ±5 detik, jadi tidak kebal, tetap bisa mati kalau sial atau ULT dispam.

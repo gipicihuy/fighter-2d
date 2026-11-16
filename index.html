@@ -150,7 +150,7 @@ const CHARDEF={
  // HASHIM MA'JUJ: sepadan CEO SAWIT. Skill (U) = ATM Sawit / Sawit Eruption, Berat (L) = Badak Jawa Rampage (corner carry + wall bounce),
  // ULT (I) = JAWA BEAST RAMPAGE COMBO (sawit melontarkan musuh, badak menghantam saat masih melayang). Efek summon: G.castSummon / treeTick / rhinoTick.
  hashim:{
-  color:'#3fae49',djump:1,floatUlt:true,atk:1.3,def:.75,vs:{patrick:.14,default:.1},spd:1.2,dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
+  color:'#3fae49',djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08},spd:1.3,ultGuard:{chance:.5,cd:300,dmgMul:.3,armor:50},dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r3_01'],1,true),jump:A_(['r2_09'],1,true),dash:A_(['r2_09','r2_10','r2_11'],12,true)},
   moves:{
@@ -367,7 +367,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null});
+  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -440,6 +440,20 @@ class Fighter{
   G.hakiFx(this,true);SND.play('haki');
   return true;
  }
+ tryUltGuard(att,m,dir){ // KULIT BADAK: peluang selamat dari ULT (50%, cooldown panjang, tetap kena damage kecil)
+  const g=this.def.ultGuard,st=this.state;
+  if(!g||this.guardCd>0||this.drain||this.hp<=0)return false;
+  if(st!=='idle'&&st!=='walk'&&st!=='jump'&&st!=='hit'&&st!=='block'&&st!=='dash'&&st!=='dodge')return false;
+  if(Math.random()>=g.chance)return false;
+  this.guardCd=g.cd;this.armorT=g.armor;this.hp=Math.max(1,this.hp-scl(att,this,Math.max(1,Math.round(m.dmg*g.dmgMul))));
+  this.setState('hit','hit');this.vx=dir*3;this.stun=8;this.move=null;this.combo=0;
+  const y=this.y+60;
+  G.fx.push({k:'ring',x:this.x,y,t:0,max:24,r0:8,r1:90,c:'#d6ff6a',c2:'#ffd54a'});
+  G.fx.push({k:'glow',x:this.x,y,t:0,max:20,r0:12,r1:70,c:'#9cff3a'});
+  G.fx.push({k:'txt',x:this.x,y:this.y+110,t:0,max:50,s:'KULIT BADAK!'});
+  G.shake=Math.max(G.shake,14);G.stop=Math.max(G.stop,6);SND.play('block');
+  return true;
+ }
  knockdown(dir,kb){
   this.setState('down','knock');this.vx=dir*kb;this.vy=Math.max(this.vy,2.2+(kb>4?1.5:0));
   this.downT=Math.round(Math.max(animTicks(this.an)+30,60)*(this.def.downMul||1));this.dead=this.hp<=0;if(this.dead)G.lastKO=this;this.combo=0;this.move=null;SND.play('down');
@@ -451,6 +465,7 @@ class Fighter{
   this.ox=this.x;this.oy=this.y;this.age++;if(this.armorT>0)this.armorT--;
   const spd=this.def.spd||1,jx=JUMPX*(1+(spd-1)*.6);
   if(this.ghosts.length){for(const g of this.ghosts)g.t++;this.ghosts=this.ghosts.filter(g=>g.t<16)}
+  if(this.guardCd>0)this.guardCd--;
   if(this.def.haki){
    if(this.hakiCd>0)this.hakiCd--;
    if(this.hakiT>0)this.hakiT--;
@@ -1077,6 +1092,7 @@ const G={
    def.en=Math.min(MAXEN,def.en+3);att.en=Math.min(MAXEN,att.en+4);
    this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);return true;
   }
+  if(m.drain&&def.tryUltGuard(att,m,dir))return true;
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
    def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
