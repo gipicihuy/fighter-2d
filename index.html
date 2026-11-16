@@ -173,13 +173,13 @@ const CHARDEF={
                 rhino:{delay:54,speed:12,maxRun:900,dmg:14,carryDmg:1.5,every:8,wallDmg:16,maxCarry:120,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }},
  madura:{
-  color:'#d32f2f',djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:0.95,
+  color:'#d32f2f',djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
-         block:A_(['r6_08'],1,true),jump:A_(['r1_06'],1,true),dash:A_(['r1_04','r1_05'],12,true)},
+         block:A_(['blk'],1,true),jump:A_(['jump'],1,true),dash:A_(['u00','u01','u02','u03','u04','u05'],14,true)},
   moves:{
-   punch:{anim:'punch',fps:16,hit:[1,2],rx:[10,70],dmg:7,stun:16,kb:1.2,stop:3,end:3},
-   kick :{anim:'kick',fps:15,hit:[1,3],rx:[10,80],dmg:10,stun:18,kb:2.2,stop:4,end:5},
-   heavy:{anim:'punch_heavy',fps:13,hit:[1,3],rx:[10,95],dmg:14,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
+   punch:{anim:'punch',fps:16,hit:[1,1],rx:[10,70],dmg:7,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:15,hit:[1,2],rx:[10,80],dmg:10,stun:18,kb:2.2,stop:4,end:5},
+   heavy:{anim:'punch_heavy',fps:13,hit:[2,3],rx:[10,95],dmg:14,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
    // Special: Cambuk Sarung Sakti - menjerat dan menyentak musuh dari jarak jauh
    skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
