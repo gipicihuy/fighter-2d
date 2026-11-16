@@ -66,7 +66,10 @@ canvas{image-rendering:pixelated;display:block;background:#000}
     <select id="selL"><option value="easy">Mudah</option><option value="normal" selected>Normal</option><option value="hard">Susah</option></select>
   </label>
   <label>Jumlah musuh
-    <select id="selN"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+    <select id="selN"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+  </label>
+  <label>Jumlah tim (termasuk kamu)
+    <select id="selT"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
   </label>
   <button class="btn" id="go">MULAI</button>
   <small>Keyboard: A/D jalan (HP: stick analog kiri, tombol ikon di kanan) · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
@@ -779,20 +782,24 @@ function koSpawns(k,u,dt,env,C,tx,ty){
 
 const G={
  phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
- chars:{},fx:[],interp:false,alpha:1,enemies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
- begin(p1id,bid,level,n){
+ chars:{},fx:[],interp:false,alpha:1,enemies:[],allies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
+ begin(p1id,bid,level,n,t){
   SND.stopKO();this.koFx=null;
   const mk=(id,ctrl,label)=>{const c=this.chars[id];return new Fighter(id,c.def,c.atlas,c.img,label,ctrl)};
   this.p1=mk(p1id,PlayerInput,SHORT[p1id]||p1id.toUpperCase());
-  const nn=Math.max(1,Math.min(4,n||1));
+  const nn=Math.max(1,Math.min(10,n||1)),tt=Math.max(1,Math.min(10,t||1));
+  this.p1.side=1;
+  this.allies=[];
+  for(let i=0;i<tt-1;i++){const a=mk(p1id,new Bot(level),(SHORT[p1id]||p1id.toUpperCase())+' T'+(i+1));a.side=1;this.allies.push(a)}
   this.enemies=[];
-  for(let i=0;i<nn;i++)this.enemies.push(mk(bid,new Bot(level),(SHORT[bid]||bid.toUpperCase())+(nn>1?' '+(i+1):'')));
+  for(let i=0;i<nn;i++){const e=mk(bid,new Bot(level),(SHORT[bid]||bid.toUpperCase())+(nn>1?' '+(i+1):''));e.side=-1;this.enemies.push(e)}
   this.p2=this.enemies[0];
   if(p1id===bid){this.p1.label+=' (1P)';for(const e of this.enemies)e.label+=' (CPU)'}
   this.round=1;this.newRound();
  },
  newRound(){
   this.p1.reset(WW/2-90,1);this.p1.ctrl.timer=0;
+  this.allies.forEach((a,i)=>{a.reset(WW/2-90-(i+1)*46,1);a.ctrl.timer=0});
   this.enemies.forEach((e,i)=>{e.reset(WW/2+90+i*46,-1);e.ctrl.timer=0});
   this.camZ=this.camOZ=this.zoomTarget();this.camX=this.camOX=this.camTarget();
   this.fadeIn=this.koFx?30:0;this.koFx=null;this.lastKO=null;
@@ -1085,36 +1092,48 @@ const G={
   this.fx.push({k:'ring',x:f.x,y:6,t:-3,max:30,r0:10,r1:170*m,c:'#ffb300',c2:'#ff7a1a',fl:.14,lw:3,lw2:6});
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:end?46:40,h:150*m,w:46*m,c:'#ffb300'});
  },
- opps(f){return f===this.p1?this.enemies:[this.p1]},
+ team(){return[this.p1,...this.allies]},
+ opps(f){return f.side===1?this.enemies:this.team()},
+ camF(){return this.p1.hp>0?this.p1:(this.allies.find(a=>a.hp>0)||this.p1)},
  nearest(f){
   let b=null,bd=1e9;
   for(const o of this.opps(f)){const d=Math.abs(o.x-f.x)+(o.hp<=0?1000:0);if(d<bd){bd=d;b=o}}
   return b;
  },
  camTarget(){
-  const p=this.p1,n=this.nearest(p),vw=W/this.camZ,lk=vw*.12,look=n?Math.max(-lk,Math.min(lk,(n.x-p.x)*.3)):0;
+  const p=this.camF(),n=this.nearest(p),vw=W/this.camZ,lk=vw*.12,look=n?Math.max(-lk,Math.min(lk,(n.x-p.x)*.3)):0;
   if(this.focus)return Math.max(0,Math.min(WW-vw,this.focus.x-vw/2)); // kamera ikut badak
   return Math.max(0,Math.min(WW-vw,p.x-vw/2+look));
  },
  zoomTarget(){
   if(this.focus)return .72;
-  const p=this.p1,n=this.nearest(p),dist=n?Math.abs(n.x-p.x):160;
+  const p=this.camF(),n=this.nearest(p),dist=n?Math.abs(n.x-p.x):160;
   return Math.max(.6,Math.min(ZMAX,400/(dist+260)));
  },
  dashFx(f){
   this.fx.push({k:'ring',x:f.x,y:f.y+6,t:0,max:14,r0:4,r1:26});
   this.spark(f.x-f.face*10,f.y+10,'#cfe8ff');
  },
- enemyBars(){
-  const n=this.enemies.length,w=110,x=W-12-w;
+ allyBars(){
+  const n=this.allies.length,cp=n>3,w=cp?56:110,h=cp?3:7,st=cp?5:11,x=12;
   for(let i=0;i<n;i++){
-   const e=this.enemies[i],y=11+i*11,pct=Math.max(0,e.hp/MAXHP),pd=Math.max(0,e.hpShow/MAXHP);
-   ctx.fillStyle='#000a';ctx.fillRect(x-1,y-1,w+2,9);
-   ctx.fillStyle='#e8e8e8';ctx.fillRect(x+w-w*pd,y,w*pd,7);
-   ctx.fillStyle=pct>.5?'#5ee06a':pct>.25?'#f1c232':'#e8453c';ctx.fillRect(x+w-w*pct,y,w*pct,7);
-   ctx.font='bold 6px monospace';ctx.textAlign='right';ctx.fillStyle='#fff';ctx.fillText(e.label,x-3,y+6);
+   const e=this.allies[i],y=46+i*st,pct=Math.max(0,e.hp/MAXHP),pd=Math.max(0,e.hpShow/MAXHP);
+   ctx.fillStyle='#000a';ctx.fillRect(x-1,y-1,w+2,h+2);
+   ctx.fillStyle='#e8e8e8';ctx.fillRect(x,y,w*pd,h);
+   ctx.fillStyle=pct>.5?'#5ee06a':pct>.25?'#f1c232':'#e8453c';ctx.fillRect(x,y,w*pct,h);
+   if(!cp){ctx.font='bold 6px monospace';ctx.textAlign='left';ctx.fillStyle='#fff';ctx.fillText(e.label,x+w+3,y+6)}
   }
-  for(let i=0;i<WIN_ROUNDS;i++){ctx.fillStyle=i<this.p2.wins?'#ffd54a':'#fff3';ctx.beginPath();ctx.arc(W-12-4-i*9,11+n*11+4,3,0,7);ctx.fill()}
+ },
+ enemyBars(){
+  const n=this.enemies.length,cp=n>3,w=cp?56:110,h=cp?3:7,st=cp?5:11,x=W-12-w;
+  for(let i=0;i<n;i++){
+   const e=this.enemies[i],y=11+i*st,pct=Math.max(0,e.hp/MAXHP),pd=Math.max(0,e.hpShow/MAXHP);
+   ctx.fillStyle='#000a';ctx.fillRect(x-1,y-1,w+2,h+2);
+   ctx.fillStyle='#e8e8e8';ctx.fillRect(x+w-w*pd,y,w*pd,h);
+   ctx.fillStyle=pct>.5?'#5ee06a':pct>.25?'#f1c232':'#e8453c';ctx.fillRect(x+w-w*pct,y,w*pct,h);
+   if(!cp){ctx.font='bold 6px monospace';ctx.textAlign='right';ctx.fillStyle='#fff';ctx.fillText(e.label,x-3,y+6)}
+  }
+  for(let i=0;i<WIN_ROUNDS;i++){ctx.fillStyle=i<this.p2.wins?'#ffd54a':'#fff3';ctx.beginPath();ctx.arc(W-12-4-i*9,11+n*st+4,3,0,7);ctx.fill()}
  },
  hakiFx(f,big){
   const y=f.y+(big?60:84);
@@ -1155,16 +1174,16 @@ const G={
   return true;
  },
  endRound(w){
-  this.phase='ko';this.koT=0;this.winner=w;if(w)(w===this.p1?this.p1:this.p2).wins++;
-  const isKO=this.p1.hp<=0||!this.enemies.some(e=>e.hp>0); // K.O. cinematic hanya kalau ada yang benar-benar kalah
+  this.phase='ko';this.koT=0;this.winner=w;if(w)(w.side===1?this.p1:this.p2).wins++;
+  const isKO=!this.team().some(f=>f.hp>0)||!this.enemies.some(e=>e.hp>0); // K.O. cinematic hanya kalau ada yang benar-benar kalah
   this.msg=isKO?'K.O.':(w?'WAKTU HABIS':'SERI');
   if(isKO)this.startKO();else SND.play('ko');
  },
  startKO(){
-  const p1=this.p1,v=p1.hp<=0?p1:(this.lastKO&&this.lastKO.hp<=0&&this.lastKO!==p1?this.lastKO:(this.enemies.find(e=>e.hp<=0)||this.p2));
+  const p1=this.p1,v=this.lastKO&&this.lastKO.hp<=0?this.lastKO:(p1.hp<=0?p1:(this.enemies.find(e=>e.hp<=0)||this.p2));
   const dur=SND.playKO(); // (audio: tidak diubah)
   KP.on.fill(0);koBuild();
-  this.koFx={t0:performance.now(),dur,victim:v,victimIsP1:v===p1,wx:v.x,wy:v.y+50,s0:0,s1:0,s2:0,s3:0,a1:0,a2:0,last:0};
+  this.koFx={t0:performance.now(),dur,victim:v,victimIsP1:v.side===1,wx:v.x,wy:v.y+50,s0:0,s1:0,s2:0,s3:0,a1:0,a2:0,last:0};
  },
  koTimeScale(){ // slow-mo singkat di momen impact (waktu nyata, tidak mempengaruhi sinkron audio)
   const k=this.koFx;if(!k)return 1;
@@ -1175,7 +1194,7 @@ const G={
   tickBuf();
   this.interp=false;
   if(this.phase==='menu'||!this.p1)return;
-  const a=this.p1,b=this.p2,all=[a,...this.enemies];
+  const a=this.p1,b=this.p2,all=[a,...this.allies,...this.enemies];
   if(this.freeze>0){this.freeze--;return}
   if(this.stop>0){this.stop--;return}
   this.interp=true;
@@ -1188,8 +1207,9 @@ const G={
   if(this.phase==='intro'){if(this.pt===1)SND.play('round');if(this.pt===56)SND.play('fight')}
   if(this.phase==='intro'&&this.pt>=110){this.phase='fight';this.pt=0}
   const na=this.nearest(a);
-  const inps=all.map(f=>live?f.ctrl.get(f,f===a?na:a,this):NEUTRAL);
-  all.forEach((f,i)=>f.update(inps[i],f===a?na:a,this));
+  const fo=all.map(f=>f===a?na:this.nearest(f));
+  const inps=all.map((f,i)=>live?f.ctrl.get(f,fo[i],this):NEUTRAL);
+  all.forEach((f,i)=>f.update(inps[i],fo[i],this));
   this.camOZ=this.camZ;this.camZ+=(this.zoomTarget()-this.camZ)*.05;this.camOX=this.camX;this.camX+=(this.camTarget()-this.camX)*.12;
   // dorong agar tidak tumpang tindih
   for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){
@@ -1259,9 +1279,9 @@ const G={
   this.fx=this.fx.filter(e=>e.t<e.max);
   for(const f of all){f.hpShow+=(f.hp-f.hpShow)*.08;if(live&&f.hp>0)f.en=Math.min(MAXEN,f.en+.07)}
   if(this.phase==='fight'){
-   const alive=this.enemies.find(e=>e.hp>0),ehp=this.enemies.reduce((t,e)=>t+Math.max(0,e.hp),0)/this.enemies.length;
-   if(--this.timer<=0){this.timer=0;this.endRound(a.hp===ehp?null:(a.hp>ehp?a:(alive||b)))}
-   else if(a.hp<=0||!alive)this.endRound(a.hp>0?a:(alive||null));
+   const tm=this.team(),alive=this.enemies.find(e=>e.hp>0),tAlive=tm.find(f=>f.hp>0),sum=l=>l.reduce((t,e)=>t+Math.max(0,e.hp),0)/l.length,ehp=sum(this.enemies),thp=sum(tm);
+   if(--this.timer<=0){this.timer=0;this.endRound(thp===ehp?null:(thp>ehp?(tAlive||a):(alive||b)))}
+   else if(!tAlive||!alive)this.endRound(tAlive||alive||null);
   }else if(this.phase==='ko'){
    this.koT++;
    if(this.koT===70&&this.winner&&this.winner.hp>0&&this.winner.y===0&&this.winner.state!=='attack'){this.winner.setState('win','win');SND.play('win')}
@@ -1290,7 +1310,7 @@ const G={
    if(f.en>=ULTC&&((this.pt>>3)&1)){ctx.fillStyle='#ffd54a';ctx.fillText('ULT READY!',right?x+w:x,43)}
    for(let i=0;i<WIN_ROUNDS;i++){ctx.fillStyle=i<f.wins?'#ffd54a':'#fff3';ctx.beginPath();ctx.arc((right?x+w-4-i*9:x+4+i*9),36,3,0,7);ctx.fill()}
   };
-  bar(this.p1,12,false);
+  bar(this.p1,12,false);if(this.allies.length)this.allyBars();
   if(this.enemies.length===1)bar(this.p2,W-12-150,true);else this.enemyBars();
   ctx.textAlign='center';ctx.font='bold 16px monospace';ctx.fillStyle='#fff';ctx.strokeStyle='#000';ctx.lineWidth=3;
   const t=String(Math.ceil(this.timer/60));ctx.strokeText(t,W/2,24);ctx.fillText(t,W/2,24);
@@ -1298,6 +1318,7 @@ const G={
   ctx.fillStyle='#000a';ctx.fillRect(mx-1,my-1,mw+2,7);
   ctx.strokeStyle='#fff8';ctx.lineWidth=1;ctx.strokeRect(mx+this.camView.x*mk,my,this.camView.w*mk,5);
   for(const e of this.enemies)if(e.hp>0){ctx.fillStyle='#ff5c5c';ctx.fillRect(mx+e.x*mk-1,my,2,5)}
+  for(const a of this.allies)if(a.hp>0){ctx.fillStyle='#4f8cff';ctx.fillRect(mx+a.x*mk-1,my,2,5)}
   ctx.fillStyle='#7fe3ff';ctx.fillRect(mx+this.p1.x*mk-1,my,2,5);
  },
 
@@ -1400,13 +1421,13 @@ const G={
    if(sh>0)ctx.translate(Math.round((Math.random()-.5)*2*sh),Math.round((Math.random()-.5)*2*sh));}
   drawBG(camR,Zr);
   ctx.save();ctx.translate(0,GROUND*(1-Zr));ctx.scale(Zr,Zr);ctx.translate(-camR,0);
-  for(const f of[this.p1,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
    const m=f.mdef,x0=f.face>0?f.x+10:f.x-m.reach,hh=m.ry[1],pl=.18+.14*Math.sin(this.pt*.5);
    ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
-   if(f!==this.p1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
+   if(f.side!==1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
   }
   this.drawSummons(ctx);
-  for(const f of[this.p1,...this.enemies])f.draw(ctx);
+  for(const f of[this.p1,...this.allies,...this.enemies])f.draw(ctx);
   for(const p of this.projs){
    const A=p.owner.A,ia=G.interp?G.alpha:1,py=Math.round(GROUND-(p.oy+(p.y-p.oy)*ia)),pxx=Math.round((p.ox+(p.x-p.ox)*ia)*S)/S;
    const vf=p.pd.vfx&&A.vfx&&A.vfx[p.pd.vfx]&&A.frames[A.vfx[p.pd.vfx][0]];
@@ -1507,7 +1528,7 @@ const G={
   ctx.restore();ctx.restore();
   this.enemies.forEach((e,i)=>{
    if(e.hp<=0)return;
-   const ly=GROUND-48-i*14;
+   const ly=GROUND-48-i*Math.min(14,90/this.enemies.length);
    if(e.x<camR-6){ctx.fillStyle='#ff5c5c';ctx.globalAlpha=.85;ctx.beginPath();ctx.moveTo(3,ly);ctx.lineTo(11,ly-6);ctx.lineTo(11,ly+6);ctx.fill();ctx.globalAlpha=1}
    else if(e.x>camR+VWr+6){ctx.fillStyle='#ff5c5c';ctx.globalAlpha=.85;ctx.beginPath();ctx.moveTo(W-3,ly);ctx.lineTo(W-11,ly-6);ctx.lineTo(W-11,ly+6);ctx.fill();ctx.globalAlpha=1}
   });
@@ -1536,15 +1557,15 @@ const G={
 /* ================= loader & UI ================= */
 const loadJSON=async u=>{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(u+' '+r.status);return r.json()};
 const loadImg=u=>new Promise((ok,bad)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>bad(new Error('gambar gagal: '+u));i.src=u});
-let list=[],last={p:'default',b:'patrick',l:'normal',n:1};
+let list=[],last={p:'default',b:'patrick',l:'normal',n:1,t:1};
 
 function showMenu(){
  SND.stopKO();G.koFx=null;G.phase='menu';G.p1=null;G.projs=[];$('end').classList.add('hide');$('menu').classList.remove('hide');$('menuBtn').style.display='none';
 }
 function startMatch(){
- last={p:$('selP').value,b:$('selB').value,l:$('selL').value,n:+$('selN').value||1};
+ last={p:$('selP').value,b:$('selB').value,l:$('selL').value,n:+$('selN').value||1,t:+$('selT').value||1};
  $('menu').classList.add('hide');$('end').classList.add('hide');$('menuBtn').style.display='block';
- G.begin(last.p,last.b,last.l,last.n);
+ G.begin(last.p,last.b,last.l,last.n,last.t);
 }
 async function boot(){
  const fontP=loadKOFont();
@@ -1565,7 +1586,8 @@ async function boot(){
  if(q.get('p')&&G.chars[q.get('p')])$('selP').value=q.get('p');
  if(q.get('b')&&G.chars[q.get('b')])$('selB').value=q.get('b');
  if(LEVELS[q.get('l')])$('selL').value=q.get('l');
- const qn=+q.get('n');if(qn>=1&&qn<=4)$('selN').value=String(qn);
+ const qn=+q.get('n');if(qn>=1&&qn<=10)$('selN').value=String(qn);
+ const qt=+q.get('t');if(qt>=1&&qt<=10)$('selT').value=String(qt);
  if(q.get('auto'))startMatch();
 }
 const root=document.documentElement,reqFS=root.requestFullscreen||root.webkitRequestFullscreen,exitFS=document.exitFullscreen||document.webkitExitFullscreen;
@@ -1581,7 +1603,7 @@ addEventListener('keydown',e=>{if(e.repeat)return;if(e.code==='KeyF')toggleFS();
 ['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,()=>SND.init(),{passive:true}));
 addEventListener('fullscreenchange',resize);addEventListener('webkitfullscreenchange',resize);
 $('go').onclick=startMatch;
-$('again').onclick=()=>{$('end').classList.add('hide');G.begin(last.p,last.b,last.l,last.n)};
+$('again').onclick=()=>{$('end').classList.add('hide');G.begin(last.p,last.b,last.l,last.n,last.t)};
 $('toMenu').onclick=showMenu;
 $('menuBtn').onclick=showMenu;
 
