@@ -13,5 +13,10 @@
   "id": "sawit",
   "name": "CEO SAWIT",
   "atlas": "characters/sawit/atlas.json"
+ },
+ {
+  "id": "hashim",
+  "name": "HASHIM MA'JUJ",
+  "atlas": "characters/hashim/atlas.json"
  }
 ]

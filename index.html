@@ -70,6 +70,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
   </label>
   <button class="btn" id="go">MULAI</button>
   <small>Keyboard: A/D jalan (HP: stick analog kiri, tombol ikon di kanan) · W lompat · S blok · J pukul · K tendang · L pukulan berat · U skill (20 energi) · I ULT (50 energi; musuh bisa menghindar dengan lompat/blok) · F fullscreen · M suara<br>
+  HASHIM MA'JUJ: U = ATM Sawit, L = Badak Jawa Rampage (U lalu L = combo), I = Jawa Beast Rampage Combo.<br>
   HP: best of 3 ronde. Energi naik tiap kena/kasih pukulan.</small>
 </div>
 
@@ -88,7 +89,7 @@ const $=id=>document.getElementById(id);
 const W=400,WW=2400,ZMAX=.9,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2,ATK_TEMPO=.9;
 const ATK=['ult','skill','heavy','kick','punch'];
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
-const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT'};
+const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ"};
 
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
@@ -145,6 +146,27 @@ const CHARDEF={
    heavy:{anim:'punch_heavy',fps:14,hit:[4,5],rx:[10,84],dmg:12,kd:true,kb:3.2,stop:6,shake:6,end:8,lunge:[3,5,1.4]},
    skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
    ult  :{anim:'skill_ultimate',fps:12,hit:[9,9],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
+  }},
+ // HASHIM MA'JUJ: sepadan CEO SAWIT. Skill (U) = ATM Sawit / Sawit Eruption, Berat (L) = Badak Jawa Rampage (corner carry + wall bounce),
+ // ULT (I) = JAWA BEAST RAMPAGE COMBO (sawit melontarkan musuh, badak menghantam saat masih melayang). Efek summon: G.castSummon / treeTick / rhinoTick.
+ hashim:{
+  color:'#3fae49',djump:1,floatUlt:true,atk:1.3,def:.75,vs:{patrick:.14,default:.1},spd:1.2,dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
+  anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
+         block:A_(['r3_01'],1,true),jump:A_(['r2_09'],1,true),dash:A_(['r2_09','r2_10','r2_11'],12,true)},
+  moves:{
+   punch:{anim:'punch',fps:16,hit:[3,5],rx:[10,64],dmg:6,stun:16,kb:1.2,stop:3,end:3},
+   kick :{anim:'kick',fps:15,hit:[3,5],rx:[10,74],dmg:8,stun:18,kb:2.2,stop:4,end:6},
+   // Special A: ATM SAWIT (Sawit Eruption) - pohon sawit raksasa menyembul dari tanah di bawah musuh, melontarkan ke udara
+   skill:{anim:'skill_sawit',fps:10,fire:2,cost:20,end:10,summon:'sawit',
+          spec:{delay:22,life:84,fdur:4,w:46,dmg:16,chip:5,lift:7.2,float:10,stop:7,shake:16,scale:1.05,text:'SAWIT ERUPTION!'}},
+   // Special B: BADAK JAWA RAMPAGE - badak menyeruduk, menyeret lawan ke ujung arena (Corner Carry), lalu terpental dari dinding (Wall Bounce)
+   // kalau musuh masih melayang karena sawit -> otomatis jadi COMBO (badak anti-udara, damage x1.6)
+   heavy:{anim:'skill_badak',fps:9,fire:2,cost:20,end:12,summon:'badak',
+          spec:{speed:10.5,maxRun:640,dmg:11,chip:4,carryDmg:2,every:9,wallDmg:13,maxCarry:140,stop:6,scale:1.1,text:'BADAK JAWA RAMPAGE!',comboMul:1.6,comboText:'SAWIT + BADAK COMBO!'}},
+   // ULT: JAWA BEAST RAMPAGE COMBO - sawit meletus di bawah musuh (tak bisa dihindari/diblok), badak menghantam saat masih melayang
+   ult  :{anim:'skill_ultimate',fps:8,fire:3,cost:ULTC,armor:true,end:16,summon:'combo',banner:'JAWA BEAST RAMPAGE!',
+          spec:{tree:{delay:10,life:96,fdur:4.5,w:62,dmg:17,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,noKill:true,flash:6,text:'SAWIT ERUPTION!'},
+                rhino:{delay:36,speed:12,maxRun:900,dmg:18,carryDmg:3,every:8,wallDmg:24,maxCarry:150,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,noKill:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -219,6 +241,11 @@ const SND={ctx:null,m:null,muted:false,nb:null,koBuf:null,koSrc:null,
    case'ko':this.tone(420,60,.9,'sawtooth',.3);this.noise(.5,.4,2000,100);break;
    case'round':this.tone(440,440,.12,'square',.2);this.tone(660,660,.2,'square',.2,.14);break;
    case'fight':this.tone(523,523,.1,'square',.22);this.tone(784,784,.35,'square',.22,.1);break;
+   case'treecrack':this.noise(.5,.5,900,60);this.tone(80,40,.4,'sawtooth',.35);break;
+   case'treeboom':this.noise(.7,.95,3000,70);this.tone(110,26,.8,'sawtooth',.65);this.tone(60,24,.9,'sine',.55);this.noise(.3,.4,6500,1500,'highpass',.04);this.tone(520,90,.3,'square',.15,.06);break;
+   case'rhinoroar':this.tone(190,60,.55,'sawtooth',.35);this.tone(270,80,.5,'square',.1,.03);this.noise(.5,.35,1600,180,'bandpass');break;
+   case'stampede':this.noise(.2,.4,600,110);this.tone(58,42,.18,'sine',.55);break;
+   case'wallbounce':this.noise(1,1,2600,45);this.tone(95,20,1,'sawtooth',.7);this.tone(48,28,.9,'sine',.65);this.noise(.3,.6,7000,900,'highpass',.03);break;
    case'win':[523,659,784,1047].forEach((f,i)=>this.tone(f,f,.18,'square',.2,i*.14));break;
   }
  },
@@ -340,7 +367,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false});
+  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -352,6 +379,7 @@ class Fighter{
  frameIdx(){const n=this.an.frames.length,k=Math.floor(this.t*this.an.fps/60);return this.an.loop?k%n:Math.min(k,n-1)}
  frameId(){return this.an.frames[this.frameIdx()]}
  vulnerable(){
+  if(this.carried)return false; // sedang diseret badak
   if(this.drain||(this.state==='attack'&&this.mdef&&this.mdef.armor))return false; // ult: kebal
   if(this.state==='dash'&&this.dT>9)return false;
   return this.state!=='down'&&this.state!=='getup'&&this.state!=='win'&&this.state!=='dodge';
@@ -419,6 +447,7 @@ class Fighter{
  gotHit(dir,kb,stun){this.setState('hit','hit');this.vx=dir*kb;this.stun=stun;this.move=null}
  update(inp,foe,G){
   const S=this.state,air=this.y>0;
+  if(this.juggle&&this.state!=='down')this.juggle=false;
   this.ox=this.x;this.oy=this.y;this.age++;if(this.armorT>0)this.armorT--;
   const spd=this.def.spd||1,jx=JUMPX*(1+(spd-1)*.6);
   if(this.ghosts.length){for(const g of this.ghosts)g.t++;this.ghosts=this.ghosts.filter(g=>g.t<16)}
@@ -487,8 +516,8 @@ class Fighter{
   if(this.y>0||this.vy>0){
    if(this.state==='hit'||this.state==='down')this.slowFall=false;
    const sf=this.slowFall&&this.y>0;
-   this.y+=this.vy;this.vy-=sf?GRAV*.2:GRAV;if(sf&&this.vy<-1.2)this.vy=-1.2;
-   if(this.y<=0){this.y=0;this.vy=0;this.airDashed=false;this.slowFall=false;this.djLeft=this.def.djump||0;this.vx*=.5;if(this.state==='jump')this.setState('idle','idle')}
+   this.y+=this.vy;this.vy-=sf?GRAV*.2:GRAV*(this.floatT>0?(this.floatT--,.3):1);if(sf&&this.vy<-1.2)this.vy=-1.2;
+   if(this.y<=0){this.y=0;this.vy=0;this.juggle=false;this.floatT=0;this.airDashed=false;this.slowFall=false;this.djLeft=this.def.djump||0;this.vx*=.5;if(this.state==='jump')this.setState('idle','idle')}
   }
   this.t++;
  }
@@ -705,7 +734,7 @@ function koSpawns(k,u,dt,env,C,tx,ty){
 }
 
 const G={
- phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,
+ phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
  chars:{},fx:[],interp:false,alpha:1,enemies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
  begin(p1id,bid,level,n){
   SND.stopKO();this.koFx=null;
@@ -723,7 +752,7 @@ const G={
   this.enemies.forEach((e,i)=>{e.reset(WW/2+90+i*46,-1);e.ctrl.timer=0});
   this.camZ=this.camOZ=this.zoomTarget();this.camX=this.camOX=this.camTarget();
   this.fadeIn=this.koFx?30:0;this.koFx=null;this.lastKO=null;
-  this.projs=[];this.sparks=[];this.fx=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.glare=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
+  this.projs=[];this.summons=[];this.focus=null;this.sparks=[];this.fx=[];this.stop=0;this.shake=0;this.freeze=0;this.flash=0;this.glare=0;this.timer=ROUND_TIME*60;this.phase='intro';this.pt=0;this.winner=null;
  },
  sfx(n){SND.play(n)},
  startFreeze(o){this.freeze=this.freezeMax;this.freezeOwner=o;SND.play('charge')},
@@ -740,6 +769,7 @@ const G={
   this.projs.push(p);
  },
  fireProj(o,m){
+  if(m.summon){this.castSummon(o,m);return}
   const pd=m.proj;
   if(pd.lanes){
    pd.lanes.forEach((h,i)=>{
@@ -769,6 +799,188 @@ const G={
   this.fx.push({k:'ring',x:f.x,y:6,t:0,max:34,r0:10,r1:240,c:'#ffb300',c2:'#ff7a1a',fl:.14,lw:3,lw2:6});
   this.fx.push({k:'ring',x:f.x,y:6,t:-6,max:36,r0:10,r1:300,c:'#ffd54a',c2:'#ff9a1a',fl:.14,lw:3,lw2:6});
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:36,h:170,w:60,c:'#ffb300'});
+ },
+/* ---------- HASHIM: summon pohon sawit & badak jawa ---------- */
+ hurt(att,o,v,spec){const d=scl(att,o,v),fl=spec&&spec.noKill?Math.min(o.hp,5):0;o.hp=Math.max(fl,o.hp-d);att.en=Math.min(MAXEN,att.en+d*1.5);o.en=Math.min(MAXEN,o.en+d*1.1);return d},
+ banner2(x,y,s,sz,c){this.fx.push({k:'banner',x,y,t:0,max:56,s,sz:sz||16,c:c||'#ffd54a'})},
+ castSummon(o,m){
+  const sp=m.spec,face=o.face,foes=this.opps(o).filter(e=>e.hp>0),cx=x=>Math.max(40,Math.min(WW-40,x));
+  const near=foes.length?foes.reduce((a,b)=>Math.abs(b.x-o.x)<Math.abs(a.x-o.x)?b:a):null;
+  const tree=(x,s)=>{this.summons.push({k:'tree',owner:o,x:cx(x),dir:face,t:-s.delay,sp:s});SND.play('treecrack')};
+  const rhino=(x,s,delay)=>this.summons.push({k:'rhino',owner:o,x:cx(x),ox:cx(x),dir:face,t:-delay,sp:s,state:'run',spd:3,hit:new Set(),car:null,ct:0,st:0,run:0});
+  if(m.summon==='sawit'){
+   const ahead=near&&(near.x-o.x)*face>-30&&Math.abs(near.x-o.x)<320;
+   tree(ahead?near.x:o.x+face*110,sp);SND.say('ATM Sawit!');
+  }else if(m.summon==='badak'){
+   const air=foes.find(e=>e.juggle&&Math.abs(e.x-o.x)<700);
+   if(air){ // SAWIT + BADAK COMBO: badak anti-udara, datang dari belakang titik lawan melayang
+    rhino(air.x-face*170,Object.assign({},sp,{antiAir:true,combo:true,dmg:sp.dmg*sp.comboMul,carryDmg:sp.carryDmg*1.4,wallDmg:sp.wallDmg*1.4,text:sp.comboText}),0);
+   }else rhino(o.x+face*24,sp,0);
+   SND.say('Badak Jawa!');
+  }else if(m.summon==='combo'){
+   const tx=near?near.x:o.x+face*120;
+   tree(tx,sp.tree);rhino(tx-face*170,sp.rhino,sp.rhino.delay);
+   this.glareMax=24;this.glare=24;this.glareA=.22;
+   SND.say('Jawa Beast Rampage!');
+  }
+ },
+ updateSummons(){
+  let foc=null;
+  for(const s of this.summons){
+   if(s.k==='tree')this.treeTick(s);
+   else{this.rhinoTick(s);if(s.t>=0&&(s.state==='run'||s.state==='carry'))foc=s}
+  }
+  this.summons=this.summons.filter(s=>!s.dead);
+  this.focus=foc?{x:foc.x+foc.dir*60}:null;
+ },
+ treeTick(s){
+  const o=s.owner,sp=s.sp,rd=Math.random;
+  s.t++;
+  if(s.t<0){ // retakan tanah + energi hijau sebagai peringatan
+   if(s.t%4===0){
+    this.fx.push({k:'crack',x:s.x,y:1,t:0,max:26,len:26+rd()*(sp.big?46:30),seed:rd()*9|0,c:'#9cff3a'});
+    this.fx.push({k:'puff',x:s.x+(rd()-.5)*40,y:3,t:0,max:20,r0:4,r1:14+rd()*8,rise:10+rd()*14});
+   }
+   if(s.t%8===0)this.fx.push({k:'glow',x:s.x+(rd()-.5)*30,y:4,t:0,max:16,r0:6,r1:20,c:'#9cff3a'});
+   this.shake=Math.max(this.shake,sp.big?4:2);
+   return;
+  }
+  if(s.t===0){
+   SND.play('treeboom');this.shake=Math.max(this.shake,sp.shake);this.stop=Math.max(this.stop,3);
+   this.treeFx(s);
+   for(const f of this.opps(o)){
+    if(f.hp<=0||f.carried||Math.abs(f.x-s.x)>sp.w||!f.vulnerable())continue;
+    const side=f.x>=s.x?1:-1;
+    if(f.state==='block'&&f.y===0&&!sp.pierce){
+     f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=side*3;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');this.stop=Math.max(this.stop,4);continue;
+    }
+    if(!sp.pierce&&f.tryHaki(o,o.mdef,s.dir))continue;
+    this.hurt(o,f,sp.dmg*Math.max(.6,1-.08*f.combo),sp);
+    f.knockdown(side,1.2);
+    if(f.hp>0){f.vy=sp.lift;f.floatT=sp.float;f.juggle=true;f.vx=side*.7}else f.vy=sp.lift*.8;
+    for(let i=0;i<7;i++)this.spark(f.x+(rd()-.5)*30,f.y+20+rd()*60,i%2?'#ffd54a':'#9cff3a');
+    this.fx.push({k:'glow',x:f.x,y:f.y+50,t:0,max:18,r0:10,r1:sp.big?90:60,c:'#ffd54a'});
+    this.stop=Math.max(this.stop,sp.stop);this.flash=Math.max(this.flash,sp.flash||0);SND.play('heavy');
+   }
+  }
+  if(s.t>=sp.life)s.dead=true;
+ },
+ treeFx(s){
+  const x=s.x,sp=s.sp,big=!!sp.big,rd=Math.random;
+  this.fx.push({k:'ring',x,y:5,t:0,max:26,r0:8,r1:big?150:92,c:'#d6ff6a',c2:'#ffd54a',fl:.14,lw:3,lw2:7});
+  this.fx.push({k:'ring',x,y:5,t:-4,max:32,r0:8,r1:big?220:132,c:'#ffb300',c2:'#7ee021',fl:.14,lw:3,lw2:6});
+  this.fx.push({k:'glow',x,y:70,t:0,max:26,r0:20,r1:big?180:115,c:'#9cff3a'});
+  this.fx.push({k:'pillar',x,y:0,t:0,max:30,h:big?270:200,w:big?92:64,c:'#7ee021'});
+  this.fx.push({k:'pillar',x,y:0,t:-2,max:36,h:big?230:165,w:big?56:40,c:'#ffd54a'});
+  this.fx.push({k:'rays',x,y:60,t:0,max:22,n:18,r0:14,r1:big?200:135,c:'#e8ff9a'});
+  for(let i=0;i<(big?3:2);i++)this.fx.push({k:'crack',x,y:1,t:-i*2,max:34,len:70+rd()*(big?110:60),seed:i*3+1,c:i?'#ffd54a':'#9cff3a'});
+  for(let i=0;i<10;i++)this.fx.push({k:'puff',x:x+(rd()-.5)*(big?150:90),y:3,t:-Math.floor(rd()*8),max:30,r0:8,r1:24+rd()*18,dx:(rd()-.5)*40,rise:20+rd()*28});
+  const cr=['#6b4423','#8d5a2b','#3f2a16','#a67c3d'],ln=['#4aa31f','#7ee021','#ffd54a','#ff8a1a'],ro=[],lf=[];
+  for(let i=0;i<(big?44:28);i++){const an=Math.PI*(.15+.7*rd()),sp2=3+rd()*(big?8:6);ro.push({vx:Math.cos(an)*sp2*(rd()<.5?1:-1)*.8,vy:3+Math.sin(an)*sp2,r:rd()*6.28,vr:(rd()-.5)*.5,s:3+rd()*6,c:cr[i%4]})}
+  for(let i=0;i<(big?50:32);i++){const an=Math.PI*(.1+.8*rd()),sp2=2+rd()*7;lf.push({vx:Math.cos(an)*sp2*(rd()<.5?1:-1)*.7,vy:4+Math.sin(an)*sp2,r:rd()*6.28,vr:(rd()-.5)*.6,s:2+rd()*4,c:ln[i%4]})}
+  this.fx.push({k:'shards',x,y:12,t:0,max:56,ps:ro});this.fx.push({k:'shards',x,y:20,t:0,max:48,ps:lf});
+  this.banner2(x,big?150:132,sp.text||'SAWIT ERUPTION!',big?17:14,'#b8ff4a');
+ },
+ rhinoTick(s){
+  const o=s.owner,sp=s.sp,dir=s.dir,rd=Math.random;
+  s.ox=s.x;s.t++;
+  if(s.t<0)return;
+  if(s.t===0){
+   SND.play('rhinoroar');this.shake=Math.max(this.shake,sp.big?12:8);
+   this.fx.push({k:'ring',x:s.x,y:5,t:0,max:24,r0:6,r1:sp.big?120:80,c:'#d6ff6a',c2:'#ffb300',fl:.16,lw:3,lw2:6});
+   this.fx.push({k:'glow',x:s.x,y:40,t:0,max:20,r0:14,r1:sp.big?100:70,c:'#ffd54a'});
+   for(let i=0;i<8;i++)this.fx.push({k:'puff',x:s.x+(rd()-.5)*50,y:3,t:0,max:26,r0:8,r1:26+rd()*16,dx:-dir*(8+rd()*26),rise:10+rd()*16});
+   this.banner2(s.x+dir*30,sp.big?140:122,sp.text||'BADAK JAWA!',sp.big?18:14,sp.combo?'#ff9a3a':'#ffd54a');
+  }
+  if(s.state==='run'||s.state==='carry'){
+   s.spd=Math.min(sp.speed+(s.state==='carry'?1:0),s.spd+.9);
+   s.x+=dir*s.spd;s.run+=s.spd;
+   this.shake=Math.max(this.shake,s.state==='carry'?10:6);
+   if(s.t%11===0)SND.play('stampede');
+   if(s.t%2===0)this.fx.push({k:'puff',x:s.x-dir*(60+rd()*30),y:3,t:0,max:22,r0:8,r1:26+rd()*16,dx:-dir*(10+rd()*14),rise:10+rd()*14});
+   if(s.t%3===0){const ps=[];for(let i=0;i<5;i++)ps.push({vx:-dir*(1+rd()*3)+(rd()-.5)*2,vy:2+rd()*3,r:rd()*6.28,vr:(rd()-.5)*.5,s:2+rd()*4,c:['#6b4423','#a67c3d','#d9b87a'][i%3]});this.fx.push({k:'shards',x:s.x-dir*50,y:6,t:0,max:26,ps})}
+   if(sp.big&&s.t%2===0)this.fx.push({k:'glow',x:s.x-dir*30,y:20+rd()*40,t:0,max:14,r0:8,r1:26,c:rd()<.5?'#ffd54a':'#9cff3a'});
+   if(s.state==='run'){
+    for(const f of this.opps(o)){
+     if(f.hp<=0||f.carried||s.hit.has(f))continue;
+     const rn=(f.x-s.x)*dir,rp=(f.x-(s.x-dir*s.spd))*dir;
+     if(!(rn<=36&&rp>=-22))continue;
+     if(!(sp.antiAir?(f.juggle||f.vulnerable()):(f.vulnerable()&&f.y<56)))continue;
+     if(!sp.pierce&&f.state==='block'&&f.y===0){ // diblok: badak mental
+      f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*5;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');
+      this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,6);s.state='stop';s.st=0;this.banner2(f.x,110,'BLOK!',12,'#8ecbff');break;
+     }
+     if(!sp.pierce&&f.tryHaki(o,o.mdef,dir)){s.hit.add(f);continue}
+     s.hit.add(f);
+     this.hurt(o,f,s.car?sp.dmg*.6:sp.dmg,sp);
+     for(let i=0;i<8;i++)this.spark(f.x+(rd()-.5)*30,f.y+15+rd()*70,i%2?'#fff3b0':'#ff9a3a');
+     this.fx.push({k:'rays',x:f.x,y:f.y+50,t:0,max:16,n:14,r0:8,r1:sp.big?90:64,c:'#fff3b0'});
+     this.fx.push({k:'glow',x:f.x,y:f.y+50,t:0,max:16,r0:10,r1:sp.big?80:56,c:'#ffb300'});
+     this.shake=Math.max(this.shake,sp.big?20:16);this.stop=Math.max(this.stop,sp.stop);SND.play('heavy');
+     if(s.car){f.knockdown(dir,5);f.vy=3;continue} // musuh lain yang terinjak
+     if(f.hp<=0){f.knockdown(dir,7);f.vy=5;s.state='stop';s.st=0;break}
+     s.car=f;f.carried=s;f.setState('down','knock');f.t=14;f.vx=0;f.vy=0;f.stun=0;f.move=null;f.combo=0;f.drain=null;f.juggle=false;f.floatT=0;f.face=-dir;
+     s.state='carry';s.ct=0;this.banner2(f.x,sp.big?118:104,'CORNER CARRY!',sp.big?16:13,'#ffd54a');
+     break;
+    }
+   }
+   if(s.state==='carry'){
+    const f=s.car;s.ct++;
+    f.x=Math.max(16,Math.min(WW-16,s.x+dir*10));f.y+=(26+3*Math.sin(s.ct*.9)-f.y)*.35;f.vx=0;f.vy=0;f.face=-dir;f.t=14;
+    if(s.ct%sp.every===0){
+     this.hurt(o,f,sp.carryDmg,sp);SND.play('hit');this.shake=Math.max(this.shake,12);
+     this.spark(f.x+(rd()-.5)*20,f.y+25+rd()*50,'#ffb347');
+     this.fx.push({k:'glow',x:f.x,y:f.y+40,t:0,max:12,r0:8,r1:30,c:'#ffd54a'});
+    }
+    if(s.t%2===1){const ps=[];for(let i=0;i<4;i++)ps.push({vx:dir*(1+rd()*3),vy:2+rd()*4,r:rd()*6.28,vr:(rd()-.5)*.6,s:2+rd()*3,c:i%2?'#ffd54a':'#ff8a1a'});this.fx.push({k:'shards',x:s.x+dir*20,y:f.y+20,t:0,max:20,ps})}
+    if((dir>0?s.x>=WW-48:s.x<=48)||s.ct>=sp.maxCarry||f.hp<=0)this.wallBounce(s);
+   }
+   if(s.state==='run'&&(s.run>sp.maxRun||(dir>0?s.x>=WW-48:s.x<=48))){s.state='fade';s.st=0}
+  }else{
+   s.st++;
+   if(s.state==='stop')s.x+=dir*Math.max(0,3-s.st*.12);
+   if(s.st>=(s.state==='stop'?46:20))s.dead=true;
+  }
+ },
+ wallBounce(s){
+  const o=s.owner,sp=s.sp,f=s.car,dir=s.dir,rd=Math.random;
+  f.carried=null;s.car=null;
+  this.hurt(o,f,sp.wallDmg,sp);
+  f.knockdown(-dir,6.5);f.vy=7.2;f.floatT=0;f.y=Math.max(f.y,26); // WALL BOUNCE: terpental kembali ke tengah arena
+  s.state='stop';s.st=0;
+  const wx=s.x+dir*30;
+  SND.play('wallbounce');this.shake=Math.max(this.shake,sp.big?36:26);this.stop=Math.max(this.stop,sp.big?11:8);this.flash=Math.max(this.flash,sp.big?9:5);
+  this.fx.push({k:'ring',x:wx,y:40,t:0,max:26,r0:8,r1:sp.big?130:90,c:'#ffffff',c2:'#ffd54a',fl:1,lw:4,lw2:8});
+  this.fx.push({k:'rays',x:wx,y:45,t:0,max:24,n:28,r0:14,r1:sp.big?170:110,c:'#fff3b0'});
+  for(let i=0;i<10;i++)this.fx.push({k:'puff',x:wx-dir*rd()*50,y:3,t:-Math.floor(rd()*6),max:30,r0:10,r1:30+rd()*20,dx:-dir*(10+rd()*30),rise:14+rd()*30});
+  const ps=[];for(let i=0;i<30;i++){const an=Math.PI*(.1+.8*rd()),sp2=3+rd()*8;ps.push({vx:-dir*Math.abs(Math.cos(an))*sp2,vy:2+Math.sin(an)*sp2*1.1,r:rd()*6.28,vr:(rd()-.5)*.6,s:3+rd()*6,c:['#6b4423','#a67c3d','#ffd54a','#9cff3a','#ffffff'][i%5]})}
+  this.fx.push({k:'shards',x:wx,y:25,t:0,max:50,ps});
+  if(sp.big){this.blastFx(wx,200,o);this.glareMax=32;this.glare=32;this.glareA=.42}
+  else{this.glareMax=14;this.glare=14;this.glareA=.18}
+  this.banner2(wx-dir*70,sp.big?140:125,'WALL BOUNCE!',sp.big?20:15,'#ffffff');
+ },
+ drawSummons(ctx){
+  const ia=this.interp?this.alpha:1;
+  for(const s of this.summons){
+   if(s.t<0)continue;
+   const A=s.owner.A,img=s.owner.img,sp=s.sp;
+   if(s.k==='tree'){
+    const seq=A.vfx.tree,fi=Math.min(seq.length-1,Math.floor(s.t/sp.fdur)),f=A.frames[seq[fi]];
+    const fade=Math.min(1,(sp.life-s.t)/18),pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
+    ctx.save();ctx.globalAlpha=Math.max(0,fade);ctx.translate(s.x,GROUND+3);ctx.scale(sc,sc*rise);
+    ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
+   }else{
+    const run=A.vfx.rhino_run,hitF=A.vfx.rhino_hit[0],px=Math.round((s.ox+(s.x-s.ox)*ia)*S)/S,sc=sp.scale||1;
+    let id,al=1;
+    if(s.state==='stop'){id=s.st<28?hitF:run[0];al=s.st<28?1:Math.max(0,1-(s.st-28)/18)}
+    else if(s.state==='fade'){id=run[s.t/3%4|0];al=Math.max(0,1-s.st/20)}
+    else id=run[s.t/3%4|0];
+    const f=A.frames[id];
+    ctx.save();ctx.globalAlpha=.35*al;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(px-s.dir*60*sc,GROUND+3,90*sc,5,0,0,7);ctx.fill();
+    ctx.globalAlpha=al;ctx.translate(px,GROUND+5);if(s.dir<0)ctx.scale(-1,1);ctx.scale(sc,sc);
+    ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
+   }
+  }
  },
  blastFx(x,R,ow){
   const rd=Math.random,gold=['#ffd54a','#ff9a1a','#fff3b0','#ffb300'];
@@ -822,9 +1034,11 @@ const G={
  },
  camTarget(){
   const p=this.p1,n=this.nearest(p),vw=W/this.camZ,lk=vw*.12,look=n?Math.max(-lk,Math.min(lk,(n.x-p.x)*.3)):0;
+  if(this.focus)return Math.max(0,Math.min(WW-vw,this.focus.x-vw/2)); // kamera ikut badak
   return Math.max(0,Math.min(WW-vw,p.x-vw/2+look));
  },
  zoomTarget(){
+  if(this.focus)return .72;
   const p=this.p1,n=this.nearest(p),dist=n?Math.abs(n.x-p.x):160;
   return Math.max(.6,Math.min(ZMAX,400/(dist+260)));
  },
@@ -932,6 +1146,7 @@ const G={
    if(d.t%d.every===0){f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;this.spark(f.x+(Math.random()-.5)*24,f.y+25+Math.random()*55,d.att.def.color);SND.play('hit');this.shake=Math.max(this.shake,6)}
    if(d.left<=0||f.hp<=0){if(d.aura)this.auraHit(f,true);f.drain=null;f.knockdown(d.dir,5);if(!d.aura)this.flash=10;this.shake=16;this.stop=d.aura?2:10;SND.play('heavy')}
   }
+  this.updateSummons();
   // proyektil
   for(const p of this.projs){
    const os=this.opps(p.owner),foe=p.tgt&&p.tgt.hp>0?p.tgt:os.reduce((m,o)=>(Math.abs(o.x-p.x)+(o.hp<=0?1000:0))<(Math.abs(m.x-p.x)+(m.hp<=0?1000:0))?o:m,os[0]);
@@ -1110,6 +1325,7 @@ const G={
    ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
    if(f!==this.p1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
   }
+  this.drawSummons(ctx);
   for(const f of[this.p1,...this.enemies])f.draw(ctx);
   for(const p of this.projs){
    const A=p.owner.A,ia=G.interp?G.alpha:1,py=Math.round(GROUND-(p.oy+(p.y-p.oy)*ia)),pxx=Math.round((p.ox+(p.x-p.ox)*ia)*S)/S;
@@ -1163,7 +1379,7 @@ const G={
     }
     ctx.globalAlpha=fade*.5;ctx.strokeStyle='#fff3b0';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(e.x,cy+cr*.1,cr*1.05,cr*.22,0,0,7);ctx.stroke();
    }else if(e.k==='sawits'){
-    const vf=e.A&&e.A.vfx&&e.A.frames[e.A.vfx.sawit_small[0]];
+    const vf=e.A&&e.A.vfx&&e.A.vfx.sawit_small&&e.A.frames[e.A.vfx.sawit_small[0]];
     for(const pc of e.ps){
      const tt=e.t-pc.d;if(tt<0)continue;
      const hx=e.x+(pc.sx||0)+pc.vx*tt,hy=Math.max(0,(pc.sy||e.y)+pc.vy*tt-pc.g*tt*tt),al=Math.min(1,(1-pg)*1.8),py=GROUND-hy;
@@ -1174,6 +1390,23 @@ const G={
      if(vf){const sc=pc.s/vf.w;ctx.save();ctx.translate(hx,py);ctx.rotate(pc.r+pc.vr*tt);ctx.drawImage(e.img,vf.x,vf.y,vf.w,vf.h,-vf.w*sc/2,-vf.h*sc/2,vf.w*sc,vf.h*sc);ctx.restore()}
      else{ctx.fillStyle='#7a1f0e';ctx.beginPath();ctx.arc(hx,py,pc.s*.4,0,7);ctx.fill()}
     }
+   }else if(e.k==='crack'){
+    const L=e.len*Math.min(1,pg*3.2);ctx.globalAlpha=Math.min(1,(1-pg)*2);ctx.lineCap='round';ctx.lineJoin='round';
+    for(let sg=-1;sg<=1;sg+=2){
+     ctx.beginPath();ctx.moveTo(e.x,ey);
+     for(let i=1;i<=8;i++)ctx.lineTo(e.x+sg*L*i/8,ey+(((i*37+e.seed*13)%7)-3)*1.2);
+     ctx.strokeStyle='#24120a';ctx.lineWidth=3.2;ctx.stroke();
+     ctx.globalCompositeOperation='lighter';ctx.strokeStyle=e.c||'#9cff3a';ctx.lineWidth=1.3;ctx.stroke();ctx.globalCompositeOperation='source-over';
+    }
+   }else if(e.k==='puff'){
+    const r=e.r0+(e.r1-e.r0)*pg,px=e.x+(e.dx||0)*pg,py=ey-(e.rise||0)*pg,g=ctx.createRadialGradient(px,py,0,px,py,r);
+    g.addColorStop(0,'rgba(214,180,128,.75)');g.addColorStop(.6,'rgba(150,115,72,.45)');g.addColorStop(1,'rgba(96,70,40,0)');
+    ctx.globalAlpha=(1-pg)*.85;ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,r,0,7);ctx.fill();
+   }else if(e.k==='banner'){
+    const k=Math.min(1,.5+pg*6),sz=e.sz||16;
+    ctx.globalAlpha=Math.min(1,(1-pg)*2.4);ctx.translate(e.x,ey-pg*14);ctx.scale(k,k);ctx.textAlign='center';ctx.font='bold '+sz+'px monospace';
+    ctx.lineWidth=4;ctx.lineJoin='round';ctx.strokeStyle='#1a0d00';ctx.strokeText(e.s,0,0);ctx.fillStyle=e.c||'#ffd54a';ctx.fillText(e.s,0,0);
+    ctx.globalCompositeOperation='lighter';ctx.globalAlpha*=.45;ctx.fillStyle='#fff3b0';ctx.fillText(e.s,0,-1);
    }else if(e.k==='shards'){
     ctx.fillStyle='#fff';
     for(const pc of e.ps){
@@ -1206,7 +1439,7 @@ const G={
    ctx.stroke();ctx.globalAlpha=1;o.draw(ctx);ctx.restore();
    const sl=Math.min(1,p*5),bx=W/2+(1-sl)*-320;
    ctx.fillStyle=col;ctx.globalAlpha=.85;ctx.fillRect(0,74,W,34);ctx.globalAlpha=1;
-   ctx.textAlign='center';ctx.font='bold 26px monospace';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#fff';ctx.strokeText('ULTIMATE!',bx,100);ctx.fillText('ULTIMATE!',bx,100);
+   ctx.textAlign='center';ctx.font='bold 26px monospace';ctx.lineWidth=4;ctx.strokeStyle='#000';ctx.fillStyle='#fff';const ub=(o.mdef&&o.mdef.banner)||'ULTIMATE!';ctx.strokeText(ub,bx,100);ctx.fillText(ub,bx,100);
    ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText(o.label,W-bx,70);
   }
   this.koBack(Zr,camR);
