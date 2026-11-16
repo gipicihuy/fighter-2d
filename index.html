@@ -535,15 +535,26 @@ addEventListener('resize',()=>{resize();clearTimeout(koWarmT);koWarmT=setTimeout
 
 const BLD=(()=>{let s=7;const r=()=>(s=(s*1103515245+12345)&0x7fffffff)/0x7fffffff,o=[];
  for(let x=-10;x<W+WW*.5*ZMAX+60;){const w=22+r()*30,h=40+r()*70;o.push({x,w:Math.floor(w),h:Math.floor(h),c:r()<.5?'#241c3d':'#2d2248'});x+=w+2+r()*4}return o})();
+const BGX0=-16;let BGC=null; // latar statis (langit + gedung+jendela) dirender SEKALI per resolusi -> ~470 fillRect/frame jadi 2 drawImage
+function bgBuild(){
+ const R=S,bx=BLD[BLD.length-1],wL=Math.ceil(bx.x+bx.w+8-BGX0);
+ const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.ceil(w*R);c.height=Math.ceil(h*R);const x=c.getContext('2d');x.setTransform(R,0,0,R,0,0);return[c,x]};
+ const[sky,sx]=mk(W,FLOOR),g=sx.createLinearGradient(0,0,0,FLOOR);g.addColorStop(0,'#141b3a');g.addColorStop(.6,'#5b3a6e');g.addColorStop(1,'#e8806a');sx.fillStyle=g;sx.fillRect(0,0,W,FLOOR);
+ const[bl,bc]=mk(wL,FLOOR);bc.translate(-BGX0,0);
+ for(const b of BLD){bc.fillStyle=b.c;bc.fillRect(b.x,FLOOR-b.h,b.w,b.h);
+  bc.fillStyle='rgba(255,210,120,.35)';for(let y=FLOOR-b.h+6;y<FLOOR-4;y+=9)for(let x=b.x+4;x<b.x+b.w-4;x+=8)if(((x*7+y*3)&7)<3)bc.fillRect(x,y,3,4)}
+ BGC={R,sky,bl};return BGC;
+}
 function drawBG(cam,zm){
  cam=cam||0;zm=zm||1;
- const g=ctx.createLinearGradient(0,0,0,FLOOR);g.addColorStop(0,'#141b3a');g.addColorStop(.6,'#5b3a6e');g.addColorStop(1,'#e8806a');
- ctx.fillStyle=g;ctx.fillRect(0,0,W,FLOOR);
+ const B=(BGC&&BGC.R===S)?BGC:bgBuild();
+ ctx.drawImage(B.sky,0,0,W,FLOOR);
  ctx.fillStyle='rgba(255,225,160,.85)';ctx.beginPath();ctx.arc(300-cam*zm*.06,150,26,0,7);ctx.fill();
- ctx.save();ctx.translate(-cam*zm*.5,0);
- for(const b of BLD){ctx.fillStyle=b.c;ctx.fillRect(b.x,FLOOR-b.h,b.w,b.h);
-  ctx.fillStyle='rgba(255,210,120,.35)';for(let y=FLOOR-b.h+6;y<FLOOR-4;y+=9)for(let x=b.x+4;x<b.x+b.w-4;x+=8)if(((x*7+y*3)&7)<3)ctx.fillRect(x,y,3,4)}
- ctx.restore();
+ {const R=B.R,o=cam*zm*.5,sStart=(o-BGX0)*R,bw=B.bl.width,bh=B.bl.height; // parallax gedung: world x -> kolom strip (x-BGX0)*R
+  let a=Math.round(sStart)-2,dx=(a-sStart)/R,sw=Math.round(W*R)+4; // overscan 2px kiri/kanan: tidak ada celah sub-piksel
+  if(a<0){dx+=-a/R;sw+=a;a=0}
+  if(a+sw>bw)sw=bw-a;
+  if(sw>0)ctx.drawImage(B.bl,a,0,sw,bh,dx,0,sw/R,FLOOR)}
  ctx.fillStyle='#2b2233';ctx.fillRect(0,FLOOR,W,H-FLOOR);
  ctx.fillStyle='#6b4f7a';ctx.fillRect(0,FLOOR,W,2);
  const cc=W/2,x0=Math.floor(cam/40)*40-40;
@@ -1049,7 +1060,7 @@ const G={
    const lg=ctx.createLinearGradient(half,0,half+ln,0);lg.addColorStop(0,gold[1]);lg.addColorStop(1,'rgba(255,200,80,0)');
    for(const sg of[-1,1]){ctx.save();ctx.scale(sg,1);ctx.fillStyle=lg;ctx.fillRect(half,-.8,ln,1.6);ctx.fillStyle=gold[0];ctx.beginPath();ctx.moveTo(half-1,0);ctx.lineTo(half+3,-3.4);ctx.lineTo(half+7,0);ctx.lineTo(half+3,3.4);ctx.fill();ctx.restore()}
    ctx.transform(1,0,-.1,1,0,0);
-   ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=6*S;ctx.shadowOffsetY=2*S;ctx.lineWidth=8;ctx.strokeStyle='#000';ctx.strokeText(tx2,0,0);ctx.shadowBlur=0;ctx.shadowOffsetY=0; // outline hitam tebal
+   ctx.globalAlpha=al*.35;ctx.lineWidth=12;ctx.strokeStyle='#000';ctx.strokeText(tx2,0,2);ctx.globalAlpha=al;ctx.lineWidth=8;ctx.strokeText(tx2,0,0); // outline hitam tebal + bayangan murah (tanpa shadowBlur)
    ctx.lineWidth=4;ctx.strokeStyle=gold[2];ctx.strokeText(tx2,0,0);ctx.lineWidth=1.6;ctx.strokeStyle=gold[1];ctx.strokeText(tx2,0,0); // aksen emas
    const fg=ctx.createLinearGradient(0,-11,0,11);fg.addColorStop(0,'#fffef6');fg.addColorStop(.5,gold[0]);fg.addColorStop(1,gold[1]);ctx.fillStyle=fg;ctx.fillText(tx2,0,0);
    const ph=((su-.5)%2)/.7;if(su>.5&&ph<1){const sx=-tw/2-20+ph*(tw+40),sg2=ctx.createLinearGradient(sx-16,0,sx+16,0);sg2.addColorStop(0,'rgba(255,255,255,0)');sg2.addColorStop(.5,'rgba(255,255,255,.9)');sg2.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=sg2;ctx.fillText(tx2,0,0)}
