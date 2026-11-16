@@ -150,26 +150,26 @@ const CHARDEF={
    skill:{anim:A_(rng('r5_',4,9),12),fire:5,cost:20,end:8,proj:{dmg:9,stun:18,kb:2,vx:3.8,orb:'#4fc3ff',ph:55}},
    ult  :{anim:'skill_ultimate',fps:12,hit:[9,9],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
- // HASHIM MA'JUJ: sepadan CEO SAWIT. Skill (U) = ATM Sawit / Sawit Eruption, Berat (L) = Badak Jawa Rampage (corner carry + wall bounce),
+ // HASHIM MA'JUJ: bruiser combo, DISEIMBANGKAN: stat tidak lagi sama kayak CEO SAWIT, skill ada cooldown, energi dari damage summon dikecilkan, ULT bisa dihindari dengan dash, pohon ada batas umur. Skill (U) = ATM Sawit / Sawit Eruption, Berat (L) = Badak Jawa Rampage (corner carry + wall bounce),
  // ULT (I) = JAWA BEAST RAMPAGE COMBO (sawit melontarkan musuh, badak menghantam saat masih melayang). Efek summon: G.castSummon / treeTick / rhinoTick.
  hashim:{
-  color:'#3fae49',djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08},spd:1.3,ultGuard:{parryWin:14,parryMul:.15,luck:.2,dmgMul:.3,cd:300,armor:50},dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
+  color:'#3fae49',djump:1,floatUlt:true,atk:1.15,def:.85,vs:{patrick:.3,default:.25},spd:1.15,ultGuard:{parryWin:14,parryMul:.25,luck:.1,dmgMul:.4,cd:480,armor:50},dash:true,dashCd:48,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1.2,
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r3_01'],1,true),jump:A_(['r2_09'],1,true),dash:A_(['r2_09','r2_10','r2_11'],12,true)},
   moves:{
    punch:{anim:'punch',fps:16,hit:[3,5],rx:[10,64],dmg:6,stun:16,kb:1.2,stop:3,end:3},
    kick :{anim:'kick',fps:15,hit:[3,5],rx:[10,74],dmg:8,stun:18,kb:2.2,stop:4,end:6},
    // Special A: ATM SAWIT (Sawit Eruption) - pohon sawit raksasa menyembul dari tanah di bawah musuh, melontarkan ke udara
-   skill:{anim:'skill_sawit',fps:10,fire:2,cost:20,end:10,summon:'sawit',
-          spec:{delay:22,life:84,fdur:4,w:46,dmg:16,chip:5,lift:7.2,float:10,stop:7,shake:16,scale:1.05,text:'SAWIT ERUPTION!'}},
+   skill:{anim:'skill_sawit',fps:10,fire:2,cost:20,end:10,summon:'sawit',cd:90,
+          spec:{delay:28,life:84,stay:420,fdur:4,w:46,dmg:12,chip:4,lift:7.2,float:10,stop:7,shake:16,scale:1.05,text:'SAWIT ERUPTION!'}},
    // Special B: BADAK JAWA RAMPAGE - badak menyeruduk, menyeret lawan ke ujung arena (Corner Carry), lalu terpental dari dinding (Wall Bounce)
    // kalau musuh masih melayang karena sawit -> otomatis jadi COMBO (badak anti-udara, damage x1.6)
-   heavy:{anim:'skill_badak',fps:9,fire:2,cost:20,end:12,summon:'badak',
-          spec:{speed:10.5,maxRun:640,dmg:11,chip:4,carryDmg:2,every:9,wallDmg:13,maxCarry:140,stop:6,scale:1.1,text:'BADAK JAWA RAMPAGE!',comboMul:1.6,comboText:'SAWIT + BADAK COMBO!'}},
+   heavy:{anim:'skill_badak',fps:9,fire:2,cost:20,end:12,summon:'badak',cd:150,
+          spec:{speed:10.5,maxRun:640,dmg:9,chip:3,carryDmg:1.5,every:9,wallDmg:10,maxCarry:110,stop:6,scale:1.1,text:'BADAK JAWA RAMPAGE!',comboMul:1.25,comboText:'SAWIT + BADAK COMBO!'}},
    // ULT: JAWA BEAST RAMPAGE COMBO - sawit meletus di bawah musuh (tak bisa dihindari/diblok), badak menghantam saat masih melayang
    ult  :{anim:'skill_ultimate',fps:8,fire:3,cost:ULTC,armor:true,end:16,summon:'combo',banner:'JAWA BEAST RAMPAGE!',
-          spec:{tree:{delay:10,life:96,fdur:4.5,w:62,dmg:14,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,flash:6,text:'SAWIT ERUPTION!'},
-                rhino:{delay:36,speed:12,maxRun:900,dmg:14,carryDmg:2,every:8,wallDmg:18,maxCarry:150,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
+          spec:{tree:{delay:28,life:96,stay:300,fdur:4.5,w:62,dmg:14,lift:7.2,float:12,stop:10,shake:24,scale:1.25,big:true,pierce:true,flash:6,text:'SAWIT ERUPTION!'},
+                rhino:{delay:54,speed:12,maxRun:900,dmg:14,carryDmg:1.5,every:8,wallDmg:16,maxCarry:120,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -355,11 +355,11 @@ class Bot{
   if(this.timer>0){this.timer--;return I}
   I.left=I.right=I.up=I.down=0;
   const rnd=Math.random,dx=foe.x-me.x,d=Math.abs(dx),toward=dx>0?'right':'left',away=dx>0?'left':'right';
-  const next=L.react[0]+rnd()*(L.react[1]-L.react[0]),has=m=>!!me.def.moves[m];
+  const next=L.react[0]+rnd()*(L.react[1]-L.react[0]),has=m=>!!me.def.moves[m]&&!(me.cds&&me.cds[m]>0);
   const pr=G.projs.find(p=>p.owner===foe&&Math.abs(p.x-me.x)<120&&((p.vx>0)===(me.x>p.x)));
   { // Hashim bot: kadang nangkis serangan/proyektil kecil lawan dengan serudukan badak (counter, 20 energi, cooldown ±3 detik)
    const hb=me.def.moves.heavy&&me.def.moves.heavy.summon==='badak';
-   const trig=hb&&me.en>=20&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')&&(dx>0)===(me.face>0)&&((foe.state==='attack'&&foe.move!=='ult'&&d<150)||(pr&&!pr.pd.big&&d<220));
+   const trig=hb&&me.cds.heavy<=0&&me.en>=20&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')&&(dx>0)===(me.face>0)&&((foe.state==='attack'&&foe.move!=='ult'&&d<150)||(pr&&!pr.pd.big&&d<220));
    if(!trig||this.cCd>0)this.cRoll=null;
    else{
     if(this.cRoll==null)this.cRoll=rnd()<L.dodge*.5;
@@ -396,7 +396,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null});
+  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -423,8 +423,10 @@ class Fighter{
  tryAttack(inp,G){
   const a=inp.attack,m=this.def.moves[a];inp.consume(a);
   if(!m)return false;
+  if(m.cd&&this.cds[a]>0)return false;
   if(m.cost&&this.en<m.cost)return false;
   if(m.cost)this.en-=m.cost;
+  if(m.cd)this.cds[a]=m.cd;
   const base=typeof m.anim==='string'?this.A.animations[m.anim]:m.anim;
   this.move=a;this.mdef=m;this.hitDone=false;this.fired=false;
   this.state='attack';this.an={frames:base.frames,fps:(m.fps||base.fps)*(a==='ult'?1:ATK_TEMPO),loop:false};this.t=0;this.beamed=false;
@@ -455,7 +457,7 @@ class Fighter{
   G.fx.push({k:'glow',x:this.x,y:this.y+6,t:0,max:12,r0:6,r1:22,c:'#ffd54a'});
  }
  startDash(dir,back){
-  this.setState('dash','dash');this.dDir=dir;this.dT=18;this.dashCd=28;if(!back)this.face=dir;this.vx=dir*9;this.combo=0;this.stun=0;
+  this.setState('dash','dash');this.dDir=dir;this.dT=18;this.dashCd=this.def.dashCd||28;if(!back)this.face=dir;this.vx=dir*9;this.combo=0;this.stun=0;
   G.dashFx(this);SND.play('dash');
  }
  tryHaki(att,m,dir){
@@ -494,7 +496,7 @@ class Fighter{
  update(inp,foe,G){
   const S=this.state,air=this.y>0;
   if(this.juggle&&this.state!=='down')this.juggle=false;
-  this.ox=this.x;this.oy=this.y;this.age++;if(this.armorT>0)this.armorT--;
+  this.ox=this.x;this.oy=this.y;this.age++;if(this.armorT>0)this.armorT--;for(const k in this.cds)if(this.cds[k]>0)this.cds[k]--;
   const spd=this.def.spd||1,jx=JUMPX*(1+(spd-1)*.6);
   if(this.ghosts.length){for(const g of this.ghosts)g.t++;this.ghosts=this.ghosts.filter(g=>g.t<16)}
   if(this.guardCd>0)this.guardCd--;
@@ -852,13 +854,13 @@ const G={
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:36,h:170,w:60,c:'#ffb300'});
  },
 /* ---------- HASHIM: summon pohon sawit & badak jawa ---------- */
- canUlt(f,sp){return f.hp>0&&!f.carried&&f.state!=='win'&&(sp.pierce||f.vulnerable())},
- hurt(att,o,v,spec){const d=scl(att,o,v),fl=spec&&spec.noKill?Math.min(o.hp,5):0;o.hp=Math.max(fl,o.hp-d);att.en=Math.min(MAXEN,att.en+d*1.5);o.en=Math.min(MAXEN,o.en+d*1.1);return d},
+ canUlt(f,sp){return f.hp>0&&!f.carried&&f.state!=='win'&&(sp.pierce?!(f.state==='dash'&&f.dT>9):f.vulnerable())},
+ hurt(att,o,v,spec){const d=scl(att,o,v),fl=spec&&spec.noKill?Math.min(o.hp,5):0;o.hp=Math.max(fl,o.hp-d);att.en=Math.min(MAXEN,att.en+d*(spec?.5:1.5));o.en=Math.min(MAXEN,o.en+d*1.1);return d},
  banner2(x,y,s,sz,c){this.fx.push({k:'banner',x,y,t:0,max:56,s,sz:sz||16,c:c||'#ffd54a'})},
  castSummon(o,m){
   const sp=m.spec,face=o.face,foes=this.opps(o).filter(e=>e.hp>0),cx=x=>Math.max(40,Math.min(WW-40,x));
   const near=foes.length?foes.reduce((a,b)=>Math.abs(b.x-o.x)<Math.abs(a.x-o.x)?b:a):null;
-  const tree=(x,s)=>{this.summons.push({k:'tree',owner:o,x:cx(x),dir:face,t:-s.delay,sp:s});const ts=this.summons.filter(q=>q.k==='tree'&&q.owner===o&&!q.dead);while(ts.length>3)ts.shift().dead=true;SND.play('treecrack')};
+  const tree=(x,s)=>{this.summons.push({k:'tree',owner:o,x:cx(x),dir:face,t:-s.delay,sp:s});const ts=this.summons.filter(q=>q.k==='tree'&&q.owner===o&&!q.dead);while(ts.length>2)ts.shift().dead=true;SND.play('treecrack')};
   const rhino=(x,s,delay)=>this.summons.push({k:'rhino',owner:o,x:cx(x),ox:cx(x),dir:face,t:-delay,sp:s,state:'run',spd:3,hit:new Set(),car:null,ct:0,st:0,run:0});
   if(m.summon==='sawit'){
    const ahead=near&&(near.x-o.x)*face>-30&&Math.abs(near.x-o.x)<320;
@@ -866,7 +868,7 @@ const G={
   }else if(m.summon==='badak'){
    const air=foes.find(e=>e.juggle&&Math.abs(e.x-o.x)<700);
    if(air){ // SAWIT + BADAK COMBO: badak anti-udara, datang dari belakang titik lawan melayang
-    rhino(air.x-face*170,Object.assign({},sp,{antiAir:true,combo:true,dmg:sp.dmg*sp.comboMul,carryDmg:sp.carryDmg*1.4,wallDmg:sp.wallDmg*1.4,text:sp.comboText}),0);
+    rhino(air.x-face*170,Object.assign({},sp,{antiAir:true,combo:true,dmg:sp.dmg*sp.comboMul,carryDmg:sp.carryDmg*1.1,wallDmg:sp.wallDmg*1.15,text:sp.comboText}),0);
    }else rhino(o.x+face*24,sp,0);
    SND.say('Badak Jawa!');
   }else if(m.summon==='combo'){
@@ -888,6 +890,7 @@ const G={
  treeTick(s){
   const o=s.owner,sp=s.sp,rd=Math.random;
   s.t++;
+  if(sp.stay&&s.t>sp.stay){s.dead=true;return}
   if(s.t<0){ // retakan tanah + energi hijau sebagai peringatan
    if(s.t%4===0){
     this.fx.push({k:'crack',x:s.x,y:1,t:0,max:26,len:26+rd()*(sp.big?46:30),seed:rd()*9|0,c:'#9cff3a'});
@@ -915,7 +918,7 @@ const G={
     this.stop=Math.max(this.stop,sp.stop);this.flash=Math.max(this.flash,sp.flash||0);SND.play('heavy');
    }
   }
-  // pohon permanen: tidak hilang sampai ronde berakhir
+  // pohon punya batas umur (sp.stay) supaya tidak jadi tembok permanen
  },
  treeFx(s){
   const x=s.x,sp=s.sp,big=!!sp.big,rd=Math.random;
@@ -1032,7 +1035,7 @@ const G={
    const A=s.owner.A,img=s.owner.img,sp=s.sp;
    if(s.k==='tree'){
     const seq=A.vfx.tree,fi=Math.min(seq.length-1,Math.floor(s.t/sp.fdur)),f=A.frames[seq[fi]];
-    const fade=1,pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
+    const fade=sp.stay?Math.min(1,(sp.stay-s.t)/40):1,pop=Math.min(1,s.t/7),rise=.5+.5*(1-Math.pow(1-pop,3)),sc=sp.scale||1;
     ctx.save();ctx.globalAlpha=Math.max(0,fade);ctx.translate(s.x,GROUND+3);ctx.scale(sc,sc*rise);
     ctx.drawImage(img,f.x,f.y,f.w,f.h,-f.pivot[0],-f.pivot[1],f.w,f.h);ctx.restore();
    }else{
@@ -1249,7 +1252,7 @@ const G={
     if(Math.abs(p.x-s.x)>(big?34:26)||p.y>(big?270:200))continue;
     if(!p.pd.big){p.life=0;this.treeHitFx(s,p.x,p.y,false);this.shatter(p,null);break}
     p.treeHit=p.treeHit||new Set();
-    if(!p.treeHit.has(s)){p.treeHit.add(s);this.treeHitFx(s,p.x,p.y,true)}
+    if(!p.treeHit.has(s)){p.treeHit.add(s);this.treeHitFx(s,p.x,p.y,true);s.dead=true}
    }
   }
   // badak vs proyektil kecil lawan: badak menabrak dan memecahkannya (ULT sawit raksasa tidak)
