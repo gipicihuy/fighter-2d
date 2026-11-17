@@ -97,3 +97,7 @@ ULTI CAROK RAJA MADURA: sarung meluncur dari tangan seperti ular (berkelok, meng
 Cambuk Sarung RAJA MADURA bisa menangkis ULT CEO SAWIT kalau timingnya pas (sarung berkelok mengikuti arah terbang sawit lalu menghancurkannya, +15 energi). Sarung dan ULT juga melengkung realistis saat Madura sedang melompat.
 
 AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sawit homing, sarung ular Madura) langsung ULT dari jarak jauh (zoning), tidak lagi lari dulu sampai dekat. ULT jarak dekat (Patrick, Karakter 1) tetap dipakai saat dekat.
+
+## ULT clash & tangkisan sarung
+- Dua ULT beradu = **overpower**: keduanya kena damage (22) dan terpental, shake besar, kubah + gelombang kejut selebar arena, pilar energi, retakan tanah, serpihan sawit & kain sarung beterbangan. Tidak ada teks.
+- **CEO SAWIT bisa menangkis sarung Madura** (Cambuk Sarung & ULT ular) dengan serangan dasar (punch/kick/heavy, kena kepala ular atau diayun saat dicambuk) atau skill dasar (sawit kecil memotong sarung). Berhasil = sarung batal, Madura terguncang, Sawit +15 energi. Bot Sawit juga kadang menangkis.
