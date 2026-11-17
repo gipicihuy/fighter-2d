@@ -493,19 +493,19 @@ class Fighter{
    let tg=sn.tgt;if(!tg||tg.hp<=0){tg=G.nearest(this);sn.tgt=tg}
    const tx=tg.x,ty=GROUND-tg.y-50,dx=tx-sn.hx,dy=ty-sn.hy,dist=Math.hypot(dx,dy);
    let df=Math.atan2(dy,dx)-sn.ang;df=Math.atan2(Math.sin(df),Math.cos(df));
-   const mt=dist<90?.45:.16;
+   const mt=dist<80?.35:.13;
    sn.ang+=Math.max(-mt,Math.min(mt,df));
-   const sp=Math.max(7,Math.min(13,dist*.03+5)),a2=sn.ang+(dist>70?.5*Math.sin(sn.t*.32):0);
+   const sp=Math.max(4,Math.min(7,dist*.015+3.5)),a2=sn.ang+(dist>60?.42*Math.sin(sn.t*.22):0);
    sn.hx+=Math.cos(a2)*sp;sn.hy+=Math.sin(a2)*sp;
    sn.trail.push({x:sn.hx,y:sn.hy});if(sn.trail.length>300)sn.trail.shift();
-   if(Math.hypot(tx-sn.hx,ty-sn.hy)<20||sn.t>240){
+   if(Math.hypot(tx-sn.hx,ty-sn.hy)<24||sn.t>360){
     sn.hx=tx;sn.hy=ty;
     this.face=tx>this.x?1:-1;
     if(G.applyHit(this,tg,m,this.face)){
      this.hitDone=true;sn.st='pull';sn.pt=0;
-     if(tg.drain)tg.drain.wait=Math.max(28,Math.min(70,Math.round(Math.abs(tg.x-(this.x+this.face*52))/14)));
+     if(tg.drain)tg.drain.wait=Math.max(30,Math.min(75,Math.round(Math.abs(tg.x-(this.x+this.face*52))/11)));
     }
-    else if(sn.t>420){this.hitDone=true;sn.st='slash';sn.rt=0}
+    else if(sn.t>480){this.hitDone=true;sn.st='slash';sn.rt=0}
    }
   }else if(sn.st==='pull'){
    sn.pt++;
@@ -1795,7 +1795,7 @@ const G={
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.snake&&f.snake.st!=='done')this.drawSnake(f);
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.parry)this.drawParry(f);
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.mdef.snake&&!f.parry&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
-   const m=f.mdef,hp=f.handPos(),L=(m.sarung?460:m.rx[1])*(f.y>0?.8:1),gy=f.y>0?GROUND-36:hp.y,pr=Math.min(1,f.t/(m.sarung?12:7)),e1=1-Math.pow(1-pr,2);
+   const m=f.mdef,hp=f.handPos(),L=(m.sarung?460:m.rx[1])*(f.y>0?.8:1),gy=f.y>0?GROUND-36:hp.y,pr=Math.min(1,f.t/(m.sarung?16:9)),e1=1-Math.pow(1-pr,2);
    ctx.save();
    this.drawSarung(f,hp.x,hp.y+4,hp.x+f.face*L,gy+6,e1,2.4);
    this.drawSarung(f,hp.x,hp.y,hp.x+f.face*L,gy,e1);
