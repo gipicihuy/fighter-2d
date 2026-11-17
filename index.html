@@ -174,7 +174,7 @@ const CHARDEF={
                 rhino:{delay:54,speed:12,maxRun:900,dmg:14,carryDmg:1.5,every:8,wallDmg:16,maxCarry:120,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }},
  madura:{
-  color:'#d32f2f',djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
+  color:'#d32f2f',sawitGuard:true,djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
   ultGuard:{parryWin:16,parryMul:.2,luck:.15,dmgMul:.35,cd:360,armor:60,text:'SARUNG SAKTI!'},
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['blk'],1,true),jump:A_(['jump'],1,true),dash:A_(['u00','u01','u02','u03','u04','u05'],14,true)},
@@ -411,6 +411,11 @@ class Bot{
   const rnd=Math.random,dx=foe.x-me.x,d=Math.abs(dx),toward=dx>0?'right':'left',away=dx>0?'left':'right';
   const next=L.react[0]+rnd()*(L.react[1]-L.react[0]),has=m=>!!me.def.moves[m]&&!(me.cds&&me.cds[m]>0);
   const pr=G.projs.find(p=>p.owner===foe&&Math.abs(p.x-me.x)<120&&((p.vx>0)===(me.x>p.x)));
+  if(me.def.sawitGuard&&pr&&pr.pd.vfx==='sawit_small'&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){ // bot Madura: tangkis lemparan sawit pakai serangan dasar
+   const pdx=Math.abs(pr.x-me.x);
+   if(this.sg2==null)this.sg2=rnd()<.35+L.dodge*.55;
+   if(this.sg2&&pdx<=120&&pdx>=60){I.left=I.right=I.up=I.down=0;I.attack=rnd()<.5?'kick':'punch';this.timer=14;this.sg2=null;return I}
+  }else this.sg2=null;
   { // Hashim bot: kadang nangkis serangan/proyektil kecil lawan dengan serudukan badak (counter, 20 energi, cooldown ±3 detik)
    const hb=me.def.moves.heavy&&me.def.moves.heavy.summon==='badak';
    const trig=hb&&me.cds.heavy<=0&&me.en>=20&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')&&(dx>0)===(me.face>0)&&((foe.state==='attack'&&foe.move!=='ult'&&d<150)||(pr&&!pr.pd.big&&d<220));
@@ -1414,6 +1419,30 @@ const G={
    }
   }
  },
+ sawitDeflect(){ // RAJA MADURA menangkis lemparan sawit kecil CEO SAWIT pakai serangan dasar (punch/kick/heavy): sawit pecah berterbangan
+  const BASIC=['punch','kick','heavy'],all=[this.p1,...this.allies,...this.enemies];
+  for(const v of all){
+   if(!v.def.sawitGuard||v.hp<=0||v.state!=='attack'||!BASIC.includes(v.move)||!v.mdef||!v.mdef.hit)continue;
+   const idx=v.frameIdx();if(idx<v.mdef.hit[0]-1||idx>v.mdef.hit[1]+2)continue;
+   const rx=v.mdef.rx||[10,60],xa=v.x+v.face*(rx[0]-16),xb=v.x+v.face*(rx[1]+28),x0=Math.min(xa,xb),x1=Math.max(xa,xb);
+   for(const p of this.projs){
+    if(p.life<=0||p.owner===v||!this.opps(v).includes(p.owner)||p.pd.big||p.pd.homing||p.pd.vfx!=='sawit_small')continue;
+    if(p.x<x0||p.x>x1||p.y<v.y-12||p.y>v.y+112)continue;
+    p.life=0;this.sawitBreak(p,v);
+   }
+  }
+ },
+ sawitBreak(p,v){
+  const rd=Math.random,x=p.x,y=p.y,dir=v.face;
+  this.shatter(p,{pd:{big:true},life:0,owner:v});
+  const ps=[];
+  for(let i=0;i<9;i++){const an=Math.PI*(.1+.8*rd()),sp=2.2+rd()*4.6;ps.push({vx:Math.cos(an)*sp*(rd()<.35?-1:1)*(dir>0?1:1)+dir*1.2,vy:2+Math.sin(an)*sp,r:rd()*6.28,vr:(rd()-.5)*.5,s:15+rd()*14,d:0,g:.15})}
+  this.fx.push({k:'sawits',x,y,t:0,max:64,ps,A:p.owner.A,img:p.owner.img});
+  this.fx.push({k:'ring',x,y,t:0,max:18,r0:5,r1:46,c:'#ffd54a',c2:v.def.color||'#ff6a5a',fl:1,lw:2.5,lw2:5});
+  this.fx.push({k:'rays',x,y,t:0,max:12,n:12,r0:6,r1:42,c:'#fff3b0'});
+  if(this.pt-(v.sdLast||-99)>20){v.sdLast=this.pt;v.en=Math.min(MAXEN,v.en+10);this.fx.push({k:'banner',x:v.x,y:v.y+120,t:0,max:40,s:'NANGKIS SAWIT!',sz:13,c:'#ffd54a'});this.stop=Math.max(this.stop,4)}
+  this.shake=Math.max(this.shake,6);SND.play('block');
+ },
  ultCasting(f){return f.hp>0&&f.state==='attack'&&f.move==='ult'&&!f.hitDone&&!this.ultLanded(f)},
  ultObjs(f){
   const a=[],um=f.def.moves.ult;
@@ -1841,7 +1870,7 @@ const G={
    else if(r.pd.big&&!q.pd.big){q.life=0;this.shatter(q,r)}
    else{q.life=r.life=0;this.shatter(q,r);this.shatter(r,q)}
   }
-  if(this.phase==='fight'){this.sarungDeflect();this.ultClash()}
+  if(this.phase==='fight'){this.sarungDeflect();this.sawitDeflect();this.ultClash()}
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
   for(const e of this.fx)e.t++;

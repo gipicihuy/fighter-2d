@@ -41,6 +41,9 @@ Sprite: `characters/hashim/` (atlas + sheet transparan; 89 frame, termasuk pohon
 - **COMBO SCALING:** damage tiap hit dalam satu combo turun 12% per hit (minimum 40%), dan muncul `N HITS` mulai hit ke-3. Combo otomatis berakhir dengan knockdown di batas `comboKd` tiap karakter.
 - **BURST (combo breaker):** saat kena combo (minimal 2 hit) dan energi >= 30, tekan **ULT (I)**: ledakan cahaya biru mendorong semua lawan di dekatmu, kamu bangun lagi dengan armor singkat. Cooldown 2,5 detik. Bot kadang melakukannya juga.
 
+## Tangkisan sawit Raja Madura
+Raja Madura bisa menangkis **lemparan sawit kecil CEO SAWIT (skill dasar, 3 jalur)** pakai **serangan dasar (punch / kick / heavy)**: kalau sawit masuk jangkauan pukulan saat ayunan aktif, sawitnya pecah berterbangan (efek sawit melayang + serpihan + cincin emas), muncul teks `NANGKIS SAWIT!`, Madura tidak kena damage dan dapat +10 energi. Jangkauan tangkisan mengikuti jangkauan serangan (tendangan lebih jauh), jadi timing dan jarak tetap menentukan. ULT sawit raksasa tidak bisa ditangkis dengan serangan dasar (tetap lewat Cambuk Sarung / parry). Bot Madura juga kadang menangkis dengan punch/kick (peluang ikut level kesulitan).
+
 ## Jalankan
 ```
 python serve.py        # lalu buka http://localhost:3000
