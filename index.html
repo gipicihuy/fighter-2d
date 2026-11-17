@@ -100,7 +100,7 @@ const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HA
    fire = frame saat proyektil keluar   kd = knockdown   end = jeda setelah animasi (tick @60fps) */
 // pengali damage: atk = damage keluar penyerang; def = damage masuk ke yang diserang; vs = override def untuk penyerang tertentu (per id)
 const scl=(att,def,v)=>{const d=def.def,r=d.vs&&d.vs[att.id]!=null?d.vs[att.id]:(d.def||1);return Math.max(1,Math.round(v*(att.def.atk||1)*r))};
-const CLASH_DMG=22; // damage tiap karakter saat dua ULT beradu (dikali pengali def masing-masing)
+const CLASH_DMG=40,CLASH_R=360; // damage MAKSIMUM tepat di titik benturan; turun seiring jarak (damage falloff), radius CLASH_R
 const A_=(frames,fps,loop)=>({frames,fps:fps||1,loop:!!loop});
 const rng=(p,a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(p+String(i).padStart(2,'0'));return o};
 const angWrap=a=>{while(a>Math.PI)a-=6.2832;while(a<-Math.PI)a+=6.2832;return a};
@@ -903,7 +903,7 @@ function koSpawns(k,u,dt,env,C,tx,ty){
 }
 
 const G={
- phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,clashT:0,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
+ phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,clashT:0,clashSlow:0,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
  chars:{},fx:[],interp:false,alpha:1,enemies:[],allies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
  begin(p1id,bid,level,n,t){
   SND.stopKO();this.koFx=null;
@@ -1271,13 +1271,14 @@ const G={
    if(pt)this.resolveClash(a,b,pt);
   }
  },
- resolveClash(a,b,pt){ // OVERPOWER: dua ULT beradu -> meledak, KEDUANYA tetap kena damage & terpental
+ resolveClash(a,b,pt){ // OVERPOWER + DAMAGE FALLOFF: makin dekat ke titik benturan makin parah (jarak yang menentukan, bukan pengali atk/def)
   for(const f of[a,b]){
-   const o=f===a?b:a,dir=f.x>=pt.x?1:-1,um=f.def.moves.ult;
+   const dir=f.x>=pt.x?1:-1,um=f.def.moves.ult;
    f.snake=null;f.drain=null;
    if(um&&um.proj)for(const p of this.projs)if(p.owner===f&&p.pd===um.proj)p.life=0;
-   f.hp=Math.max(1,f.hp-scl(o,f,CLASH_DMG)); // tidak sampai KO ganda
-   f.knockdown(dir,9);f.vy=Math.max(f.vy,6.4);f.floatT=0;
+   const d=Math.hypot(f.x-pt.x,(f.y+50)-pt.y),fr=Math.max(.2,1-d/CLASH_R); // 1 = tepat di pusat, 0.2 = jauh
+   f.clashFr=fr;f.hp=Math.max(1,f.hp-Math.max(4,Math.round(CLASH_DMG*fr))); // tidak sampai KO ganda
+   f.knockdown(dir,5+6*fr);f.vy=Math.max(f.vy,3.6+3.6*fr);f.floatT=0;
   }
   this.clashFx(pt.x,pt.y,a,b);
  },
@@ -1306,7 +1307,31 @@ const G={
    for(let i=0;i<10;i++)this.fx.push({k:'puff',x:f.x-(rd()-.5)*90,y:3,t:-Math.floor(rd()*8),max:36,r0:12,r1:34+rd()*26,dx:(rd()-.5)*80,rise:16+rd()*30});
   }
   for(let i=0;i<14;i++)this.fx.push({k:'puff',x:x+(rd()-.5)*320,y:3,t:-Math.floor(rd()*10),max:40,r0:14,r1:40+rd()*30,dx:(rd()-.5)*100,rise:12+rd()*28}); // debu menyebar luas
-  this.shake=Math.max(this.shake,62);this.stop=Math.max(this.stop,12);this.flash=Math.max(this.flash,7);
+  { // ===== EFEK GILA =====
+   const bs=[];for(let i=0;i<16;i++){const an=i/16*6.2832+rd()*.3,L=170+rd()*330,n=14,pp=new Float32Array(n*2);
+    for(let k=0;k<n;k++){const r=L*k/(n-1),jt=k&&k<n-1?1:0;pp[k*2]=Math.cos(an)*r+jt*(rd()-.5)*24;pp[k*2+1]=Math.sin(an)*r*.8+jt*(rd()-.5)*24}
+    bs.push({p:pp,n,w:1.4+rd()*2.2})}
+   this.fx.push({k:'bolts',x,y,t:0,max:34,bs}); // petir menyambar ke segala arah
+   this.fx.push({k:'mushroom',x,y:0,t:0,max:110,h:R*.5,cr:R*.26,sw:R*.045}); // awan ledakan
+   const cs2=['#ffd54a','#ffffff','#ff5a3a','#7a1f0e','#ff9a1a'],sh2=[];
+   for(let i=0;i<110;i++){const an=rd()*6.2832,sp=3+rd()*13;sh2.push({vx:Math.cos(an)*sp,vy:Math.sin(an)*sp*.9+2.5,r:rd()*6.28,vr:(rd()-.5)*.6,s:3+rd()*8,c:cs2[i%5]})}
+   this.fx.push({k:'shards',x,y,t:0,max:70,ps:sh2});
+   for(const f of[a,b])if(f){const fr=f.clashFr||.5,fy=f.y+50,ps=[]; // dampak per karakter: makin dekat pusat makin besar
+    this.fx.push({k:'glow',x:f.x,y:fy,t:0,max:26,r0:20,r1:50+110*fr,c:'#fff3b0'});
+    this.fx.push({k:'ring',x:f.x,y:fy,t:0,max:26,r0:8,r1:50+120*fr,c:'#ffffff',c2:'#ffd54a',fl:1,lw:3,lw2:8});
+    for(let i=0;i<10+Math.round(34*fr);i++){const an=rd()*6.2832,sp=2+rd()*8*fr+rd()*3;ps.push({vx:Math.cos(an)*sp,vy:Math.sin(an)*sp+2,r:rd()*6.28,vr:(rd()-.5)*.5,s:2.5+rd()*5,c:cs2[i%5]})}
+    this.fx.push({k:'shards',x:f.x,y:fy,t:0,max:44,ps})}
+   [[170,.8],[360,.65],[600,.5]].forEach(([ms,kk],i)=>setTimeout(()=>{ // ledakan beruntun susulan
+    if(this.phase==='menu'||!this.p1)return;
+    const bx=x+(rd()-.5)*220*kk,by=y+(rd()-.5)*60;
+    this.fx.push({k:'glow',x:bx,y:by,t:0,max:24,r0:14,r1:150*kk,c:'#fff3b0'});
+    this.fx.push({k:'rays',x:bx,y:by,t:0,max:22,n:24,r0:10,r1:270*kk,c:i%2?'#ff9a1a':'#ffffff'});
+    this.fx.push({k:'ring',x:bx,y:by,t:0,max:32,r0:8,r1:300*kk,c:'#ffd54a',c2:'#ff7a1a',fl:.6,lw:4,lw2:9});
+    this.shake=Math.max(this.shake,40*kk);this.flash=Math.max(this.flash,4);SND.play(i%2?'heavy':'sawitboom');
+   },ms));
+   this.clashSlow=performance.now(); // slow-mo di momen benturan
+  }
+  this.shake=Math.max(this.shake,70);this.stop=Math.max(this.stop,12);this.flash=Math.max(this.flash,7);
   this.glareMax=26;this.glare=26;this.glareA=.28;
   SND.play('heavy');SND.play('block');SND.play('sawitboom');
  },
@@ -1477,6 +1502,7 @@ const G={
   this.koFx={t0:performance.now(),dur,victim:v,victimIsP1:v.side===1,wx:v.x,wy:v.y+50,s0:0,s1:0,s2:0,s3:0,a1:0,a2:0,last:0};
  },
  koTimeScale(){ // slow-mo singkat di momen impact (waktu nyata, tidak mempengaruhi sinkron audio)
+  if(this.clashSlow){const cu=(performance.now()-this.clashSlow)/1000;if(cu<1.2)return cu<.45?.2:.2+.8*((cu-.45)/.75);this.clashSlow=0}
   const k=this.koFx;if(!k)return 1;
   const u=(performance.now()-k.t0)/1000;
   return u<.7?.25:(u<1.6?.25+.75*((u-.7)/.9):1);
@@ -1868,6 +1894,16 @@ const G={
     ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.globalAlpha=1-pg;
     ctx.strokeStyle='#ff3b30';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(cx,cy);ctx.stroke();
     ctx.strokeStyle='#ffffff';ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(cx,cy);ctx.stroke();
+   }else if(e.k==='bolts'){
+    const grow=Math.min(1,e.t/5),fl=(Math.floor(e.t*.9)%2)?.55:1;
+    ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineJoin='round';
+    for(const b of e.bs){
+     const n=Math.max(2,Math.floor(b.n*grow));ctx.beginPath();ctx.moveTo(e.x+b.p[0],ey+b.p[1]);
+     for(let i=1;i<n;i++)ctx.lineTo(e.x+b.p[i*2],ey+b.p[i*2+1]);
+     ctx.globalAlpha=(1-pg)*.5*fl;ctx.strokeStyle='#ff7a1a';ctx.lineWidth=b.w*3.2;ctx.stroke();
+     ctx.globalAlpha=(1-pg)*fl;ctx.strokeStyle='#fff7d6';ctx.lineWidth=b.w;ctx.stroke();
+    }
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
    }else if(e.k==='cloths'){
     const vf=e.A&&e.A.vfx&&e.A.vfx.sarung&&e.A.frames[e.A.vfx.sarung[0]],hs=(e.A&&e.A.hs)||1;
     for(const pc of e.ps){
