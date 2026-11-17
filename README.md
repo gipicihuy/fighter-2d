@@ -94,10 +94,11 @@ Sprite semua karakter punya versi HD 2x (`spritesheet_hd.webp`, dipakai otomatis
 
 ULTI CAROK RAJA MADURA: sarung meluncur dari tangan seperti ular (berkelok, mengejar musuh terdekat berapa pun jaraknya, dijamin kena), membelit, menarik musuh dengan mulus (makin jauh makin lama), lalu celurit menyabet beruntun. Gerakannya sengaja diperlambat biar enak dilihat.
 
-Cambuk Sarung RAJA MADURA bisa menangkis ULT CEO SAWIT kalau timingnya pas (sarung berkelok mengikuti arah terbang sawit lalu menghancurkannya, +15 energi). Sarung dan ULT juga melengkung realistis saat Madura sedang melompat.
+Cambuk Sarung RAJA MADURA bisa menangkis ULT CEO SAWIT kalau timingnya pas (jendela parry dilebarkan: mulai 4-20 frame, jangkauan 70-160 px, toleransi tinggi lebih besar buat sawit raksasa homing; sarung berkelok mengikuti arah terbang sawit lalu menghancurkannya, +15 energi, +30 kalau yang ditangkis ULT sawit raksasa). Sarung dan ULT juga melengkung realistis saat Madura sedang melompat.
 
 AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sawit homing, sarung ular Madura) langsung ULT dari jarak jauh (zoning), tidak lagi lari dulu sampai dekat. ULT jarak dekat (Patrick, Karakter 1) tetap dipakai saat dekat.
 
 ## ULT clash & tangkisan sarung
 - Dua ULT beradu = **overpower**: keduanya kena damage dan terpental, dengan **damage falloff**: tepat di titik benturan damage maksimum (40), makin jauh makin kecil (min 20%), plus petir, awan ledakan, ledakan beruntun, dan slow-mo, shake besar, kubah + gelombang kejut selebar arena, pilar energi, retakan tanah, serpihan sawit & kain sarung beterbangan. Tidak ada teks.
-- **CEO SAWIT bisa menangkis sarung Madura** (Cambuk Sarung & ULT ular) dengan serangan dasar (punch/kick/heavy, kena kepala ular atau diayun saat dicambuk) atau skill dasar (sawit kecil memotong sarung). Berhasil = sarung batal, Madura terguncang, Sawit +15 energi. Bot Sawit juga kadang menangkis.
+- **CEO SAWIT bisa menangkis Cambuk Sarung Madura** dengan serangan dasar (punch/kick/heavy, diayun saat dicambuk) atau skill dasar. Berhasil = sarung batal, Madura terguncang, Sawit +15 energi. Bot Sawit juga kadang menangkis.
+- **ULT CAROK (ular sarung) jauh lebih susah ditangkis**: terlalu cepat & lentur buat ditinju, jadi punch/kick/heavy TIDAK bisa memotongnya. Cuma skill (sawit kecil) yang kena kepala ular, itu pun peluang 35% dan ada cooldown 7 detik. Bot Sawit ikut aturan yang sama.

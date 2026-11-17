@@ -182,7 +182,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:15,hit:[1,2],rx:[10,80],dmg:10,stun:18,kb:2.2,stop:4,end:5},
    heavy:{anim:'punch_heavy',fps:13,hit:[2,3],rx:[10,95],dmg:14,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
    // Special: Cambuk Sarung Sakti - menjerat dan menyentak musuh dari jarak jauh
-   skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,parry:true,parryWin:[6,16],parryZone:[55,115],pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
+   skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,parry:true,parryWin:[4,20],parryZone:[70,160],pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
    ult  :{anim:'skill_ultimate',fps:7,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,snake:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
           drain:{n:8,every:5,dmg:10,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
@@ -341,9 +341,9 @@ class Bot{
    const sn=foe.snake&&foe.snake.st==='fly'?foe.snake:null,wh=foe.state==='attack'&&foe.mdef&&(foe.mdef.sarung||foe.mdef.pull)&&!foe.mdef.snake&&!foe.hitDone?foe.mdef:null;
    if(!sn&&!wh)this.sgRoll=null;
    else{
-    if(this.sgRoll==null)this.sgRoll=Math.random()<.3+L.dodge*.6;
-    const near=sn?Math.hypot(sn.hx-me.x,(GROUND-sn.hy)-(me.y+50))<120:Math.abs(foe.x-me.x)<=wh.rx[1]+10;
-    if(this.sgRoll&&near){I.left=I.right=I.up=I.down=0;I.attack=me.en>=20&&Math.random()<.4?'skill':(Math.random()<.5?'punch':'kick');this.timer=22;this.sgRoll=null;return I}
+    if(this.sgRoll==null)this.sgRoll=Math.random()<(sn?.15+L.dodge*.3:.3+L.dodge*.6);
+    const near=sn?Math.hypot(sn.hx-me.x,(GROUND-sn.hy)-(me.y+50))<90:Math.abs(foe.x-me.x)<=wh.rx[1]+10;
+    if(this.sgRoll&&near&&(!sn||(me.en>=20&&G.pt>=(me.udT||0)))){I.left=I.right=I.up=I.down=0;I.attack=sn?'skill':(me.en>=20&&Math.random()<.4?'skill':(Math.random()<.5?'punch':'kick'));this.timer=22;this.sgRoll=null;return I}
    }
   }
   const fu=foe.state==='attack'&&foe.move==='ult'&&!foe.beamed&&!foe.fired&&!!foe.mdef.hit;
@@ -383,9 +383,9 @@ class Bot{
   const hom=me.def.moves.skill&&me.def.moves.skill.parry&&G.projs.find(p=>p.owner===foe&&p.pd.spread&&p.tgt===me&&p.life>0&&((p.vx>0)===(me.x>p.x)));
   if(!hom)this.parryRoll=null;
   else if((me.state==='idle'||me.state==='walk')&&me.en>=20&&!(me.cds&&me.cds.skill>0)){
-   if(this.parryRoll==null)this.parryRoll=Math.random()<.35+L.dodge*.6;
+   if(this.parryRoll==null)this.parryRoll=Math.random()<.5+L.dodge*.5;
    const pdx=Math.abs(hom.x-me.x);
-   if(this.parryRoll&&pdx<=190&&pdx>=150){I.left=I.right=I.up=I.down=0;I.attack='skill';this.timer=26;this.parryRoll=null;return I}
+   if(this.parryRoll&&pdx<=240&&pdx>=130){I.left=I.right=I.up=I.down=0;I.attack='skill';this.timer=26;this.parryRoll=null;return I}
   }
   if(this.timer>0){this.timer--;return I}
   I.left=I.right=I.up=I.down=0;
@@ -454,7 +454,7 @@ class Fighter{
    if(p.tgt&&p.tgt!==this)continue;
    const dx=(p.x-this.x)*this.face;
    if(dx<m.parryZone[0]||dx>m.parryZone[1])continue;
-   if(Math.abs(GROUND-p.y-hand.y)>95)continue;
+   if(Math.abs(GROUND-p.y-hand.y)>(p.pd.big?135:95))continue;
    if(dx<bd){bd=dx;best=p}
   }
   if(!best)return;
@@ -474,7 +474,7 @@ class Fighter{
    G.shatter(p,{pd:{big:true},life:0,owner:this});
    G.fx.push({k:'banner',x:this.x,y:this.y+125,t:0,max:44,s:'NANGKIS!',sz:15,c:'#ffd54a'});
    G.fx.push({k:'ring',x:p.x,y:p.y,t:0,max:20,r0:6,r1:70,c:'#ff6a5a',c2:'#ffd54a',fl:1,lw:2.5,lw2:5});
-   this.en=Math.min(MAXEN,this.en+15);
+   this.en=Math.min(MAXEN,this.en+(p.pd.big?30:15));
    G.shake=Math.max(G.shake,8);G.stop=Math.max(G.stop,5);
    SND.play('whip');SND.play('block');
   }
@@ -1222,24 +1222,30 @@ const G={
   for(const v of all){
    if(!v.def.sarungGuard||v.hp<=0)continue;
    for(const o of this.opps(v)){
-    if(o.hp<=0||o.state!=='attack')continue;
+    if(o.hp<=0||o.state!=='attack'){o.udRoll=null;continue}
     const sn=o.snake&&o.snake.st==='fly'?o.snake:null,
      wh=o.mdef&&(o.mdef.sarung||o.mdef.pull)&&!o.mdef.snake&&!o.hitDone&&!o.parry&&o.mdef.hit&&o.frameIdx()<=o.mdef.hit[1]?o.mdef:null;
-    if(!sn&&!wh)continue;
+    if(!sn&&!wh){o.udRoll=null;continue}
+    if(sn){ // ULT CAROK: ular sarung terlalu cepat & lentur buat ditinju; cuma skill (sawit kecil) yang bisa memotong, peluang 35%, cooldown 7 detik
+     if(this.pt<(v.udT||0)||v.move!=='skill')continue;
+     if(o.udRoll==null)o.udRoll=Math.random()<.35;
+     if(!o.udRoll)continue;
+    }
     let ok=false,pj=null;
-    if(v.state==='attack'&&v.mdef&&BASIC.includes(v.move)&&v.mdef.hit){ // serangan dasar: kepala ular kena hitbox / ayunan saat dicambuk
+    if(!sn&&v.state==='attack'&&v.mdef&&BASIC.includes(v.move)&&v.mdef.hit){ // serangan dasar: kepala ular kena hitbox / ayunan saat dicambuk
      const idx=v.frameIdx(),hb=v.hitbox();
      if(sn)ok=idx>=v.mdef.hit[0]-1&&idx<=v.mdef.hit[1]+1&&sn.hx>hb.x0-34&&sn.hx<hb.x1+34&&(GROUND-sn.hy)>hb.y0-34&&(GROUND-sn.hy)<hb.y1+34;
      else ok=v.t<=18&&Math.abs(o.x-v.x)<=wh.rx[1]+20;
     }
     if(!ok&&v.state==='attack'&&v.move==='skill'){ // skill dasar: sawit kecil memotong sarung
      if(wh)ok=v.t<=22&&Math.abs(o.x-v.x)<=wh.rx[1]+20;
-     else{const sp=v.def.moves.skill&&v.def.moves.skill.proj;if(sp)for(const p of this.projs)if(p.owner===v&&p.pd===sp&&p.life>0&&Math.hypot(sn.hx-p.x,(GROUND-sn.hy)-p.y)<64){ok=true;pj=p;break}}
+     else{const sp=v.def.moves.skill&&v.def.moves.skill.proj;if(sp)for(const p of this.projs)if(p.owner===v&&p.pd===sp&&p.life>0&&Math.hypot(sn.hx-p.x,(GROUND-sn.hy)-p.y)<46){ok=true;pj=p;break}}
     }
     if(!ok)continue;
     const dir=o.x>=v.x?1:-1,px=sn?sn.hx:(v.x+o.x)/2,py=sn?GROUND-sn.hy:55;
     o.snake=null;o.hitDone=true;o.gotHit(dir,3.4,24); // sarung batal, Madura terguncang
     if(pj)pj.life=0;
+    if(sn)v.udT=this.pt+420;
     v.en=Math.min(MAXEN,v.en+15);
     this.fx.push({k:'glow',x:px,y:py,t:0,max:20,r0:12,r1:70,c:'#fff3b0'});
     this.fx.push({k:'rays',x:px,y:py,t:0,max:18,n:20,r0:8,r1:90,c:'#ffd54a'});
