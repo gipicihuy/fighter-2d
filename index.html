@@ -393,7 +393,8 @@ class Bot{
   }
   if(pr&&rnd()<L.block){if(rnd()<.7){I.down=1;this.timer=22}else{I.up=1;I[toward]=1;this.timer=16}return I}
   if(foe.state==='attack'&&d<95&&rnd()<L.block){I.down=1;this.timer=18+rnd()*8;return I}
-  if(has('ult')&&me.en>=ULTC&&d<230&&rnd()<.6){I.attack='ult';this.timer=50;return I}
+  const um=me.def.moves.ult,ur=!um?0:(um.snake?1100:(um.proj&&um.proj.homing?800:230));
+  if(has('ult')&&me.en>=ULTC&&d<ur&&rnd()<(d<230?.6:.4)){I.attack='ult';this.timer=50;return I}
   if(d>160){
    if(has('skill')&&me.en>=20&&rnd()<.3){I.attack='skill';this.timer=34}
    else{I[toward]=1;this.timer=next+10;if(me.def.dash&&rnd()<.4)I.dash=1}

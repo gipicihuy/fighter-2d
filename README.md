@@ -95,3 +95,5 @@ Sprite semua karakter punya versi HD 2x (`spritesheet_hd.webp`, dipakai otomatis
 ULTI CAROK RAJA MADURA: sarung meluncur dari tangan seperti ular (berkelok, mengejar musuh terdekat berapa pun jaraknya, dijamin kena), membelit, menarik musuh dengan mulus (makin jauh makin lama), lalu celurit menyabet beruntun. Gerakannya sengaja diperlambat biar enak dilihat.
 
 Cambuk Sarung RAJA MADURA bisa menangkis ULT CEO SAWIT kalau timingnya pas (sarung berkelok mengikuti arah terbang sawit lalu menghancurkannya, +15 energi). Sarung dan ULT juga melengkung realistis saat Madura sedang melompat.
+
+AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sawit homing, sarung ular Madura) langsung ULT dari jarak jauh (zoning), tidak lagi lari dulu sampai dekat. ULT jarak dekat (Patrick, Karakter 1) tetap dipakai saat dekat.
