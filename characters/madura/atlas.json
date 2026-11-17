@@ -8,7 +8,7 @@
   1500,
   720
  ],
- "notes": "Sprite RAJA MADURA, di-key dari background hijau. Frame menghadap kanan. pivot=titik pijakan (kaki).",
+ "notes": "Sprite RAJA MADURA (sheet kualitas lebih bagus, di-key dari background hitam). Frame menghadap kanan. pivot=titik pijakan (kaki).",
  "frames": {
   "w00": {
    "x": 0,
