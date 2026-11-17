@@ -93,3 +93,5 @@ Bot Hashim kadang **nangkis dengan serudukan badak** (counter) saat lawan menyer
 Sprite semua karakter punya versi HD 2x (`spritesheet_hd.webp`, dipakai otomatis; kalau gagal dimuat, game jatuh balik ke sheet asli). Posisi tangan per frame disimpan di atlas (`hand`) supaya sarung RAJA MADURA keluar dari tangan.
 
 ULTI CAROK RAJA MADURA: sarung meluncur dari tangan seperti ular (berkelok, mengejar musuh terdekat berapa pun jaraknya, dijamin kena), membelit, menarik musuh dengan mulus (makin jauh makin lama), lalu celurit menyabet beruntun. Gerakannya sengaja diperlambat biar enak dilihat.
+
+Cambuk Sarung RAJA MADURA bisa menangkis ULT CEO SAWIT kalau timingnya pas (sarung berkelok mengikuti arah terbang sawit lalu menghancurkannya, +15 energi). Sarung dan ULT juga melengkung realistis saat Madura sedang melompat.

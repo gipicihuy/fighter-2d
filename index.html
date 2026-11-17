@@ -181,7 +181,7 @@ const CHARDEF={
    kick :{anim:'kick',fps:15,hit:[1,2],rx:[10,80],dmg:10,stun:18,kb:2.2,stop:4,end:5},
    heavy:{anim:'punch_heavy',fps:13,hit:[2,3],rx:[10,95],dmg:14,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
    // Special: Cambuk Sarung Sakti - menjerat dan menyentak musuh dari jarak jauh
-   skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
+   skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,parry:true,parryWin:[6,16],parryZone:[55,115],pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
    ult  :{anim:'skill_ultimate',fps:7,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,snake:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
           drain:{n:8,every:5,dmg:10,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
@@ -370,6 +370,13 @@ class Bot{
    if(this.bigRoll&&bd<=105&&bd>=70){I.left=I.right=I.down=0;I.up=1;this.timer=24;return I}
    if(!this.bigRoll&&bd<=100){I.left=I.right=I.up=0;I.down=1;this.timer=16;return I}
   }
+  const hom=me.def.moves.skill&&me.def.moves.skill.parry&&G.projs.find(p=>p.owner===foe&&p.pd.spread&&p.tgt===me&&p.life>0&&((p.vx>0)===(me.x>p.x)));
+  if(!hom)this.parryRoll=null;
+  else if((me.state==='idle'||me.state==='walk')&&me.en>=20&&!(me.cds&&me.cds.skill>0)){
+   if(this.parryRoll==null)this.parryRoll=Math.random()<.35+L.dodge*.6;
+   const pdx=Math.abs(hom.x-me.x);
+   if(this.parryRoll&&pdx<=190&&pdx>=150){I.left=I.right=I.up=I.down=0;I.attack='skill';this.timer=26;this.parryRoll=null;return I}
+  }
   if(this.timer>0){this.timer--;return I}
   I.left=I.right=I.up=I.down=0;
   const rnd=Math.random,dx=foe.x-me.x,d=Math.abs(dx),toward=dx>0?'right':'left',away=dx>0?'left':'right';
@@ -414,7 +421,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,snake:null,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
+  Object.assign(this,{x,ox:x,oy:0,age:0,snake:null,parry:null,parryDone:false,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -422,12 +429,46 @@ class Fighter{
   if(typeof a==='string'){const s=this.A.animations[a]||this.A.animations[this.def.anims.idle];return{frames:s.frames,fps:s.fps,loop:!!s.loop}}
   return a;
  }
- setState(s,key){this.state=s;if(s!=='attack')this.snake=null;this.an=this.resolve(key);this.t=0}
+ setState(s,key){this.state=s;if(s!=='attack'){this.snake=null;this.parry=null}this.an=this.resolve(key);this.t=0}
+ tryParry(m){
+  const hand=this.handPos();
+  let best=null,bd=1e9;
+  for(const p of G.projs){
+   if(p.life<=0||!p.pd.spread||p.owner===this||G.opps(this).indexOf(p.owner)<0)continue;
+   if(p.tgt&&p.tgt!==this)continue;
+   const dx=(p.x-this.x)*this.face;
+   if(dx<m.parryZone[0]||dx>m.parryZone[1])continue;
+   if(Math.abs(GROUND-p.y-hand.y)>95)continue;
+   if(dx<bd){bd=dx;best=p}
+  }
+  if(!best)return;
+  this.parryDone=true;
+  const an=best.ang!=null?best.ang:(best.vx>=0?0:Math.PI);
+  this.parry={p:best,t:0,ex:best.x,ey:GROUND-best.y,hx:Math.cos(an),hy:-Math.sin(an)};
+ }
+ stepParry(){
+  const pr=this.parry,p=pr.p;
+  pr.t++;
+  if(p.life>0){
+   const an=p.ang!=null?p.ang:(p.vx>=0?0:Math.PI);
+   pr.ex=p.x;pr.ey=GROUND-p.y;pr.hx=Math.cos(an);pr.hy=-Math.sin(an);
+  }
+  if(pr.t===6&&p.life>0){
+   p.life=0;
+   G.shatter(p,{pd:{big:true},life:0,owner:this});
+   G.fx.push({k:'banner',x:this.x,y:this.y+125,t:0,max:44,s:'NANGKIS!',sz:15,c:'#ffd54a'});
+   G.fx.push({k:'ring',x:p.x,y:p.y,t:0,max:20,r0:6,r1:70,c:'#ff6a5a',c2:'#ffd54a',fl:1,lw:2.5,lw2:5});
+   this.en=Math.min(MAXEN,this.en+15);
+   G.shake=Math.max(G.shake,8);G.stop=Math.max(G.stop,5);
+   SND.play('whip');SND.play('block');
+  }
+  if(pr.t>=16)this.parry=null;
+ }
  launchSnake(m){
   const tg=G.nearest(this);
   if(tg.x!==this.x)this.face=tg.x>this.x?1:-1;
-  const h=this.handPos();
-  this.snake={st:'fly',t:0,pt:0,rt:0,tgt:tg,hx:h.x,hy:h.y,ang:this.face>0?-.6:Math.PI+.6,trail:[{x:h.x,y:h.y}]};
+  const h=this.handPos(),pit=-.5+Math.min(1.3,this.y*.016);
+  this.snake={st:'fly',t:0,pt:0,rt:0,tgt:tg,hx:h.x,hy:h.y,ang:this.face>0?pit:Math.PI-pit,trail:[{x:h.x,y:h.y}]};
  }
  stepSnake(m){
   const sn=this.snake;
@@ -485,7 +526,7 @@ class Fighter{
   if(m.cd)this.cds[a]=m.cd;
   const base=typeof m.anim==='string'?this.A.animations[m.anim]:m.anim;
   this.move=a;this.mdef=m;this.hitDone=false;this.fired=false;
-  this.state='attack';this.an={frames:base.frames,fps:(m.fps||base.fps)*(a==='ult'?1:ATK_TEMPO),loop:false};this.t=0;this.beamed=false;
+  this.state='attack';this.an={frames:base.frames,fps:(m.fps||base.fps)*(a==='ult'?1:ATK_TEMPO),loop:false};this.t=0;this.beamed=false;this.parryDone=false;this.parry=null;
   if(a==='ult'&&this.y>0&&this.def.floatUlt){this.slowFall=true;this.vy=Math.min(this.vy,1.2)}
   if(a==='ult')G.startFreeze(this);else if(a!=='skill')SND.play('swing');
   return true;
@@ -586,6 +627,7 @@ class Fighter{
    if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;this.actStart=this.t;SND.play(m.sound||'beam');G.shake=Math.max(G.shake,10)}
    if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.fireProj(this,m)}
    if(m.snake&&this.beamed){if(!this.snake)this.launchSnake(m);this.stepSnake(m)}
+   if(m.parry){if(!this.parryDone&&this.t>=m.parryWin[0]&&this.t<=m.parryWin[1])this.tryParry(m);if(this.parry)this.stepParry()}
    if(!m.snake&&!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
     const hb=this.hitbox();
     for(const o of G.opps(this).slice().sort((u,v)=>Math.abs(u.x-this.x)-Math.abs(v.x-this.x))){
@@ -1264,12 +1306,20 @@ const G={
   const tip=this.ribbon(pts,amp,0,11);
   if(tip&&sn.st!=='slash')this.crescent(tip);
  },
+ drawParry(f){
+  const pr=f.parry,hp=f.handPos(),k=pr.t<=7?Math.min(1,(pr.t+1)/5):Math.max(0,1-(pr.t-7)/9);
+  if(k<=.02)return;
+  const ex=pr.ex,ey=pr.ey,cx=ex-pr.hx*90,cy=ey-pr.hy*90,pts=[];
+  for(let i=0;i<=16;i++){const u=i/16*k,v=1-u;pts.push({x:v*v*hp.x+2*u*v*cx+u*u*ex,y:v*v*hp.y+2*u*v*cy+u*u*ey})}
+  const tip=this.ribbon(pts,10,1.3,11);
+  if(tip)this.crescent(tip);
+ },
  drawSarung(a,hx,hy,tx,ty,p,ph){
   if(a.mdef&&a.mdef.snake&&a.move)return true;
   const dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
   if(L<24)return true;
-  const pts=[];
-  for(let i=0;i<=14;i++){const u=i/14;pts.push({x:hx+dx*u,y:hy+dy*u})}
+  const ex=hx+dx,ey=hy+dy,cx=hx+dx*.5,cy=Math.min(hy,ey)-12-Math.abs(dy)*.3,pts=[];
+  for(let i=0;i<=14;i++){const u=i/14,v=1-u;pts.push({x:v*v*hx+2*u*v*cx+u*u*ex,y:v*v*hy+2*u*v*cy+u*u*ey})}
   const tip=this.ribbon(pts,7,ph||0,11);
   if(tip)this.crescent(tip);
   return true;
@@ -1593,11 +1643,12 @@ const G={
   this.drawSummons(ctx);
   for(const f of[this.p1,...this.allies,...this.enemies])f.draw(ctx);
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.snake&&f.snake.st!=='done')this.drawSnake(f);
-  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.mdef.snake&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
-   const m=f.mdef,hp=f.handPos(),L=m.sarung?460:m.rx[1],pr=Math.min(1,f.t/(m.sarung?12:7)),e1=1-Math.pow(1-pr,2);
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.parry)this.drawParry(f);
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.mdef.snake&&!f.parry&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
+   const m=f.mdef,hp=f.handPos(),L=(m.sarung?460:m.rx[1])*(f.y>0?.8:1),gy=f.y>0?GROUND-36:hp.y,pr=Math.min(1,f.t/(m.sarung?12:7)),e1=1-Math.pow(1-pr,2);
    ctx.save();
-   this.drawSarung(f,hp.x,hp.y+4,hp.x+f.face*L,hp.y+6,e1,2.4);
-   this.drawSarung(f,hp.x,hp.y,hp.x+f.face*L,hp.y,e1);
+   this.drawSarung(f,hp.x,hp.y+4,hp.x+f.face*L,gy+6,e1,2.4);
+   this.drawSarung(f,hp.x,hp.y,hp.x+f.face*L,gy,e1);
    ctx.restore();
   }
   for(const f of[this.p1,...this.allies,...this.enemies])if(f.drain&&f.drain.sarung&&f.drain.att){
