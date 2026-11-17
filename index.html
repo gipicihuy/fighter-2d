@@ -175,6 +175,7 @@ const CHARDEF={
   }},
  madura:{
   color:'#d32f2f',djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
+  ultGuard:{parryWin:16,parryMul:.2,luck:.15,dmgMul:.35,cd:360,armor:60,text:'SARUNG SAKTI!'},
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['blk'],1,true),jump:A_(['jump'],1,true),dash:A_(['u00','u01','u02','u03','u04','u05'],14,true)},
   moves:{
@@ -362,13 +363,29 @@ class Bot{
     if(this.parryRoll&&Math.abs(hp.x-me.x)<=75){I.left=I.right=I.up=0;I.down=1;this.timer=14;return I}
    }
   }
-  { // badak lawan menyeruduk: bot kadang lompat menghindar
+  { // badak lawan menyeruduk: bot kadang lompat menghindar, atau Raja Madura menangkis dengan sarung / blok
    const rn=G.summons.find(q=>q.k==='rhino'&&q.owner===foe&&q.t>=0&&q.state==='run'&&((q.dir>0)===(me.x>q.x))&&Math.abs(q.x-me.x)<260);
    if(!rn)this.rhRoll=null;
    else if(me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
     if(this.rhRoll==null)this.rhRoll=Math.random()<L.dodge;
     const rd2=Math.abs(rn.x-me.x);
-    if(this.rhRoll&&rd2<=170&&rd2>=90){I.left=I.right=I.down=0;I.up=1;this.timer=24;return I}
+    if(this.rhRoll){
+     if(me.def.moves.ult&&me.def.moves.ult.sarung){ // Raja Madura: tangkis pakai skill sarung atau blok
+      I.left=I.right=I.up=0;
+      if(me.en>=20&&rd2<=200&&rd2>=110&&Math.random()<.6){I.attack='skill';this.timer=26;return I}
+      else if(rd2<=140){I.down=1;this.timer=22;return I}
+     }else if(rd2<=170&&rd2>=90){I.left=I.right=I.down=0;I.up=1;this.timer=24;return I}
+    }
+   }
+  }
+  { // pohon sawit lawan mau meletus: Raja Madura tangkis dengan sarung / blok
+   const tr=G.summons.find(q=>q.k==='tree'&&q.owner===foe&&q.t<0&&Math.abs(q.x-me.x)<=q.sp.w+25);
+   if(tr&&me.y===0&&(me.state==='idle'||me.state==='walk'||me.state==='block')){
+    if(me.def.moves.ult&&me.def.moves.ult.sarung){
+     I.left=I.right=I.up=0;
+     if(me.en>=20&&Math.random()<.5){I.attack='skill';this.timer=22;return I}
+     else{I.down=1;this.timer=26;return I}
+    }
    }
   }
   // sawit raksasa (proyektil ULT): bot lompat pas jaraknya pas (kalau lolos roll dodge), atau blok
@@ -457,6 +474,18 @@ class Fighter{
    if(Math.abs(GROUND-p.y-hand.y)>(p.pd.big?135:95))continue;
    if(dx<bd){bd=dx;best=p}
   }
+  if(!best){
+   for(const s of G.summons){
+    if(s.dead||s.owner===this||G.opps(this).indexOf(s.owner)<0)continue;
+    if(s.k==='rhino'&&s.state==='run'){
+     const dx=(s.x-this.x)*this.face;
+     if(dx>=30&&dx<=220){best={k:'rhino',s,x:s.x,y:35,ang:s.dir>0?0:Math.PI,owner:s.owner};break}
+    }else if(s.k==='tree'&&s.t<=2){
+     const dx=Math.abs(s.x-this.x);
+     if(dx<=m.parryZone[1]+30){best={k:'tree',s,x:s.x,y:50,ang:-Math.PI/2,owner:s.owner};break}
+    }
+   }
+  }
   if(!best)return;
   this.parryDone=true;
   const an=best.ang!=null?best.ang:(best.vx>=0?0:Math.PI);
@@ -468,15 +497,32 @@ class Fighter{
   if(p.life>0){
    const an=p.ang!=null?p.ang:(p.vx>=0?0:Math.PI);
    pr.ex=p.x;pr.ey=GROUND-p.y;pr.hx=Math.cos(an);pr.hy=-Math.sin(an);
+  }else if(p.k==='rhino'&&p.s){
+   pr.ex=p.s.x;pr.ey=GROUND-35;
   }
-  if(pr.t===6&&p.life>0){
-   p.life=0;
-   G.shatter(p,{pd:{big:true},life:0,owner:this});
-   G.fx.push({k:'banner',x:this.x,y:this.y+125,t:0,max:44,s:'NANGKIS!',sz:15,c:'#ffd54a'});
-   G.fx.push({k:'ring',x:p.x,y:p.y,t:0,max:20,r0:6,r1:70,c:'#ff6a5a',c2:'#ffd54a',fl:1,lw:2.5,lw2:5});
-   this.en=Math.min(MAXEN,this.en+(p.pd.big?30:15));
-   G.shake=Math.max(G.shake,8);G.stop=Math.max(G.stop,5);
-   SND.play('whip');SND.play('block');
+  if(pr.t===6){
+   if(p.life>0){
+    p.life=0;
+    G.shatter(p,{pd:{big:true},life:0,owner:this});
+    G.fx.push({k:'banner',x:this.x,y:this.y+125,t:0,max:44,s:'NANGKIS! SARUNG SAKTI!',sz:15,c:'#ffd54a'});
+    G.fx.push({k:'ring',x:p.x,y:p.y,t:0,max:20,r0:6,r1:70,c:'#ff6a5a',c2:'#ffd54a',fl:1,lw:2.5,lw2:5});
+    this.en=Math.min(MAXEN,this.en+(p.pd.big?30:15));
+    G.shake=Math.max(G.shake,8);G.stop=Math.max(G.stop,5);
+    SND.play('whip');SND.play('block');
+   }else if(p.k==='rhino'&&p.s&&p.s.state==='run'){
+    p.s.state='stop';p.s.st=0;
+    G.banner2(this.x,125,'NANGKIS! SARUNG SAKTI!',16,'#ffd54a');
+    G.fx.push({k:'ring',x:p.s.x,y:40,t:0,max:24,r0:8,r1:120,c:'#ffd54a',c2:'#d32f2f',fl:1,lw:3.5,lw2:7});
+    this.en=Math.min(MAXEN,this.en+25);
+    G.shake=Math.max(G.shake,14);G.stop=Math.max(G.stop,8);
+    SND.play('whip');SND.play('block');
+   }else if(p.k==='tree'&&p.s){
+    G.treeHitFx(p.s,p.s.x,50,true);
+    G.banner2(this.x,125,'NANGKIS! SARUNG SAKTI!',16,'#ffd54a');
+    this.en=Math.min(MAXEN,this.en+20);
+    G.shake=Math.max(G.shake,12);G.stop=Math.max(G.stop,6);
+    SND.play('whip');SND.play('block');
+   }
   }
   if(pr.t>=16)this.parry=null;
  }
@@ -1087,8 +1133,18 @@ const G={
    for(const f of this.opps(o)){
     if(!this.canUlt(f,sp)||Math.abs(f.x-s.x)>sp.w)continue;
     const side=f.x>=s.x?1:-1;
-    if(f.state==='block'&&f.y===0&&!sp.pierce){
-     f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=side*3;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');this.stop=Math.max(this.stop,4);continue;
+    const isMadura=f.def.moves.ult&&f.def.moves.ult.sarung;
+    const maduraNangkis=isMadura&&(f.state==='block'||(f.state==='attack'&&f.move==='skill'))&&f.y===0;
+    if((f.state==='block'&&f.y===0&&!sp.pierce)||maduraNangkis){
+     f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=side*2.5;
+     SND.play('block');SND.play('whip');
+     this.spark(f.x,f.y+55,'#ffd54a');this.spark(f.x,f.y+55,'#d32f2f');
+     this.stop=Math.max(this.stop,6);
+     this.fx.push({k:'ring',x:f.x,y:f.y+40,t:0,max:22,r0:8,r1:100,c:'#ffd54a',c2:'#d32f2f',fl:1,lw:3,lw2:6});
+     this.banner2(f.x,125,maduraNangkis?'NANGKIS! SARUNG SAKTI!':'BLOK!',14,maduraNangkis?'#ffd54a':'#8ecbff');
+     f.en=Math.min(MAXEN,f.en+15);
+     this.treeHitFx(s,f.x,50,false);
+     continue;
     }
     if(!sp.pierce&&f.tryHaki(o,o.mdef,s.dir))continue;
     this.hurt(o,f,sp.dmg*Math.max(.6,1-.08*f.combo),sp);
@@ -1155,9 +1211,16 @@ const G={
      if(!(rn<=36&&rp>=-22))continue;
      if(f.y>=40&&!f.juggle)continue; // lompat = badak lewat di bawah (kecuali lagi melayang gara-gara sawit)
      if(!(sp.pierce?this.canUlt(f,sp):(sp.antiAir?(f.juggle||f.vulnerable()):f.vulnerable())))continue;
-     if(!sp.pierce&&f.state==='block'&&f.y===0){ // diblok: badak mental
-      f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*5;SND.play('block');this.spark(f.x,f.y+55,'#8ecbff');
-      this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,6);s.state='stop';s.st=0;this.banner2(f.x,110,'BLOK!',12,'#8ecbff');break;
+     const isMadura=f.def.moves.ult&&f.def.moves.ult.sarung;
+     const maduraNangkis=isMadura&&(f.state==='block'||(f.state==='attack'&&f.move==='skill'))&&f.y===0;
+     if((!sp.pierce&&f.state==='block'&&f.y===0)||maduraNangkis){ // diblok: badak mental
+      f.hp=Math.max(1,f.hp-scl(o,f,sp.chip));f.vx=dir*4;SND.play('block');SND.play('whip');
+      this.spark(f.x,f.y+55,'#ffd54a');this.spark(f.x,f.y+55,'#d32f2f');
+      this.shake=Math.max(this.shake,14);this.stop=Math.max(this.stop,8);s.state='stop';s.st=0;
+      this.fx.push({k:'ring',x:f.x,y:f.y+40,t:0,max:24,r0:8,r1:110,c:'#ffd54a',c2:'#d32f2f',fl:1,lw:3,lw2:7});
+      this.banner2(f.x,110,maduraNangkis?'NANGKIS! SARUNG SAKTI!':'BLOK!',14,maduraNangkis?'#ffd54a':'#8ecbff');
+      f.en=Math.min(MAXEN,f.en+20);
+      break;
      }
      // FIX: badak (skill dasar) tidak bisa di-haki dodge lagi. Sebelumnya CEO Sawit punya haki 55% yang bikin badak 'tembus' tanpa damage,
      // dan f masuk s.hit sehingga badak tidak pernah mencoba lagi. Badak sudah bisa dihindari lewat lompat/blok.
@@ -1622,6 +1685,13 @@ const G={
      f.x=d.sx+(tx-d.sx)*ez;
     }else f.x+=(tx-f.x)*(dist>80?0.38:0.25);
     f.y=0;
+    if(d.sarung&&d.t<=d.wait){ // Realistis: sarung sakti juga menyedot musuh lain di sekitar jalur tarikan
+     for(const o of this.opps(d.att)){
+      if(o!==f&&o.hp>0&&Math.abs(o.x-f.x)<80){
+       o.x+=(f.x-o.x)*0.35;o.gotHit(d.dir,0.2,14);
+      }
+     }
+    }
    }
    if(d.aura&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*26,y:f.y+10+Math.random()*30,vy:1.5,t:0,max:20,r0:6,r1:18,c:Math.random()<.5?'#ffd54a':'#ff9a1a'});
    if(d.t>d.wait&&(d.t-d.wait)%d.every===0){
@@ -1632,6 +1702,19 @@ const G={
      this.fx.push({k:'slash',x:f.x,y:f.y+50,ang:(d.left%2?-1:1)*.62,t:0,max:10});
      SND.play('slash');SND.play('hit');
      this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,3);
+     // Multi-target cleave: sabetan celurit brutal juga menebas musuh-musuh lain di area tebasan!
+     const xMin=Math.min(d.att.x,f.x)-45,xMax=Math.max(d.att.x,f.x)+45;
+     for(const o of this.opps(d.att)){
+      if(o!==f&&o.hp>0&&(Math.abs(o.x-f.x)<=85||(o.x>=xMin&&o.x<=xMax))){
+       const cleaveDmg=scl(d.att,o,Math.round(d.dmg*.85));
+       o.hp=Math.max(0,o.hp-cleaveDmg);
+       o.gotHit(d.dir,0.5,18);
+       this.fx.push({k:'slash',x:o.x,y:o.y+48,ang:(d.left%2?1:-1)*.55,t:0,max:8});
+       this.spark(o.x+(Math.random()-.5)*28,o.y+20+Math.random()*45,'#d32f2f');
+       this.spark(o.x+(Math.random()-.5)*28,o.y+25+Math.random()*40,'#ffd54a');
+       if(o.hp<=0)o.knockdown(d.dir,6.5);
+      }
+     }
     }else{
      SND.play('hit');this.shake=Math.max(this.shake,6);
     }
@@ -1646,6 +1729,15 @@ const G={
      for(let i=0;i<16;i++){
       this.spark(f.x+(Math.random()-.5)*50,f.y+20+Math.random()*50,i%2?'#d32f2f':'#ffd54a');
       this.spark(f.x+(Math.random()-.5)*40,f.y+25+Math.random()*40,'#ffffff');
+     }
+     // Sabetan penutup celurit: musuh-musuh lain di area tebasan juga terpelanting knockdown!
+     const xMin=Math.min(d.att.x,f.x)-50,xMax=Math.max(d.att.x,f.x)+50;
+     for(const o of this.opps(d.att)){
+      if(o!==f&&o.hp>0&&(Math.abs(o.x-f.x)<=95||(o.x>=xMin&&o.x<=xMax))){
+       o.knockdown(d.dir,6.8);
+       this.fx.push({k:'slash',x:o.x,y:o.y+50,ang:-0.62,t:0,max:10});
+       for(let i=0;i<6;i++)this.spark(o.x+(Math.random()-.5)*35,o.y+20+Math.random()*40,i%2?'#d32f2f':'#ffd54a');
+      }
      }
     }
    }
