@@ -34,6 +34,13 @@ Petarung combo yang sudah **diseimbangkan** (sebelumnya terlalu overpower): dama
 Efek: hitstop tiap kena, screen shake (naik saat badak menyeruduk, maksimal saat wall bounce), hit spark putih-oranye, debu & pecahan tanah, energi hijau keemasan, retakan tanah, glare layar. Karakter lain yang lawan Hashim juga bisa kena Corner Carry / Wall Bounce, termasuk saat Hashim jadi bot.
 Sprite: `characters/hashim/` (atlas + sheet transparan; 89 frame, termasuk pohon sawit 8 frame, badak 5 frame, dan pose menang). Logika jurus di `index.html`: `CHARDEF.hashim`, `G.castSummon`, `G.treeTick`, `G.rhinoTick`, `G.wallBounce`.
 
+## Sistem tempo: counter-hit, guard meter, tangkap, combo scaling, burst
+- **COUNTER / PUNISH:** kena pukul saat sedang mengayun = `COUNTER!` (damage x1.25, stun x1.45, knockback x1.3, hitstop lebih lama). Kena saat jeda serangan yang meleset (atau tangkapan yang meleset) = `PUNISH!` (damage x1.4). ULT, serangan tembus-blok, dan karakter yang sedang armor tidak kena aturan ini.
+- **GUARD METER:** tiap blok menguras guard meter (garis kecil kuning di bawah bar energi; makin besar damage serangan yang diblok, makin banyak terkuras). Habis = `GUARD BREAK!` (stun 52 tick, hitstop, efek cincin merah), lalu meter diisi ulang ke 40. Meter pulih sendiri kalau tidak diserang (lebih cepat saat tidak sedang blok).
+- **TANGKAP (THROW):** tekan **G**, atau **Punch + Kick bersamaan**. Menembus blok, jangkauan dekat, kena musuh yang sedang berdiri/jalan/blok (di tanah): damage 13 + `THROW!`, musuh terbanting. Kalau meleset ada jeda panjang yang bisa di-PUNISH. Kalah dari serangan lawan yang lebih dulu keluar. Bot juga bisa nangkap penjaga blok.
+- **COMBO SCALING:** damage tiap hit dalam satu combo turun 12% per hit (minimum 40%), dan muncul `N HITS` mulai hit ke-3. Combo otomatis berakhir dengan knockdown di batas `comboKd` tiap karakter.
+- **BURST (combo breaker):** saat kena combo (minimal 2 hit) dan energi >= 30, tekan **ULT (I)**: ledakan cahaya biru mendorong semua lawan di dekatmu, kamu bangun lagi dengan armor singkat. Cooldown 2,5 detik. Bot kadang melakukannya juga.
+
 ## Jalankan
 ```
 python serve.py        # lalu buka http://localhost:3000

@@ -91,7 +91,7 @@ canvas{image-rendering:pixelated;display:block;background:#000}
 const $=id=>document.getElementById(id);
 /* ================= konstanta ================= */
 const W=400,WW=2400,ZMAX=.9,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2,ATK_TEMPO=.9;
-const ATK=['ult','skill','heavy','kick','punch'];
+const ATK=['grab','ult','skill','heavy','kick','punch'];const BURSTC=30; // Burst (combo breaker): 30 energi
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
 const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ",madura:'RAJA MADURA'};
 
@@ -284,8 +284,8 @@ const SND={ctx:null,m:null,muted:false,nb:null,koBuf:null,koSrc:null,
 
 /* ================= input ================= */
 const KEYMAP={KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',KeyW:'up',ArrowUp:'up',Space:'up',KeyS:'down',ArrowDown:'down',
- KeyJ:'punch',KeyZ:'punch',KeyK:'kick',KeyX:'kick',KeyL:'heavy',KeyC:'heavy',KeyU:'skill',KeyV:'skill',KeyI:'ult',KeyB:'ult',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'dash'};
-const codes=new Set(),touch={},buf={punch:0,kick:0,heavy:0,skill:0,ult:0};
+ KeyG:'grab',KeyJ:'punch',KeyZ:'punch',KeyK:'kick',KeyX:'kick',KeyL:'heavy',KeyC:'heavy',KeyU:'skill',KeyV:'skill',KeyI:'ult',KeyB:'ult',ShiftLeft:'dash',ShiftRight:'dash',KeyQ:'dash'};
+const codes=new Set(),touch={},buf={grab:0,punch:0,kick:0,heavy:0,skill:0,ult:0};
 addEventListener('keydown',e=>{const a=KEYMAP[e.code];if(!a)return;e.preventDefault();if(!e.repeat&&ATK.includes(a))buf[a]=10;codes.add(e.code)});
 addEventListener('keyup',e=>{codes.delete(e.code)});
 addEventListener('blur',()=>{codes.clear();for(const k in touch)touch[k]=k==='ax'?0:false});
@@ -325,6 +325,7 @@ const PlayerInput={
   for(const k in touch)if(k!=='ax'&&touch[k])f[k]=1;
   let mx=(f.right?1:0)-(f.left?1:0);if(touch.ax)mx=touch.ax;this.mx=mx;
   this.left=mx<0?1:0;this.right=mx>0?1:0;this.up=f.up?1:0;this.down=f.down?1:0;this.dash=f.dash?1:0;
+  if(buf.punch>0&&buf.kick>0){buf.punch=buf.kick=0;buf.grab=10} // Punch+Kick bersamaan = Tangkap
   this.attack=null;for(const a of ATK)if(buf[a]>0){this.attack=a;break}
   return this;
  },
@@ -337,6 +338,7 @@ class Bot{
  constructor(level){this.lv=LEVELS[level]||LEVELS.normal;this.I={left:0,right:0,up:0,down:0,attack:null,autoFace:true,consume(){}};this.timer=0}
  get(me,foe,G){
   const I=this.I,L=this.lv;I.attack=null;I.dash=0;if(this.cCd>0)this.cCd--;
+  if(me.state==='hit'&&me.combo>=2&&me.en>=BURSTC&&!me.drain&&me.burstCd<=0&&Math.random()<L.dodge*.05){I.left=I.right=I.up=I.down=0;I.attack='ult';return I}
   if(me.state==='hit'&&me.def.dash&&!me.drain){I.left=I.right=I.up=I.down=0;if(Math.random()<.12)I.dash=1;return I}
   if(me.def.sarungGuard&&(me.state==='idle'||me.state==='walk')){ // bot CEO Sawit: kadang menangkis sarung Madura pakai serangan / skill dasar
    const sn=foe.snake&&foe.snake.st==='fly'?foe.snake:null,wh=foe.state==='attack'&&foe.mdef&&(foe.mdef.sarung||foe.mdef.pull)&&!foe.mdef.snake&&!foe.hitDone?foe.mdef:null;
@@ -438,6 +440,7 @@ class Bot{
    else{this.timer=next}
   }else{
    const r=rnd();
+   if((foe.state==='block'||foe.state==='idle')&&foe.y===0&&d<40&&!(me.cds&&me.cds.grab>0)&&rnd()<(foe.state==='block'?.4:.12)){I.attack='grab';this.timer=26;return I}
    if(r<.38){I.attack='punch';this.timer=next+10}
    else if(r<.63&&has('kick')){I.attack='kick';this.timer=next+12}
    else if(r<.75&&has('heavy')){I.attack='heavy';this.timer=next+20}
@@ -454,7 +457,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,snake:null,parry:null,parryDone:false,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
+  Object.assign(this,{x,ox:x,oy:0,age:0,snake:null,parry:null,parryDone:false,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,gm:100,gmT:0,burstCd:0,cds:{skill:0,heavy:0,grab:0}});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -581,8 +584,9 @@ class Fighter{
   return{x0:this.face>0?this.x+a:this.x-b,x1:this.face>0?this.x+b:this.x-a,y0:this.y+(m.ry?m.ry[0]:8),y1:this.y+(m.ry?m.ry[1]:92)};
  }
  tryAttack(inp,G){
-  const a=inp.attack,m=this.def.moves[a];inp.consume(a);
+  const a=inp.attack;let m=a==='grab'?this.grabMove():this.def.moves[a];inp.consume(a);
   if(!m)return false;
+  if(a==='grab'&&this.y>0)return false;
   if(m.cd&&this.cds[a]>0)return false;
   if(m.cost&&this.en<m.cost)return false;
   if(m.cost)this.en-=m.cost;
@@ -594,6 +598,7 @@ class Fighter{
   if(a==='ult'){G.startFreeze(this);if(m.sarung)G.castMaduraAura(this)}else if(a!=='skill')SND.play('swing');
   return true;
  }
+ grabMove(){const pm=this.def.moves.punch;return this._gm||(this._gm={anim:pm.anim,fps:pm.fps,grab:true,cd:50,end:18,dmg:0})}
  dashCheck(dm,inp){
   const dr=Math.abs(dm)>.5?Math.sign(dm):0;
   if(this.dashCd>0)this.dashCd--;
@@ -660,6 +665,11 @@ class Fighter{
   const spd=this.def.spd||1,jx=JUMPX*(1+(spd-1)*.6);
   if(this.ghosts.length){for(const g of this.ghosts)g.t++;this.ghosts=this.ghosts.filter(g=>g.t<16)}
   if(this.guardCd>0)this.guardCd--;
+  if(this.burstCd>0)this.burstCd--;
+  // guard meter: pulih pelan kalau tidak diserang (lebih cepat saat tidak sedang blok)
+  this.gmT++;if(this.gm<100&&this.gmT>(this.state==='block'?70:38))this.gm=Math.min(100,this.gm+(this.state==='block'?.12:.45));
+  // BURST (combo breaker): saat kena combo (>=2 hit), tekan ULT dengan >=30 energi
+  if(S==='hit'&&!this.drain&&inp.attack==='ult'&&this.en>=BURSTC&&this.combo>=2&&this.burstCd<=0){inp.consume('ult');G.burst(this)}
   if(this.def.haki){
    if(this.hakiCd>0)this.hakiCd--;
    if(this.hakiT>0)this.hakiT--;
@@ -696,6 +706,7 @@ class Fighter{
     if(this.t%5===0)G.fx.push({k:'glow',x:this.x+(Math.random()-.5)*30,y:this.y+15+Math.random()*50,vy:1.8,t:0,max:18,r0:8,r1:28,c:Math.random()<.5?'#ff1744':'#ffd54a'});
    }
    if(m.parry){if(!this.parryDone&&this.t>=m.parryWin[0]&&this.t<=m.parryWin[1])this.tryParry(m);if(this.parry)this.stepParry()}
+   if(m.grab&&!this.hitDone&&idx>=1){this.hitDone=true;G.doThrow(this)}
    if(!m.snake&&!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
     const hb=this.hitbox();
     for(const o of G.opps(this).slice().sort((u,v)=>Math.abs(u.x-this.x)-Math.abs(v.x-this.x))){
@@ -1295,6 +1306,30 @@ const G={
    }
   }
  },
+ doThrow(att){
+  const dir=att.face;
+  const tg=this.opps(att).filter(o=>o.hp>0&&o.y===0&&!o.carried&&(o.state==='idle'||o.state==='walk'||o.state==='block')&&(o.x-att.x)*dir>=-6&&(o.x-att.x)*dir<=44).sort((a,b)=>Math.abs(a.x-att.x)-Math.abs(b.x-att.x))[0];
+  if(!tg)return; // meleset: jeda panjang, bisa di-PUNISH
+  const d=scl(att,tg,13);tg.hp=Math.max(0,tg.hp-d);att.en=Math.min(MAXEN,att.en+d*1.5);tg.en=Math.min(MAXEN,tg.en+d);
+  tg.face=-dir;tg.knockdown(dir,4.8);tg.vy=Math.max(tg.vy,5);
+  this.banner2(tg.x,130,'THROW!',13,'#ffd54a');
+  this.fx.push({k:'ring',x:tg.x,y:tg.y+40,t:0,max:16,r0:4,r1:50,c:'#fff3b0',c2:'#ffb347',fl:1,lw:3,lw2:5});
+  for(let i=0;i<8;i++)this.spark(tg.x+(Math.random()-.5)*30,tg.y+20+Math.random()*50,i%2?'#ffd54a':'#ffffff');
+  this.shake=Math.max(this.shake,9);this.stop=Math.max(this.stop,tg.hp<=0?14:9);SND.play('heavy');
+ },
+ burst(f){
+  f.en-=BURSTC;f.combo=0;f.stun=0;f.vx=0;f.burstCd=150;f.armorT=Math.max(f.armorT,26);f.setState('idle','idle');
+  for(const o of this.opps(f)){
+   if(o.hp<=0||o.carried||Math.abs(o.x-f.x)>105||o.y>80||!o.vulnerable())continue;
+   o.knockdown(o.x>=f.x?1:-1,4.6);o.vy=Math.max(o.vy,4);
+  }
+  const x=f.x,y=f.y+50;
+  this.fx.push({k:'ring',x,y,t:0,max:22,r0:8,r1:110,c:'#ffffff',c2:'#4fc3ff',fl:1,lw:4,lw2:8});
+  this.fx.push({k:'rays',x,y,t:0,max:18,n:20,r0:10,r1:100,c:'#bfeaff'});
+  this.fx.push({k:'glow',x,y,t:0,max:20,r0:14,r1:90,c:'#4fc3ff'});
+  this.banner2(x,140,'BURST!',14,'#8ee6ff');
+  this.shake=Math.max(this.shake,12);this.stop=Math.max(this.stop,8);this.flash=Math.max(this.flash,4);SND.play('heavy');
+ },
  blastFx(x,R,ow){
   const rd=Math.random,gold=['#ffd54a','#ff9a1a','#fff3b0','#ffb300'];
   this.fx.push({k:'dome',x,y:0,t:0,max:34,r1:R*.85});
@@ -1603,7 +1638,16 @@ const G={
   if(def.state==='block'&&def.y===0&&!m.pierce){
    def.hp=Math.max(1,def.hp-scl(att,def,Math.max(1,Math.round(m.chip||m.dmg*.2))));def.vx=dir*(m.chip?4:1.6);SND.play('block');if(m.chip)this.shake=Math.max(this.shake,8);
    def.en=Math.min(MAXEN,def.en+3);att.en=Math.min(MAXEN,att.en+4);
-   this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);return true;
+   this.spark(sx,sy,'#8ecbff');this.stop=Math.max(this.stop,3);
+   def.gm-=Math.max(7,Math.round((m.dmg||8)*2.2));def.gmT=0;
+   if(def.gm<=0){ // GUARD BREAK: blok jebol, stun panjang
+    def.gm=40;def.gotHit(dir,3.5,52);def.armorT=0;att.en=Math.min(MAXEN,att.en+10);
+    this.banner2(def.x,140,'GUARD BREAK!',12,'#ff5c3c');
+    this.fx.push({k:'ring',x:def.x,y:def.y+55,t:0,max:20,r0:6,r1:70,c:'#ffffff',c2:'#ff5c3c',fl:1,lw:3,lw2:6});
+    for(let i=0;i<8;i++)this.spark(sx+(Math.random()-.5)*30,sy+(Math.random()-.5)*40,i%2?'#ff5c3c':'#ffffff');
+    this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,9);SND.play('heavy');
+   }
+   return true;
   }
   if(m.drain&&!m.antiMeleset&&def.tryUltGuard(att,m,dir))return true;
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
@@ -1616,13 +1660,21 @@ const G={
    this.spark(sx,sy,att.def.color);return true;
   }
   if(m.pull){this.fx.push({k:'whip',t:0,max:18,att,def});def.x+=(att.x+dir*(m.pullDist||50)-def.x)*.55}
-  const d=scl(att,def,m.dmg*Math.max(.5,1-.1*def.combo));
+  // COUNTER (kena saat sedang mengayun) / PUNISH (kena saat jeda serangan meleset): damage & stun lebih besar
+  let cm=1,tag=null;
+  if(def.state==='attack'&&def.mdef&&!def.mdef.armor&&def.move!=='ult'&&!m.drain&&!m.pierce&&!(def.armorT>0)){
+   const rec=def.mdef.grab?def.frameIdx()>=1:(def.mdef.hit&&!def.hitDone&&def.frameIdx()>def.mdef.hit[1]);
+   tag=rec?'PUNISH!':'COUNTER!';cm=rec?1.4:1.25;
+  }
+  const d=scl(att,def,m.dmg*cm*Math.max(.4,1-.12*def.combo));
   def.hp=Math.max(0,def.hp-d);if(!(def.armorT>0))def.combo++;
   att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
   if(m.kd||def.hp<=0||def.combo>=(def.def.comboKd||4)||def.y>0)def.knockdown(dir,m.kb||3);
   else if(def.armorT>0)def.vx+=dir*.6;
-  else def.gotHit(dir,m.kb||1.2,Math.max(6,Math.round((m.stun||16)*(def.def.stunMul||1))));
-  this.stop=Math.max(this.stop,def.hp<=0?14:(m.stop||4));this.shake=Math.max(this.shake,m.shake||(m.kd?5:2));
+  else def.gotHit(dir,(m.kb||1.2)*(tag?1.3:1),Math.max(6,Math.round((m.stun||16)*(def.def.stunMul||1)*(tag?1.45:1))));
+  if(tag){this.banner2(def.x,132,tag,tag==='PUNISH!'?13:12,tag==='PUNISH!'?'#ff9a3a':'#ffd54a');this.stop+=0;this.shake=Math.max(this.shake,6);this.fx.push({k:'rays',x:sx,y:sy,t:0,max:12,n:10,r0:6,r1:44,c:'#fff3b0'})}
+  else if(def.combo>=3&&!(def.armorT>0))this.banner2(def.x+att.face*26,150,def.combo+' HIT'+'S',10,'#ffffff');
+  this.stop=Math.max(this.stop,(tag?3:0)+(def.hp<=0?14:(m.stop||4)));this.shake=Math.max(this.shake,m.shake||(m.kd?5:2));
   this.spark(sx,sy,m.kd?'#ffd54a':'#ffffff');SND.play(m.kd?'heavy':'hit');
   return true;
  },
@@ -1823,6 +1875,7 @@ const G={
    fill(pd,'#e8e8e8');fill(pct,pct>.5?'#5ee06a':pct>.25?'#f1c232':'#e8453c');
    const ew=w*(f.en/MAXEN);ctx.fillStyle='#000a';ctx.fillRect(x-1,23,w+2,6);
    ctx.fillStyle=f.en>=ULTC&&((this.pt>>3)&1)?'#ffd54a':'#4fc3ff';ctx.fillRect(right?x+w-ew:x,24,ew,4);ctx.fillStyle='#fff';ctx.fillRect(right?x+w-w*ULTC/MAXEN:x+w*ULTC/MAXEN,23,1,6);
+   if(f.gm<99){const gw=w*.6,gx=right?x+w-gw:x,g=gw*Math.max(0,f.gm)/100;ctx.fillStyle='#000a';ctx.fillRect(gx-1,30,gw+2,4);ctx.fillStyle=f.gm<30?'#ff5c3c':'#ffd27a';ctx.fillRect(right?x+w-g:x,31,g,2)}
    ctx.font='bold 8px monospace';ctx.fillStyle='#fff';ctx.textAlign=right?'right':'left';ctx.fillText(f.label,right?x+w:x,9);
    if(f.en>=ULTC&&((this.pt>>3)&1)){ctx.fillStyle='#ffd54a';ctx.fillText('ULT READY!',right?x+w:x,43)}
    for(let i=0;i<WIN_ROUNDS;i++){ctx.fillStyle=i<f.wins?'#ffd54a':'#fff3';ctx.beginPath();ctx.arc((right?x+w-4-i*9:x+4+i*9),36,3,0,7);ctx.fill()}
