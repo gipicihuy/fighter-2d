@@ -91,3 +91,5 @@ Badak Hashim (skill, combo, dan ULT) **bisa dihindari dengan melompat**: kalau k
 Bot Hashim kadang **nangkis dengan serudukan badak** (counter) saat lawan menyerang dekat atau melempar sawit kecil: peluang ngikutin level kesulitan, butuh 20 energi, dan ikut kena cooldown L (2,5 detik) seperti pemain. Badak juga memecahkan proyektil kecil lawan yang ditabraknya (ULT sawit raksasa tetap tembus).
 
 Sprite semua karakter punya versi HD 2x (`spritesheet_hd.webp`, dipakai otomatis; kalau gagal dimuat, game jatuh balik ke sheet asli). Posisi tangan per frame disimpan di atlas (`hand`) supaya sarung RAJA MADURA keluar dari tangan.
+
+ULTI CAROK RAJA MADURA: sarung meluncur dari tangan seperti ular (berkelok, mengejar musuh terdekat berapa pun jaraknya, dijamin kena), membelit, menarik musuh dengan mulus (makin jauh makin lama), lalu celurit menyabet beruntun. Gerakannya sengaja diperlambat biar enak dilihat.

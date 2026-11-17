@@ -183,8 +183,8 @@ const CHARDEF={
    // Special: Cambuk Sarung Sakti - menjerat dan menyentak musuh dari jarak jauh
    skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
-   ult  :{anim:'skill_ultimate',fps:10,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
-          drain:{n:8,every:3,dmg:10,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:35,banner:'ULTI CAROK!'}
+   ult  :{anim:'skill_ultimate',fps:7,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,snake:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
+          drain:{n:8,every:5,dmg:10,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
@@ -414,7 +414,7 @@ const animTicks=an=>Math.ceil(an.frames.length*60/an.fps);
 class Fighter{
  constructor(id,def,atlas,img,label,ctrl){this.id=id;this.def=def;this.A=atlas;this.img=img;this.label=label;this.ctrl=ctrl;this.wins=0;this.reset(0,1)}
  reset(x,face){
-  Object.assign(this,{x,ox:x,oy:0,age:0,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
+  Object.assign(this,{x,ox:x,oy:0,age:0,snake:null,airDashed:false,armorT:0,dashCd:0,lastDir:0,tapDir:0,tapT:-99,dDir:1,ghosts:[],hakiT:0,hakiCd:0,guardCd:0,sensed:false,dT:0,y:0,vx:0,vy:0,face,hp:MAXHP,hpShow:MAXHP,en:25,combo:0,dead:false,hitDone:false,fired:false,beamed:false,drain:null,move:null,mdef:null,stun:0,downT:0,gT:0,djLeft:this.def.djump||0,upPrev:0,slowFall:false,floatT:0,juggle:false,carried:null,cds:{skill:0,heavy:0}});
   this.setState('idle','idle');
  }
  resolve(key){
@@ -422,7 +422,41 @@ class Fighter{
   if(typeof a==='string'){const s=this.A.animations[a]||this.A.animations[this.def.anims.idle];return{frames:s.frames,fps:s.fps,loop:!!s.loop}}
   return a;
  }
- setState(s,key){this.state=s;this.an=this.resolve(key);this.t=0}
+ setState(s,key){this.state=s;if(s!=='attack')this.snake=null;this.an=this.resolve(key);this.t=0}
+ launchSnake(m){
+  const tg=G.nearest(this);
+  if(tg.x!==this.x)this.face=tg.x>this.x?1:-1;
+  const h=this.handPos();
+  this.snake={st:'fly',t:0,pt:0,rt:0,tgt:tg,hx:h.x,hy:h.y,ang:this.face>0?-.6:Math.PI+.6,trail:[{x:h.x,y:h.y}]};
+ }
+ stepSnake(m){
+  const sn=this.snake;
+  if(sn.st==='fly'){
+   sn.t++;
+   let tg=sn.tgt;if(!tg||tg.hp<=0){tg=G.nearest(this);sn.tgt=tg}
+   const tx=tg.x,ty=GROUND-tg.y-50,dx=tx-sn.hx,dy=ty-sn.hy,dist=Math.hypot(dx,dy);
+   let df=Math.atan2(dy,dx)-sn.ang;df=Math.atan2(Math.sin(df),Math.cos(df));
+   const mt=dist<90?.45:.16;
+   sn.ang+=Math.max(-mt,Math.min(mt,df));
+   const sp=Math.max(7,Math.min(13,dist*.03+5)),a2=sn.ang+(dist>70?.5*Math.sin(sn.t*.32):0);
+   sn.hx+=Math.cos(a2)*sp;sn.hy+=Math.sin(a2)*sp;
+   sn.trail.push({x:sn.hx,y:sn.hy});if(sn.trail.length>300)sn.trail.shift();
+   if(Math.hypot(tx-sn.hx,ty-sn.hy)<20||sn.t>240){
+    sn.hx=tx;sn.hy=ty;
+    this.face=tx>this.x?1:-1;
+    if(G.applyHit(this,tg,m,this.face)){
+     this.hitDone=true;sn.st='pull';sn.pt=0;
+     if(tg.drain)tg.drain.wait=Math.max(28,Math.min(70,Math.round(Math.abs(tg.x-(this.x+this.face*52))/14)));
+    }
+    else if(sn.t>420){this.hitDone=true;sn.st='slash';sn.rt=0}
+   }
+  }else if(sn.st==='pull'){
+   sn.pt++;
+   if(!sn.tgt.drain||sn.pt>=sn.tgt.drain.wait){sn.st='slash';sn.rt=0}
+  }else if(sn.st==='slash'){
+   if(++sn.rt>=10)sn.st='done';
+  }
+ }
  handPos(){
   const f=this.A.frames[this.frameId()],sc=this.def.sc||1,hd=f.hand||[f.pivot[0]+30,f.pivot[1]-78],px=this.dpx==null?this.x:this.dpx,py=this.dpy==null?GROUND-this.y:this.dpy;
   return {x:px+this.face*(hd[0]-f.pivot[0])*sc,y:py+(hd[1]-f.pivot[1])*sc};
@@ -546,12 +580,13 @@ class Fighter{
   }else if(S==='attack'){
    const m=this.mdef,idx=this.frameIdx();
    if(m.lunge&&idx>=m.lunge[0]&&idx<=m.lunge[1])this.vx=this.face*m.lunge[2];else if(!air)this.vx*=.8;else if(this.slowFall)this.vx*=.9;
-   if(m.beam&&!this.beamed){ // arah ult DIKUNCI saat dipencet (tidak ikut musuh); hanya maju kalau musuh masih di depan
+   if(m.beam&&!this.beamed&&!m.snake){ // arah ult DIKUNCI saat dipencet (tidak ikut musuh); hanya maju kalau musuh masih di depan
     const ahead=(foe.x-this.x)*this.face;this.vx=ahead>m.ideal?this.face*Math.min(4.5,1+(ahead-m.ideal)*.12):0;
    }
    if(m.beam&&!this.beamed&&idx>=m.hit[0]){this.beamed=true;this.actStart=this.t;SND.play(m.sound||'beam');G.shake=Math.max(G.shake,10)}
    if(m.fire!=null&&!this.fired&&idx>=m.fire){this.fired=true;G.fireProj(this,m)}
-   if(!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
+   if(m.snake&&this.beamed){if(!this.snake)this.launchSnake(m);this.stepSnake(m)}
+   if(!m.snake&&!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
     const hb=this.hitbox();
     for(const o of G.opps(this).slice().sort((u,v)=>Math.abs(u.x-this.x)-Math.abs(v.x-this.x))){
      const hu=o.hurtbox();
@@ -594,7 +629,7 @@ class Fighter{
    this.y+=this.vy;this.vy-=sf?GRAV*.2:GRAV*(this.floatT>0?(this.floatT--,.3):1);if(sf&&this.vy<-1.2)this.vy=-1.2;
    if(this.y<=0){this.y=0;this.vy=0;this.juggle=false;this.floatT=0;this.airDashed=false;this.slowFall=false;this.djLeft=this.def.djump||0;this.vx*=.5;if(this.state==='jump')this.setState('idle','idle')}
   }
-  this.t++;
+  if(!(this.snake&&(this.snake.st==='fly'||this.snake.st==='pull')))this.t++;
  }
  draw(ctx){
   const f=this.A.frames[this.frameId()],k=G.interp?G.alpha:1,sc=this.def.sc||1,hs=this.A.hs||1;
@@ -1174,31 +1209,69 @@ const G={
   }
  },
  spark(x,y,c){this.sparks.push({x,y,c,t:0})},
- drawSarung(a,hx,hy,tx,ty,p,ph){
-  const A=a.A,vf=A.vfx&&A.vfx.sarung&&A.frames[A.vfx.sarung[0]];
-  if(!vf)return false;
-  const h=A.hs||1,dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
-  if(L<24)return true;
-  const e=vf.ends,px=e[2]-e[0],py=e[3]-e[1],D=Math.hypot(px,py),ux=px/D,uy=py/D,k=L/D,sy=.68+.2*Math.sin(this.pt*.55+(ph||0));
-  const rx=dx/L,ry=dy/L,nx=dx>=0?-ry:ry,ny=dx>=0?rx:-rx;
-  const aa=rx*ux*k+nx*(-uy)*sy,bb=ry*ux*k+ny*(-uy)*sy,cc=rx*uy*k+nx*ux*sy,dd=ry*uy*k+ny*ux*sy;
-  const ox=hx-(aa*e[0]+cc*e[1]),oy=hy-(bb*e[0]+dd*e[1]);
-  const pass=(al,mode,wid,blur)=>{
-   ctx.save();ctx.globalAlpha*=al;ctx.globalCompositeOperation=mode;
-   if(blur){ctx.shadowColor='rgba(255,50,40,.95)';ctx.shadowBlur=blur*S}
-   ctx.transform(aa,bb,cc,dd,ox,oy);ctx.translate(0,e[1]);ctx.scale(1,wid);ctx.translate(0,-e[1]);
-   ctx.drawImage(a.img,vf.x*h,vf.y*h,vf.w*h,vf.h*h,0,0,vf.w,vf.h);
-   ctx.restore();
-  };
-  pass(.9,'source-over',1.5,9);
-  pass(.6,'lighter',1.2,0);
-  pass(.22,'lighter',2,0);
-  const tipx=hx+dx,tipy=hy+dy;
-  for(const q of[[hx,hy,9],[tipx,tipy,p>=.98?16:9]]){
-   const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],q[2]);
-   g.addColorStop(0,'#ffffff');g.addColorStop(.4,'#ff6a5a');g.addColorStop(1,'rgba(0,0,0,0)');
-   ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.8;ctx.fillStyle=g;ctx.beginPath();ctx.arc(q[0],q[1],q[2],0,7);ctx.fill();ctx.restore();
+ ribbon(pts,amp,ph,wid){
+  const n=pts.length;
+  if(n<2)return null;
+  const cum=[0];
+  for(let i=1;i<n;i++)cum.push(cum[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y));
+  const tot=cum[n-1];
+  if(tot<6)return null;
+  const N=Math.max(8,Math.min(36,Math.round(tot/9))),q=[];
+  let j=0;
+  for(let i=0;i<N;i++){
+   const u=i/(N-1),d=u*tot;
+   while(j<n-2&&cum[j+1]<d)j++;
+   const sg=cum[j+1]-cum[j]||1,k=(d-cum[j])/sg;
+   q.push({x:pts[j].x+(pts[j+1].x-pts[j].x)*k,y:pts[j].y+(pts[j+1].y-pts[j].y)*k,u});
   }
+  const base=q.map(o=>({x:o.x,y:o.y}));
+  for(let i=0;i<N;i++){
+   const a=base[Math.max(0,i-1)],b=base[Math.min(N-1,i+1)],tx=b.x-a.x,ty=b.y-a.y,tl=Math.hypot(tx,ty)||1,off=amp*Math.sin(Math.PI*q[i].u)*Math.sin(q[i].u*10-this.pt*.28+(ph||0));
+   q[i].x+=-ty/tl*off;q[i].y+=tx/tl*off;
+  }
+  const w=wid||10,ga=ctx.globalAlpha;
+  const path=()=>{ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);for(let i=1;i<N-1;i++)ctx.quadraticCurveTo(q[i].x,q[i].y,(q[i].x+q[i+1].x)/2,(q[i].y+q[i+1].y)/2);ctx.lineTo(q[N-1].x,q[N-1].y)};
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=ga*.32;ctx.strokeStyle='#ff4030';ctx.lineWidth=w+10;path();ctx.stroke();
+  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=ga;
+  ctx.strokeStyle='#3b0808';ctx.lineWidth=w+3.5;path();ctx.stroke();
+  ctx.strokeStyle='#c62828';ctx.lineWidth=w;path();ctx.stroke();
+  ctx.strokeStyle='#e8453c';ctx.lineWidth=w*.6;path();ctx.stroke();
+  ctx.globalAlpha=ga*.85;ctx.strokeStyle='#ff9a8a';ctx.lineWidth=w*.2;path();ctx.stroke();
+  ctx.globalAlpha=ga*.75;ctx.fillStyle='#ffd9d0';
+  for(let i=1;i<N-1;i+=2){ctx.beginPath();ctx.arc(q[i].x,q[i].y,1.2,0,7);ctx.fill()}
+  ctx.restore();
+  return {x:q[N-1].x,y:q[N-1].y,ang:Math.atan2(q[N-1].y-q[N-2].y,q[N-1].x-q[N-2].x)};
+ },
+ crescent(t){
+  ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.ang);ctx.lineCap='round';
+  ctx.strokeStyle='#dfe8ee';ctx.lineWidth=3.4;ctx.beginPath();ctx.arc(2,0,9,-1.25,1.25);ctx.stroke();
+  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.75;ctx.strokeStyle='#ffffff';ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(2,0,9,-1.25,1.25);ctx.stroke();
+  ctx.restore();
+ },
+ drawSnake(f){
+  const sn=f.snake;
+  if(!sn||sn.st==='done')return;
+  const hp=f.handPos(),tg=sn.tgt;
+  let pts,amp=8;
+  if(sn.st==='fly'){pts=[{x:hp.x,y:hp.y}].concat(sn.trail);amp=9}
+  else{
+   const tx=tg.x,ty=GROUND-tg.y-50,k=sn.st==='slash'?1-Math.min(1,sn.rt/10):1,ex=hp.x+(tx-hp.x)*k,ey=hp.y+(ty-hp.y)*k;
+   pts=[];
+   for(let i=0;i<=14;i++){const u=i/14;pts.push({x:hp.x+(ex-hp.x)*u,y:hp.y+(ey-hp.y)*u+Math.sin(u*Math.PI)*(sn.st==='pull'?6:14)})}
+   amp=sn.st==='pull'?3:10;
+  }
+  const tip=this.ribbon(pts,amp,0,11);
+  if(tip&&sn.st!=='slash')this.crescent(tip);
+ },
+ drawSarung(a,hx,hy,tx,ty,p,ph){
+  if(a.mdef&&a.mdef.snake&&a.move)return true;
+  const dx=(tx-hx)*p,dy=(ty-hy)*p,L=Math.hypot(dx,dy);
+  if(L<24)return true;
+  const pts=[];
+  for(let i=0;i<=14;i++){const u=i/14;pts.push({x:hx+dx*u,y:hy+dy*u})}
+  const tip=this.ribbon(pts,7,ph||0,11);
+  if(tip)this.crescent(tip);
   return true;
  },
  applyHit(att,def,m,dir){
@@ -1214,7 +1287,7 @@ const G={
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
    def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
-   else{def.gotHit(dir,.4,9999);def.drain={left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread,pull:!!m.drain.pull,sarung:!!m.drain.sarung,brutal:!!m.drain.brutal}}
+   else{def.gotHit(dir,.4,9999);def.drain={wait:m.drain.wait||0,left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread,pull:!!m.drain.pull,sarung:!!m.drain.sarung,brutal:!!m.drain.brutal}}
    if(!m.blast)this.flash=8;this.shake=Math.max(this.shake,12);if(!m.blast)this.stop=Math.max(this.stop,6);SND.play(m.hitSfx||(m.sarung?'whip':'ulthit'));
    if(m.boom)for(let i=0;i<6;i++)this.spark(sx+(Math.random()-.5)*34,sy+(Math.random()-.5)*44,i%2?'#ffb347':'#ff5c3c');
    if(m.spread)this.auraHit(def,false);
@@ -1281,17 +1354,22 @@ const G={
   for(const f of all)if(f.drain){
    const d=f.drain;d.t++;
    if(d.pull&&d.att){
-    const tx=d.att.x+d.dir*42,dist=Math.abs(tx-f.x);
-    f.x+=(tx-f.x)*(dist>80?0.38:0.25);
+    const tx=d.att.x+d.dir*(d.wait?52:42),dist=Math.abs(tx-f.x);
+    if(d.wait){
+     if(d.sx==null)d.sx=f.x;
+     const u=Math.min(1,d.t/d.wait),ez=u*u*(3-2*u);
+     f.x=d.sx+(tx-d.sx)*ez;
+    }else f.x+=(tx-f.x)*(dist>80?0.38:0.25);
     f.y=0;
    }
    if(d.aura&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*26,y:f.y+10+Math.random()*30,vy:1.5,t:0,max:20,r0:6,r1:18,c:Math.random()<.5?'#ffd54a':'#ff9a1a'});
    if(d.sarung&&d.t%2===0)this.fx.push({k:'glow',x:f.x+(Math.random()-.5)*20,y:f.y+20+Math.random()*40,vy:1,t:0,max:16,r0:4,r1:14,c:'#d32f2f'});
-   if(d.t%d.every===0){
+   if(d.t>d.wait&&(d.t-d.wait)%d.every===0){
     f.hp=Math.max(0,f.hp-scl(d.att,f,d.dmg));d.left--;
     this.spark(f.x+(Math.random()-.5)*28,f.y+20+Math.random()*50,d.att.def.color);
     this.spark(f.x+(Math.random()-.5)*30,f.y+25+Math.random()*45,'#ffd54a');
     if(d.sarung){
+     this.fx.push({k:'slash',x:f.x,y:f.y+50,ang:(d.left%2?-1:1)*.62,t:0,max:10});
      SND.play('slash');SND.play('hit');
      this.shake=Math.max(this.shake,10);this.stop=Math.max(this.stop,3);
     }else{
@@ -1507,14 +1585,15 @@ const G={
    if(sh>0)ctx.translate(Math.round((Math.random()-.5)*2*sh),Math.round((Math.random()-.5)*2*sh));}
   drawBG(camR,Zr);
   ctx.save();ctx.translate(0,GROUND*(1-Zr));ctx.scale(Zr,Zr);ctx.translate(-camR,0);
-  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed){
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&f.mdef.beam&&!f.beamed&&!f.mdef.snake){
    const m=f.mdef,x0=f.face>0?f.x+10:f.x-m.reach,hh=m.ry[1],pl=.18+.14*Math.sin(this.pt*.5);
    ctx.globalAlpha=pl;ctx.fillStyle=f.def.color;ctx.fillRect(x0,GROUND-hh,m.reach-10,hh);ctx.globalAlpha=1;
    if(f.side!==1){ctx.textAlign='center';ctx.font='bold 9px monospace';ctx.fillStyle='#fff';ctx.fillText('LOMPAT / BLOK!',Math.max(camR+50,Math.min(camR+VWr-50,f.x-f.face*-60)),GROUND-hh-8)}
   }
   this.drawSummons(ctx);
   for(const f of[this.p1,...this.allies,...this.enemies])f.draw(ctx);
-  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.snake&&f.snake.st!=='done')this.drawSnake(f);
+  for(const f of[this.p1,...this.allies,...this.enemies])if(f.state==='attack'&&f.mdef&&(f.mdef.sarung||f.mdef.pull)&&!f.mdef.snake&&!f.hitDone&&f.mdef.hit&&f.frameIdx()<=f.mdef.hit[1]+1){
    const m=f.mdef,hp=f.handPos(),L=m.sarung?460:m.rx[1],pr=Math.min(1,f.t/(m.sarung?12:7)),e1=1-Math.pow(1-pr,2);
    ctx.save();
    this.drawSarung(f,hp.x,hp.y+4,hp.x+f.face*L,hp.y+6,e1,2.4);
@@ -1621,6 +1700,11 @@ const G={
     const a=e.att,o=e.def,pr=Math.min(1,e.t/3);
     ctx.globalAlpha=Math.min(1,(e.max-e.t)/6);
     const hp=a.handPos();this.drawSarung(a,hp.x,hp.y+4,o.x,GROUND-o.y-48,1-Math.pow(1-pr,2),2.4);this.drawSarung(a,hp.x,hp.y,o.x,GROUND-o.y-50,1-Math.pow(1-pr,2));
+   }else if(e.k==='slash'){
+    const L=48,c=Math.cos(e.ang),sn2=Math.sin(e.ang),pr=Math.min(1,pg*2.2),x0=e.x-c*L,y0=ey+sn2*L,x1=e.x+c*L,y1=ey-sn2*L,cx=x0+(x1-x0)*pr,cy=y0+(y1-y0)*pr;
+    ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.globalAlpha=1-pg;
+    ctx.strokeStyle='#ff3b30';ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(cx,cy);ctx.stroke();
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=2.6;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(cx,cy);ctx.stroke();
    }else if(e.k==='shards'){
     ctx.fillStyle='#fff';
     for(const pc of e.ps){
