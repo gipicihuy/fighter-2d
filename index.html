@@ -893,7 +893,7 @@ function koSpawns(k,u,dt,env,C,tx,ty){
 }
 
 const G={
- phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
+ phase:'menu',p1:null,p2:null,projs:[],sparks:[],stop:0,shake:0,freeze:0,freezeOwner:null,freezeMax:50,flash:0,glare:0,glareA:0,glareMax:1,clashT:0,round:1,pt:0,koT:0,timer:0,winner:null,msg:'',koFx:null,lastKO:null,fadeIn:0,summons:[],focus:null,
  chars:{},fx:[],interp:false,alpha:1,enemies:[],allies:[],camX:0,camOX:0,camZ:.9,camOZ:.9,camView:{x:0,w:W},
  begin(p1id,bid,level,n,t){
   SND.stopKO();this.koFx=null;
@@ -1206,6 +1206,59 @@ const G={
   this.fx.push({k:'pillar',x:f.x,y:0,t:0,max:end?46:40,h:150*m,w:46*m,c:'#ffb300'});
  },
  team(){return[this.p1,...this.allies]},
+ ultLanded(f){return[this.p1,...this.allies,...this.enemies].some(o=>o.drain&&o.drain.att===f)},
+ ultCasting(f){return f.hp>0&&f.state==='attack'&&f.move==='ult'&&!f.hitDone&&!this.ultLanded(f)},
+ ultObjs(f){
+  const a=[],um=f.def.moves.ult;
+  if(um&&um.proj)for(const p of this.projs)if(p.owner===f&&p.pd===um.proj&&p.life>0)a.push({x:p.x,y:p.y});
+  if(f.snake&&f.snake.st==='fly')a.push({x:f.snake.hx,y:GROUND-f.snake.hy});
+  return a;
+ },
+ ultClash(){
+  const all=[this.p1,...this.allies,...this.enemies];
+  for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){
+   const a=all[i],b=all[j];
+   if(a.hp<=0||b.hp<=0||this.opps(a).indexOf(b)<0)continue;
+   const oa=this.ultObjs(a),ob=this.ultObjs(b),ca=this.ultCasting(a),cb=this.ultCasting(b);
+   if(!oa.length&&!ob.length&&!(ca&&cb))continue;
+   let pt=null;
+   for(const x of oa){for(const y of ob)if(Math.hypot(x.x-y.x,x.y-y.y)<70){pt={x:(x.x+y.x)/2,y:(x.y+y.y)/2};break}if(pt)break}
+   if(!pt&&cb)for(const x of oa)if(Math.hypot(x.x-b.x,x.y-b.y-50)<90){pt={x:(x.x+b.x)/2,y:(x.y+b.y+50)/2};break}
+   if(!pt&&ca)for(const y of ob)if(Math.hypot(y.x-a.x,y.y-a.y-50)<90){pt={x:(y.x+a.x)/2,y:(y.y+a.y+50)/2};break}
+   if(!pt&&ca&&cb&&!oa.length&&!ob.length&&Math.abs(a.x-b.x)<220)pt={x:(a.x+b.x)/2,y:(a.y+b.y)/2+50};
+   if(pt)this.resolveClash(a,b,pt);
+  }
+ },
+ resolveClash(a,b,pt){
+  for(const f of[a,b]){
+   const dir=f.x>=pt.x?1:-1,um=f.def.moves.ult;
+   f.snake=null;
+   if(um&&um.proj)for(const p of this.projs)if(p.owner===f&&p.pd===um.proj)p.life=0;
+   if(this.ultCasting(f))f.gotHit(dir,3.5,22);else f.vx+=dir*2.5;
+  }
+  this.clashFx(pt.x,pt.y);
+ },
+ clashFx(x,y){
+  const rd=Math.random,cs=['#ffd54a','#ffffff','#ff5a3a','#7a1f0e'],sh=[];
+  this.fx.push({k:'glow',x,y,t:0,max:22,r0:14,r1:90,c:'#fff3b0'});
+  this.fx.push({k:'rays',x,y,t:0,max:20,n:22,r0:10,r1:130,c:'#ffffff'});
+  this.fx.push({k:'rays',x,y,t:-3,max:20,n:14,r0:8,r1:100,c:'#ff7a1a'});
+  for(let i=0;i<3;i++)this.fx.push({k:'ring',x,y,t:-i*4,max:22,r0:6,r1:80+i*30,c:i%2?'#ff7a1a':'#ffffff',c2:'#ffd54a',fl:1,lw:3,lw2:7});
+  for(let i=0;i<34;i++){const an=rd()*6.2832,sp=2+rd()*5;sh.push({vx:Math.cos(an)*sp,vy:Math.sin(an)*sp+1,r:rd()*6.28,vr:(rd()-.5)*.5,s:2.5+rd()*4,c:cs[i%4]})}
+  this.fx.push({k:'shards',x,y,t:0,max:34,ps:sh});
+  this.shake=Math.max(this.shake,26);this.stop=Math.max(this.stop,6);
+  this.glareMax=18;this.glare=18;this.glareA=.22;
+  this.clashT=70;
+  SND.play('heavy');SND.play('block');
+ },
+ clashText(){
+  const t=70-this.clashT,k=Math.min(1,t/6),sc=1+(1-k)*1.2,al=Math.min(1,this.clashT/14);
+  ctx.save();ctx.globalAlpha=al;ctx.translate(W/2,H*.3);ctx.scale(sc,sc);
+  ctx.font='italic 900 26px Impact,"Arial Black",sans-serif';ctx.textAlign='center';ctx.lineWidth=5;ctx.lineJoin='round';ctx.strokeStyle='#120000';
+  ctx.shadowColor='rgba(255,60,30,.9)';ctx.shadowBlur=14;
+  ctx.strokeText('ULT CLASH!',0,0);ctx.fillStyle='#ffe27a';ctx.fillText('ULT CLASH!',0,0);
+  ctx.restore();
+ },
  opps(f){return f.side===1?this.enemies:this.team()},
  camF(){return this.p1.hp>0?this.p1:(this.allies.find(a=>a.hp>0)||this.p1)},
  nearest(f){
@@ -1389,6 +1442,7 @@ const G={
   if(this.fadeIn>0)this.fadeIn--;
   if(this.flash>0)this.flash--;
   if(this.glare>0)this.glare--;
+  if(this.clashT>0)this.clashT--;
   this.pt++;
   const live=this.phase==='fight';
   if(this.phase==='intro'){if(this.pt===1)SND.play('round');if(this.pt===56)SND.play('fight')}
@@ -1493,6 +1547,7 @@ const G={
    else if(r.pd.big&&!q.pd.big){q.life=0;this.shatter(q,r)}
    else{q.life=r.life=0;this.shatter(q,r);this.shatter(r,q)}
   }
+  if(this.phase==='fight')this.ultClash();
   this.projs=this.projs.filter(p=>p.life>0);
   for(const s of this.sparks)s.t++;this.sparks=this.sparks.filter(s=>s.t<10);
   for(const e of this.fx)e.t++;
@@ -1801,6 +1856,7 @@ const G={
   if(this.flash>0){ctx.fillStyle='rgba(255,255,255,'+(this.flash/10*.7)+')';ctx.fillRect(0,0,W,H)}
   if(this.glare>0){ctx.fillStyle='rgba(255,232,180,'+(this.glareA*Math.pow(this.glare/this.glareMax,1.6))+')';ctx.fillRect(0,0,W,H)}
   this.hud();
+  if(this.clashT>0)this.clashText();
   if(this.phase==='intro')this.banner(this.pt<55?'ROUND '+this.round:'FIGHT!',30);
   else if(this.phase==='ko'&&!this.koFx)this.banner(this.msg,30);
   this.koFront();
