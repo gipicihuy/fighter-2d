@@ -125,5 +125,3 @@ AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sa
 - **ULT CAROK (ular sarung) jauh lebih susah ditangkis**: terlalu cepat & lentur buat ditinju, jadi punch/kick/heavy TIDAK bisa memotongnya. Cuma skill (sawit kecil) yang kena kepala ular, itu pun peluang 35% dan ada cooldown 7 detik. Bot Sawit ikut aturan yang sama.
 
 **Visual sarung (revisi):** sarung Madura (Cambuk & ULT Carok) sekarang digambar sebagai pita kain kotak-kotak yang doff dan terpuntir (merah bata, garis gelap, benang emas redup), bukan tabung neon bercahaya. Glow additive, highlight pink, dan bintik berkilau dihapus; puff glow merah saat ULT mengunci musuh juga dibuang, dan kilau celurit diredupkan.
-
-Taunting menang RAJA MADURA bergaya villain: aura gelap merah-ungu bergejolak, mata merah menyala di balik kacamata, gelombang kejut di lantai, kamera zoom dramatis dengan vignette dan bar sinematik, kilatan petir, teks tawa, dan tawa jahat (durasi taunting dipanjangkan).
