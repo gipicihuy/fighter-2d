@@ -6,7 +6,7 @@
  "image": "spritesheet_transparent.png",
  "sheetSize": [
   1500,
-  708
+  877
  ],
  "notes": "Sprite RAJA MADURA, dibangun ulang langsung dari spritesheet_greenscreen.png resolusi asli (chroma key hijau murni + matting alpha + despill; sheet 1x dari downscale 0.834x, sheet HD 2x dari sumber asli tanpa lewat resize berulang). Potongan sprite tetangga dan serpihan kecil di tiap frame dibuang. Layout atlas tidak berubah. pivot=titik pijakan (kaki).",
  "frames": {
@@ -806,6 +806,39 @@
     566.27,
     51.39
    ]
+  },
+  "t0": {
+   "x": 0,
+   "y": 708,
+   "w": 141,
+   "h": 167,
+   "pivot": [
+    86.27,
+    159.27
+   ],
+   "pivotMode": "stand"
+  },
+  "t1": {
+   "x": 145,
+   "y": 708,
+   "w": 141,
+   "h": 167,
+   "pivot": [
+    86.27,
+    159.27
+   ],
+   "pivotMode": "stand"
+  },
+  "t2": {
+   "x": 290,
+   "y": 708,
+   "w": 141,
+   "h": 167,
+   "pivot": [
+    86.27,
+    159.27
+   ],
+   "pivotMode": "stand"
   }
  },
  "animations": {
@@ -927,12 +960,12 @@
   },
   "victory": {
    "frames": [
-    "v0",
-    "uf",
-    "v0",
-    "uf"
+    "t0",
+    "t1",
+    "t0",
+    "t2"
    ],
-   "fps": 5,
+   "fps": 4,
    "loop": true
   }
  },
