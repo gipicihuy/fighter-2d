@@ -44,6 +44,15 @@ Sprite: `characters/hashim/` (atlas + sheet transparan; 89 frame, termasuk pohon
 ## Tangkisan sawit Raja Madura
 Raja Madura bisa menangkis **lemparan sawit kecil CEO SAWIT (skill dasar, 3 jalur)** pakai **serangan dasar (punch / kick / heavy)**: kalau sawit masuk jangkauan pukulan saat ayunan aktif, sawitnya pecah berterbangan (efek sawit melayang + serpihan + cincin emas), muncul teks `NANGKIS SAWIT!`, Madura tidak kena damage dan dapat +10 energi. Jangkauan tangkisan mengikuti jangkauan serangan (tendangan lebih jauh), jadi timing dan jarak tetap menentukan. ULT sawit raksasa tidak bisa ditangkis dengan serangan dasar (tetap lewat Cambuk Sarung / parry). Bot Madura juga kadang menangkis dengan punch/kick (peluang ikut level kesulitan).
 
+## Mode pasukan (1 vs banyak)
+Biar karakter OP (CEO SAWIT, Raja Madura, Hashim) bisa "solo" banyak musuh lemah tapi tetap menegangkan. Aktif otomatis kalau satu pemain dihadapi 3 musuh atau lebih:
+- **Token serangan:** bot yang mengeroyok satu target dibatasi: hanya 3 yang boleh menyerang sekaligus (4 di level hard), bergiliran tiap sekitar 1 detik. Sisanya mengitari di jarak aman dan menunggu. Tidak ada lagi 8-10 bot memukul serentak.
+- **Cleave:** punch/kick/heavy (dan serangan melee lain) juga mengenai hingga 4 musuh lain di dalam jangkauan ayunan, dengan damage 65%. Berlaku untuk siapa pun yang dikeroyok 3+ musuh.
+- **Hyper armor:** karakter OP (atk >= 1.2) yang dikeroyok tidak terguncang oleh pukulan kecil (damage <= 10, bukan knockdown) saat berdiri, jalan, lompat, atau sedang menyerang. Dia tetap kena damage, tapi tidak bisa di-stunlock. Serangan besar, knockdown, dan ULT tetap menjatuhkannya.
+- **Pengurang damage kerumunan:** makin banyak yang mengeroyok, damage per pukulan ke karakter OP makin kecil (minimum 35%).
+- **ULT dibatasi:** musuh yang mengeroyok tidak bisa spam ULT bergantian, maksimal 1 ULT per target tiap 8 detik.
+Hasil uji simulasi (pemain dikendalikan bot level hard, 6 percobaan, lawan 10 musuh): CEO SAWIT menang 6/6 vs Patrick dan 6/6 vs Karakter 1 (sebelumnya 3/6 dan 2/6), Raja Madura menang 6/6 vs Patrick (sebelumnya 1/6). Duel 1 lawan 1 tidak berubah.
+
 ## Jalankan
 ```
 python serve.py        # lalu buka http://localhost:3000

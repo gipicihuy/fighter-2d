@@ -340,6 +340,13 @@ class Bot{
   const I=this.I,L=this.lv;I.attack=null;I.dash=0;if(this.cCd>0)this.cCd--;
   if(me.state==='hit'&&me.combo>=2&&me.en>=BURSTC&&!me.drain&&me.burstCd<=0&&Math.random()<L.dodge*.05){I.left=I.right=I.up=I.down=0;I.attack='ult';return I}
   if(me.state==='hit'&&me.def.dash&&!me.drain){I.left=I.right=I.up=I.down=0;if(Math.random()<.12)I.dash=1;return I}
+  if(me.noTok&&(me.state==='idle'||me.state==='walk')&&!me.drain&&me.y===0){ // tidak dapat jatah serang: mengitari di jarak aman
+   if(me.slot==null)me.slot=G.enemies.indexOf(me);
+   const d=Math.abs(foe.x-me.x),R=100+((me.slot<0?0:me.slot)%5)*16,tw=foe.x>me.x?'right':'left',aw=tw==='right'?'left':'right';
+   I.left=I.right=I.up=I.down=0;
+   if(d<R-14)I[aw]=1;else if(d>R+24)I[tw]=1;
+   return I;
+  }
   if(me.def.sarungGuard&&(me.state==='idle'||me.state==='walk')){ // bot CEO Sawit: kadang menangkis sarung Madura pakai serangan / skill dasar
    const sn=foe.snake&&foe.snake.st==='fly'?foe.snake:null,wh=foe.state==='attack'&&foe.mdef&&(foe.mdef.sarung||foe.mdef.pull)&&!foe.mdef.snake&&!foe.hitDone?foe.mdef:null;
    if(!sn&&!wh)this.sgRoll=null;
@@ -428,7 +435,8 @@ class Bot{
   if(pr&&rnd()<L.block){if(rnd()<.7){I.down=1;this.timer=22}else{I.up=1;I[toward]=1;this.timer=16}return I}
   if(foe.state==='attack'&&d<95&&rnd()<L.block){I.down=1;this.timer=18+rnd()*8;return I}
   const um=me.def.moves.ult,ur=!um?0:(um.snake?1100:(um.proj&&um.proj.homing?800:230));
-  if(has('ult')&&me.en>=ULTC&&d<ur&&rnd()<(d<230?.6:.55)){I.attack='ult';this.timer=50;return I}
+  const crw=G.opps(foe).filter(e=>e.hp>0).length; // MODE PASUKAN: musuh yang mengeroyok tidak boleh spam ULT bergantian (1 ULT per target tiap 8 detik)
+  if(has('ult')&&me.en>=ULTC&&d<ur&&(crw<3||G.pt>=(foe.mobUltCd||0))&&rnd()<(d<230?.6:.55)){if(crw>=3)foe.mobUltCd=G.pt+480;I.attack='ult';this.timer=50;return I}
   const skc=me.def.moves.skill?me.def.moves.skill.cost||0:0,sk=has('skill')&&me.en>=20&&!(um&&me.en-skc<ULTC&&rnd()<.85);
   if(um&&has('ult')&&d>=300&&d<ur&&me.en>=ULTC-26&&me.en<ULTC){
    if(this.zone==null)this.zone=rnd()<.75;
@@ -713,13 +721,15 @@ class Fighter{
    if(m.parry){if(!this.parryDone&&this.t>=m.parryWin[0]&&this.t<=m.parryWin[1])this.tryParry(m);if(this.parry)this.stepParry()}
    if(m.grab&&!this.hitDone&&idx>=1){this.hitDone=true;G.doThrow(this)}
    if(!m.snake&&!this.hitDone&&m.hit&&idx>=m.hit[0]&&idx<=m.hit[1]&&(!m.dur||this.t-this.actStart<=m.dur)){
-    const hb=this.hitbox();
+    const hb=this.hitbox(),cleaveOn=!m.antiMeleset&&!m.pierce&&G.opps(this).filter(e=>e.hp>0).length>=3;let cl=0;
     for(const o of G.opps(this).slice().sort((u,v)=>Math.abs(u.x-this.x)-Math.abs(v.x-this.x))){
      const hu=o.hurtbox();
      if(!this.hitDone&&hu&&(m.antiMeleset||(hb.x0<hu.x1&&hb.x1>hu.x0&&hb.y0<hu.y1&&hb.y1>hu.y0))){
       this.hitDone=true;
       if(m.antiMeleset&&o.x!==this.x)this.face=o.x>this.x?1:-1;
       G.applyHit(this,o,m,this.face);
+     }else if(this.hitDone&&cleaveOn&&cl<4&&hu&&o.hp>0&&!o.carried&&hb.x0<hu.x1&&hb.x1>hu.x0&&hb.y0<hu.y1&&hb.y1>hu.y0){
+      cl++;G.cleaveMul=.65;G.applyHit(this,o,m,this.face);G.cleaveMul=1; // CLEAVE: satu ayunan mengenai musuh di sekitar target
      }
     }
    }
@@ -1311,6 +1321,7 @@ const G={
    }
   }
  },
+ cleaveMul:1,
  doThrow(att){
   const dir=att.face;
   const tg=this.opps(att).filter(o=>o.hp>0&&o.y===0&&!o.carried&&(o.state==='idle'||o.state==='walk'||o.state==='block')&&(o.x-att.x)*dir>=-6&&(o.x-att.x)*dir<=44).sort((a,b)=>Math.abs(a.x-att.x)-Math.abs(b.x-att.x))[0];
@@ -1417,6 +1428,20 @@ const G={
     this.shake=Math.max(this.shake,18);this.stop=Math.max(this.stop,8);
     SND.play('block');SND.play('heavy');
    }
+  }
+ },
+ assignTokens(all,fo){ // MODE PASUKAN: kalau satu target dikeroyok banyak bot, hanya K bot yang boleh menyerang; sisanya mengitari di jarak aman
+  const gr=new Map();
+  all.forEach((f,i)=>{if(f.hp<=0||!(f.ctrl instanceof Bot))return;const t=fo[i];if(!t||t===f)return;if(!gr.has(t))gr.set(t,[]);gr.get(t).push(f)});
+  for(const [t,g] of gr){
+   const K=3+(g[0].ctrl.lv.aggr>=.85?1:0);
+   if(g.length<=K){g.forEach(f=>f.noTok=false);continue}
+   if(this.pt>=(t.tokNext||0)||!t.tokSet){
+    t.tokNext=this.pt+40+(Math.random()*30|0);
+    g.forEach(f=>f.tokSc=Math.abs(f.x-t.x)+Math.random()*80);
+    g.sort((u,v)=>u.tokSc-v.tokSc);t.tokSet=new Set(g.slice(0,K));
+   }
+   g.forEach(f=>f.noTok=!t.tokSet.has(f)&&f.state!=='attack'&&f.state!=='dash');
   }
  },
  sawitDeflect(){ // RAJA MADURA menangkis lemparan sawit kecil CEO SAWIT pakai serangan dasar (punch/kick/heavy): sawit pecah berterbangan
@@ -1690,12 +1715,19 @@ const G={
   }
   if(m.pull){this.fx.push({k:'whip',t:0,max:18,att,def});def.x+=(att.x+dir*(m.pullDist||50)-def.x)*.55}
   // COUNTER (kena saat sedang mengayun) / PUNISH (kena saat jeda serangan meleset): damage & stun lebih besar
+  const crowd=this.opps(def).filter(e=>e.hp>0).length,opx=crowd>=3&&(def.def.atk||1)>=1.2;
+  const cr=opx?Math.max(.35,1-.07*(crowd-2)):1; // MODE PASUKAN: makin banyak yang mengeroyok, damage per pukulan ke karakter OP makin kecil
+  if(opx&&(def.state==='attack'?(def.mdef&&def.move&&def.move!=='ult'&&def.move!=='grab'&&!def.mdef.armor):(def.state==='idle'||def.state==='walk'||def.state==='jump'))&&(m.dmg||0)<=10&&!m.big&&!m.pierce&&!m.drain&&!m.kd&&!(def.armorT>0)){
+   // HYPER ARMOR: pukulan kecil tidak membuatnya terguncang / batal menyerang saat sedang menyerang
+   const dh=scl(att,def,m.dmg*cr*.7*(this.cleaveMul||1));
+   if(def.hp-dh>0){def.hp-=dh;def.hpShow=Math.max(def.hpShow,def.hp);att.en=Math.min(MAXEN,att.en+dh);this.spark(sx,sy,'#ffffff');this.stop=Math.max(this.stop,2);SND.play('hit');return true}
+  }
   let cm=1,tag=null;
   if(def.state==='attack'&&def.mdef&&!def.mdef.armor&&def.move!=='ult'&&!m.drain&&!m.pierce&&!(def.armorT>0)){
    const rec=def.mdef.grab?def.frameIdx()>=1:(def.mdef.hit&&!def.hitDone&&def.frameIdx()>def.mdef.hit[1]);
    tag=rec?'PUNISH!':'COUNTER!';cm=rec?1.4:1.25;
   }
-  const d=scl(att,def,m.dmg*cm*Math.max(.4,1-.12*def.combo));
+  const d=scl(att,def,m.dmg*cm*cr*(this.cleaveMul||1)*Math.max(.4,1-.12*def.combo));
   def.hp=Math.max(0,def.hp-d);if(!(def.armorT>0))def.combo++;
   att.en=Math.min(MAXEN,att.en+d*2.2);def.en=Math.min(MAXEN,def.en+d*1.3);
   if(m.kd||def.hp<=0||def.combo>=(def.def.comboKd||4)||def.y>0)def.knockdown(dir,m.kb||3);
@@ -1744,6 +1776,7 @@ const G={
   if(this.phase==='intro'&&this.pt>=110){this.phase='fight';this.pt=0}
   const na=this.nearest(a);
   const fo=all.map(f=>f===a?na:this.nearest(f));
+  if(live)this.assignTokens(all,fo);
   const inps=all.map((f,i)=>live?f.ctrl.get(f,fo[i],this):NEUTRAL);
   all.forEach((f,i)=>f.update(inps[i],fo[i],this));
   this.camOZ=this.camZ;this.camZ+=(this.zoomTarget()-this.camZ)*.05;this.camOX=this.camX;this.camX+=(this.camTarget()-this.camX)*.12;
