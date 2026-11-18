@@ -53,6 +53,8 @@ Biar karakter OP (CEO SAWIT, Raja Madura, Hashim) bisa "solo" banyak musuh lemah
 - **ULT dibatasi:** musuh yang mengeroyok tidak bisa spam ULT bergantian, maksimal 1 ULT per target tiap 8 detik.
 Hasil uji simulasi (pemain dikendalikan bot level hard, 6 percobaan, lawan 10 musuh): CEO SAWIT menang 6/6 vs Patrick dan 6/6 vs Karakter 1 (sebelumnya 3/6 dan 2/6), Raja Madura menang 6/6 vs Patrick (sebelumnya 1/6). Duel 1 lawan 1 tidak berubah.
 
+**Catatan ULI CAROK Madura:** pukulan pertama sarung tidak lagi bisa langsung membunuh/melempar target yang HP-nya sudah rendah. Target tetap ditarik dulu, lalu sabetan celurit yang menghabisinya, jadi sabetan tidak pernah mengenai tempat kosong.
+
 ## Jalankan
 ```
 python serve.py        # lalu buka http://localhost:3000

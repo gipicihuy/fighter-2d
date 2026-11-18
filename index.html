@@ -1705,7 +1705,8 @@ const G={
   }
   if(m.drain&&!m.antiMeleset&&def.tryUltGuard(att,m,dir))return true;
   if(m.drain){ // ULT kena: musuh terkunci, kena beam beruntun lalu knockdown
-   def.hp=Math.max(0,def.hp-scl(att,def,m.dmg));
+   // ULI CAROK (tarik sarung): pukulan pertama tidak boleh membunuh/melempar target sebelum ditarik dan disabet celurit; yang menghabisi adalah sabetannya
+   def.hp=Math.max((m.drain.pull&&m.drain.sarung)?1:0,def.hp-scl(att,def,m.dmg));
    if(def.hp<=0)def.knockdown(dir,m.kb);
    else{def.gotHit(dir,.4,9999);def.drain={wait:m.drain.wait||0,left:m.drain.n,t:0,every:m.drain.every,dmg:m.drain.dmg,dir,att,aura:!!m.spread,pull:!!m.drain.pull,sarung:!!m.drain.sarung,brutal:!!m.drain.brutal}}
    if(!m.blast)this.flash=8;this.shake=Math.max(this.shake,12);if(!m.blast)this.stop=Math.max(this.stop,6);SND.play(m.hitSfx||(m.sarung?'whip':'ulthit'));
