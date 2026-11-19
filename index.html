@@ -820,14 +820,16 @@ class Fighter{
    ctx.drawImage(this.img,gf.x*hs,gf.y*hs,gf.w*hs,gf.h*hs,-gf.pivot[0],-gf.pivot[1],gf.w,gf.h);
    ctx.restore();
   }
-  let sx=this.face,hop=0;
+  let sx=this.face,hop=0,ff=f;
   if(this.state==='win'&&this.def.spinWin){
    const t=this.t;
    let ph=0;
    if(t>=10&&t<26){ph=(t-10)/16;hop=Math.sin(Math.PI*ph)*9}
    else if(t>=26&&t<100)ph=1;
    else if(t>=100&&t<116){ph=1-(t-100)/16;hop=Math.sin(Math.PI*(1-ph))*9}
-   sx=this.face*Math.cos(Math.PI*ph);
+   const bk=ph>.5&&this.A.frames.b0;
+   if(bk)ff=this.A.frames['b'+(Math.floor(t/8)%3)];
+   sx=bk?Math.abs(Math.cos(Math.PI*ph)):this.face*Math.cos(Math.PI*ph);
   }
   ctx.save();ctx.translate(px,py-hop);ctx.scale(Math.abs(sx)<.03?(sx<0?-.03:.03):sx,1);
   if(this.state==='dodge')ctx.rotate(-.2*Math.sin(Math.PI*Math.min(1,this.t/this.def.haki.dur)));
@@ -842,7 +844,7 @@ class Fighter{
    }
    ctx.restore();
   }
-  ctx.drawImage(this.img,f.x*hs,f.y*hs,f.w*hs,f.h*hs,-f.pivot[0],-f.pivot[1],f.w,f.h);
+  ctx.drawImage(this.img,ff.x*hs,ff.y*hs,ff.w*hs,ff.h*hs,-ff.pivot[0],-ff.pivot[1],ff.w,ff.h);
   ctx.restore();
  }
 }
