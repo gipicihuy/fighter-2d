@@ -126,4 +126,4 @@ AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sa
 
 **Visual sarung (revisi):** sarung Madura (Cambuk & ULT Carok) sekarang digambar sebagai pita kain kotak-kotak yang doff dan terpuntir (merah bata, garis gelap, benang emas redup), bukan tabung neon bercahaya. Glow additive, highlight pink, dan bintik berkilau dihapus; puff glow merah saat ULT mengunci musuh juga dibuang, dan kilau celurit diredupkan.
 
-Taunting menang RAJA MADURA: mulutnya dibuat jutek/sinis (diedit langsung di sprite, sheet biasa dan HD). Tulisan K.O. dan teks kemenangan sekarang naik dan mengecil ke atas layar setelah benturan, supaya tidak menutupi karakter yang sedang taunting.
+Tulisan K.O. dan teks kemenangan sekarang naik dan mengecil ke atas layar setelah benturan, supaya tidak menutupi karakter yang sedang taunting.
