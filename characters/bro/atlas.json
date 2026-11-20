@@ -8,7 +8,7 @@
   1254,
   1254
  ],
- "notes": "Sprite Yang Bro Rasakan. Crisp chroma key + despill + boundary isolation. HD 2x WebP lossless dengan edge sharpening.",
+ "notes": "Sprite Yang Bro Rasakan. Normalized character height (93px), crisp chroma key + despill + boundary isolation. HD 2x WebP lossless dengan edge sharpening.",
  "frames": {
   "r0_00": {
    "x": 23,
@@ -629,55 +629,55 @@
   "r8_01": {
    "x": 170,
    "y": 1060,
-   "w": 150,
-   "h": 152,
+   "w": 103,
+   "h": 104,
    "pivot": [
-    49.4,
-    150
+    51.5,
+    103
    ],
    "pivotMode": "stand"
   },
   "r8_02": {
    "x": 357,
    "y": 1031,
-   "w": 164,
-   "h": 183,
+   "w": 112,
+   "h": 125,
    "pivot": [
-    82.0,
-    181
+    56.0,
+    124
    ],
    "pivotMode": "stand"
   },
   "r8_03": {
    "x": 568,
    "y": 1030,
-   "w": 238,
-   "h": 186,
+   "w": 163,
+   "h": 127,
    "pivot": [
-    119.0,
-    185
+    81.5,
+    126
    ],
    "pivotMode": "stand"
   },
   "r8_04": {
    "x": 851,
    "y": 1076,
-   "w": 119,
-   "h": 136,
+   "w": 81,
+   "h": 93,
    "pivot": [
-    60.0,
-    134
+    40.5,
+    92
    ],
    "pivotMode": "stand"
   },
   "r8_05": {
    "x": 1011,
    "y": 1066,
-   "w": 220,
-   "h": 148,
+   "w": 150,
+   "h": 101,
    "pivot": [
-    110.0,
-    146
+    75.0,
+    100
    ],
    "pivotMode": "stand"
   }
@@ -772,9 +772,7 @@
    "frames": [
     "r8_01",
     "r8_02",
-    "r8_03",
-    "r8_04",
-    "r8_05"
+    "r8_03"
    ],
    "fps": 8,
    "loop": false
@@ -807,10 +805,9 @@
   },
   "victory": {
    "frames": [
-    "r8_04",
-    "r8_05"
+    "r8_04"
    ],
-   "fps": 5,
+   "fps": 1,
    "loop": true
   }
  },
