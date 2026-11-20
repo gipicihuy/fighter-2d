@@ -128,7 +128,7 @@ const CHARDEF={
    ult  :{anim:'skill_ultimate',fps:12,hit:[8,8],beam:true,ideal:80,reach:300,ry:[0,40],dur:9,cost:ULTC,dmg:8,drain:{n:6,every:5,dmg:5},chip:10,armor:true,kd:true,kb:5,end:40}
   }},
  sawit:{
-  color:'#ffb300',sarungGuard:true,djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08},haki:{chance:.55,cd:45,dur:18},spd:1.3,dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1, // damage keluar x1.35, masuk x0.72 (dari Patrick cuma x0.12, dari Karakter 1 x0.08 = geli doang)
+  color:'#ffb300',sarungGuard:true,djump:1,floatUlt:true,atk:1.35,def:.72,vs:{patrick:.12,default:.08,madura:.5},haki:{chance:.55,cd:45,dur:18},spd:1.3,dash:true,stunMul:.5,comboKd:6,armorAfter:45,downMul:.75,sc:1, // damage keluar x1.35, masuk x0.72 (dari Patrick cuma x0.12, dari Karakter 1 x0.08 = geli doang)
   anims:{idle:'idle',walk:A_(rng('r2_',1,6),10,true),hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['r6_06'],1,true),jump:A_(['r2_10'],1,true),dodge:A_(['r6_09'],1,true),dash:A_(['r2_09','r2_10','r2_11'],12,true)},
   moves:{
@@ -174,19 +174,19 @@ const CHARDEF={
                 rhino:{delay:54,speed:12,maxRun:900,dmg:14,carryDmg:1.5,every:8,wallDmg:16,maxCarry:120,stop:9,scale:1.25,big:true,pierce:true,antiAir:true,combo:true,text:'JAWA BEAST RAMPAGE COMBO!'}}}
   }},
  madura:{
-  color:'#d32f2f',sawitGuard:true,djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10},spinWin:true,spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
+  color:'#d32f2f',sawitGuard:true,djump:1,atk:1.32,def:.75,vs:{patrick:.14,default:.10,sawit:.88},spinWin:true,spd:1.28,dash:true,dashCd:22,stunMul:.4,comboKd:6,armorAfter:50,downMul:.75,sc:1,
   ultGuard:{parryWin:16,parryMul:.2,luck:.15,dmgMul:.35,cd:360,armor:60,text:'SARUNG SAKTI!'},
   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
          block:A_(['blk'],1,true),jump:A_(['jump'],1,true),dash:A_(['u00','u01','u02','u03','u04','u05'],14,true)},
   moves:{
-   punch:{anim:'punch',fps:16,hit:[1,1],rx:[10,70],dmg:7,stun:16,kb:1.2,stop:3,end:3},
-   kick :{anim:'kick',fps:15,hit:[1,2],rx:[10,80],dmg:10,stun:18,kb:2.2,stop:4,end:5},
-   heavy:{anim:'punch_heavy',fps:13,hit:[2,3],rx:[10,95],dmg:14,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
+   punch:{anim:'punch',fps:16,hit:[1,1],rx:[10,62],dmg:6,stun:16,kb:1.2,stop:3,end:5},
+   kick :{anim:'kick',fps:15,hit:[1,2],rx:[10,72],dmg:8,stun:18,kb:2.2,stop:4,end:6},
+   heavy:{anim:'punch_heavy',fps:13,hit:[2,3],rx:[10,88],dmg:12,kd:true,kb:3.8,stop:7,shake:8,armor:true,end:8,lunge:[1,3,2.8]},
    // Special: Cambuk Sarung Sakti - menjerat dan menyentak musuh dari jarak jauh
    skill:{anim:'skill_shot',fps:12,hit:[1,2],rx:[10,180],dmg:9,stun:24,pull:true,parry:true,parryWin:[4,20],parryZone:[70,160],pullDist:45,kb:0.4,stop:6,shake:5,armor:true,end:7,cost:20,sfx:'whip'},
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
    ult  :{anim:'skill_ultimate',fps:7,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,snake:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
-          drain:{n:8,every:5,dmg:10,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
+          drain:{n:8,every:5,dmg:8,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
