@@ -821,13 +821,19 @@ class Fighter{
    ctx.restore();
   }
   let sx=this.face,hop=0,ff=f;
+  const gh=[];
   if(this.state==='win'&&this.def.spinWin){
-   const t=this.t;
+   const t=this.t,bf=this.A.frames.b0?this.A.frames:null;
    let ph=0;
-   if(t>=10&&t<52){const u=(t-10)/42;ph=2*u+.12*Math.sin(2*Math.PI*u);hop=Math.sin(Math.PI*u)*10}
-   const bk=ph>.5&&ph<1.5&&this.A.frames.b0;
-   if(bk)ff=this.A.frames['b'+(Math.floor(t/8)%3)];
-   sx=bk?Math.abs(Math.cos(Math.PI*ph)):this.face*Math.abs(Math.cos(Math.PI*ph));
+   if(t>=10&&t<84){const u=(t-10)/74;ph=10*u*u*(3-2*u);hop=Math.sin(Math.PI*u)*14}
+   const at=v=>{const m=((v%2)+2)%2,bk=!!bf&&m>.5&&m<1.5;return{ff:bk?bf['b'+(Math.floor(t/8)%3)]:f,sx:(bk?1:this.face)*Math.abs(Math.cos(Math.PI*v))}};
+   const cur=at(ph);ff=cur.ff;sx=cur.sx;
+   if(ph>0&&ph<10)for(let k=1;k<=2;k++){const g=at(ph-k*.3);g.al=.28/k;gh.push(g)}
+  }
+  for(const g of gh){
+   ctx.save();ctx.globalAlpha=g.al;ctx.translate(px,py-hop);ctx.scale(Math.abs(g.sx)<.03?(g.sx<0?-.03:.03):g.sx,1);ctx.scale(sc,sc);
+   ctx.drawImage(this.img,g.ff.x*hs,g.ff.y*hs,g.ff.w*hs,g.ff.h*hs,-g.ff.pivot[0],-g.ff.pivot[1],g.ff.w,g.ff.h);
+   ctx.restore();
   }
   ctx.save();ctx.translate(px,py-hop);ctx.scale(Math.abs(sx)<.03?(sx<0?-.03:.03):sx,1);
   if(this.state==='dodge')ctx.rotate(-.2*Math.sin(Math.PI*Math.min(1,this.t/this.def.haki.dur)));
@@ -1926,7 +1932,10 @@ const G={
   }else if(this.phase==='ko'){
    this.koT++;
    const wn=this.winner;
-   if(wn&&wn.def.spinWin&&wn.state==='win'&&(wn.t===10||wn.t===31))SND.play('dash');
+   if(wn&&wn.def.spinWin&&wn.state==='win'&&wn.t>=10&&wn.t<84){
+    if((wn.t-10)%12===0)SND.play('dash');
+    if((wn.t-10)%6===0)this.fx.push({k:'ring',x:wn.x,y:4,t:0,max:18,r0:6,r1:30+(wn.t-10)*.5,c:'#d9c9b0',c2:'#8a7a60',fl:.16,lw:2,lw2:4});
+   }
    if(this.koT===70&&this.winner&&this.winner.hp>0&&this.winner.y===0&&this.winner.state!=='attack'){this.winner.setState('win','win');SND.play('win')}
    const koDone=this.koFx?(performance.now()-this.koFx.t0>=this.koFx.dur*1000+250):this.koT>=170; // K.O.: tunggu audio selesai
    if(koDone){

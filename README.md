@@ -131,3 +131,5 @@ Tulisan K.O. dan teks kemenangan sekarang naik dan mengecil ke atas layar setela
 Taunting menang RAJA MADURA: setelah menang dia muter balik (memutar badan 180 derajat sambil loncat kecil, menunjukkan punggungnya (frame tampak belakang asli) ke lawan yang kalah, lalu muter lagi menghadap korban).
 
 Putar balik taunting Madura sekarang satu putaran penuh 360 derajat (depan, sisi tipis, punggung, sisi tipis, depan lagi) sambil loncat, dan melambat saat punggungnya menghadap.
+
+Taunting menang Madura sekarang muter kayak gasing: 5 putaran cepat di tempat (mulai pelan, ngebut, lalu melambat) dengan afterimage, loncat melayang, debu di lantai, dan suara whoosh berulang, lalu berhenti menghadap korban.
