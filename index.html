@@ -93,7 +93,7 @@ const $=id=>document.getElementById(id);
 const W=400,WW=2400,ZMAX=.9,H=225,GROUND=207,FLOOR=190,MAXHP=100,MAXEN=100,ULTC=50,SPD=2,JUMPX=3.2,JUMPV=7,GRAV=0.34,ROUND_TIME=60,WIN_ROUNDS=2,ATK_TEMPO=.9;
 const ATK=['grab','ult','skill','heavy','kick','punch'];const BURSTC=30; // Burst (combo breaker): 30 energi
 const LEVELS={easy:{react:[20,34],block:.12,aggr:.45,dodge:.25},normal:{react:[10,20],block:.35,aggr:.65,dodge:.5},hard:{react:[4,10],block:.6,aggr:.85,dodge:.8}};
-const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ",madura:'RAJA MADURA'};
+const SHORT={default:'KARAKTER 1',patrick:'PATRICK',sawit:'CEO SAWIT',hashim:"HASHIM MA'JUJ",madura:'RAJA MADURA',bro:'YANG BRO RASAKAN'};
 
 /* ============ definisi karakter (mapping ke atlas) ============
    hit:[frameAwal,frameAkhir] = frame aktif (index di animasi)   rx:[jarak depan min,max] dari tengah badan
@@ -187,7 +187,18 @@ const CHARDEF={
    // ULT: ULTI CAROK (ANTI MELESET) - sarung sakti menjangkau seluruh arena tanpa meleset, menjerat musuh di mana pun berada, menariknya mendekat (pull), lalu sabetan celurit brutal beruntun!
    ult  :{anim:'skill_ultimate',fps:7,hit:[1,3],ideal:60,reach:2400,ry:[0,60],beam:true,snake:true,sarung:true,antiMeleset:true,pierce:true,cost:ULTC,dmg:12,sound:'carok',
           drain:{n:8,every:5,dmg:8,wait:28,pull:true,sarung:true,brutal:true},chip:15,armor:true,kd:true,kb:7,end:25,banner:'ULTI CAROK!'}
-  }}
+  }},
+  bro:{
+   color:'#8e24aa',djump:1,atk:1.30,def:.78,vs:{patrick:.15,default:.12,sawit:.88,madura:.85},spd:1.25,dash:true,dashCd:24,stunMul:.45,comboKd:6,armorAfter:48,downMul:.75,sc:1.35,
+   anims:{idle:'idle',walk:'walk',hit:'hit',knock:'knockdown',getup:'getup',win:'victory',
+          block:A_(['r0_15'],1,true),jump:A_(['r2_02'],1,true),dash:A_(['r5_05','r5_06'],12,true)},
+   moves:{
+    punch:{anim:'punch',fps:15,hit:[2,4],rx:[10,60],dmg:6,stun:16,kb:1.2,stop:3,end:4},
+    kick :{anim:'kick',fps:13,hit:[2,4],rx:[10,68],dmg:8,stun:18,kb:2.2,stop:4,end:5},
+    heavy:{anim:'punch_heavy',fps:12,hit:[3,5],rx:[10,80],dmg:12,kd:true,kb:3.5,stop:6,shake:7,armor:true,end:7,lunge:[1,3,2.5]},
+    skill:{anim:'skill_shot',fps:12,hit:[2,4],rx:[10,160],dmg:10,stun:20,kb:2.5,stop:5,shake:6,armor:true,cost:20,sfx:'heavy'},
+    ult  :{anim:'skill_ultimate',fps:8,hit:[2,4],ideal:70,reach:500,ry:[0,80],beam:true,pierce:true,cost:ULTC,dmg:14,drain:{n:6,every:5,dmg:7},chip:12,armor:true,kd:true,kb:6,end:28,banner:'YANG BRO RASAKAN!'}
+   }}
 };
 function genericDef(A){ // karakter baru yang belum ada di CHARDEF: dasar saja (punch/kick)
  const an=A.animations,has=n=>!!an[n],first=Object.keys(an)[0],idle=has('idle')?'idle':first;

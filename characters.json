@@ -23,5 +23,10 @@
   "id": "madura",
   "name": "RAJA MADURA",
   "atlas": "characters/madura/atlas.json"
+ },
+ {
+  "id": "bro",
+  "name": "Yang Bro Rasakan",
+  "atlas": "characters/bro/atlas.json"
  }
 ]
