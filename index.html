@@ -825,7 +825,7 @@ class Fighter{
   if(this.state==='win'&&this.def.spinWin){
    const t=this.t,bf=this.A.frames.b0?this.A.frames:null;
    let ph=0;
-   if(t>=10&&t<84){const u=(t-10)/74;ph=10*u*u*(3-2*u);hop=Math.sin(Math.PI*u)*14}
+   if(t>=10&&t<84){const u=(t-10)/74;ph=10*u*u*(3-2*u)}
    const at=v=>{const m=((v%2)+2)%2,bk=!!bf&&m>.5&&m<1.5;return{ff:bk?bf['b'+(Math.floor(t/8)%3)]:f,sx:(bk?1:this.face)*Math.abs(Math.cos(Math.PI*v))}};
    const cur=at(ph);ff=cur.ff;sx=cur.sx;
    if(ph>0&&ph<10)for(let k=1;k<=2;k++){const g=at(ph-k*.3);g.al=.28/k;gh.push(g)}
