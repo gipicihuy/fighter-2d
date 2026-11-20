@@ -129,3 +129,5 @@ AI bot sadar jangkauan ULT: karakter dengan ULT yang bisa mengejar dari jauh (sa
 Tulisan K.O. dan teks kemenangan sekarang naik dan mengecil ke atas layar setelah benturan, supaya tidak menutupi karakter yang sedang taunting.
 
 Taunting menang RAJA MADURA: setelah menang dia muter balik (memutar badan 180 derajat sambil loncat kecil, menunjukkan punggungnya (frame tampak belakang asli) ke lawan yang kalah, lalu muter lagi menghadap korban).
+
+Putar balik taunting Madura sekarang satu putaran penuh 360 derajat (depan, sisi tipis, punggung, sisi tipis, depan lagi) sambil loncat, dan melambat saat punggungnya menghadap.
