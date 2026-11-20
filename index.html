@@ -824,9 +824,11 @@ class Fighter{
   const gh=[];
   if(this.state==='win'&&this.def.spinWin){
    const t=this.t,bf=this.A.frames.b0?this.A.frames:null;
+   // sebelum & selama gasing: pose berdiri biasa (idle); pose taunting keren baru muncul SETELAH gasing berhenti (t>=84)
+   const idl=this.A.animations.idle,nf=this.A.frames[idl.frames[Math.floor(t*(idl.fps||6)/60)%idl.frames.length]]||f,fr0=t<84?nf:f;
    let ph=0;
    if(t>=10&&t<84){const u=(t-10)/74;ph=10*u*u*(3-2*u)}
-   const at=v=>{const m=((v%2)+2)%2,bk=!!bf&&m>.5&&m<1.5;return{ff:bk?bf['b'+(Math.floor(t/8)%3)]:f,sx:(bk?1:this.face)*Math.abs(Math.cos(Math.PI*v))}};
+   const at=v=>{const m=((v%2)+2)%2,bk=!!bf&&m>.5&&m<1.5;return{ff:bk?bf['b'+(Math.floor(t/8)%3)]:fr0,sx:(bk?1:this.face)*Math.abs(Math.cos(Math.PI*v))}};
    const cur=at(ph);ff=cur.ff;sx=cur.sx;
    if(ph>0&&ph<10)for(let k=1;k<=2;k++){const g=at(ph-k*.3);g.al=.28/k;gh.push(g)}
   }
@@ -1935,6 +1937,10 @@ const G={
    if(wn&&wn.def.spinWin&&wn.state==='win'&&wn.t>=10&&wn.t<84){
     if((wn.t-10)%12===0)SND.play('dash');
     if((wn.t-10)%6===0)this.fx.push({k:'ring',x:wn.x,y:4,t:0,max:18,r0:6,r1:30+(wn.t-10)*.5,c:'#d9c9b0',c2:'#8a7a60',fl:.16,lw:2,lw2:4});
+   }
+   if(wn&&wn.def.spinWin&&wn.state==='win'&&wn.t===84){ // gasing berhenti -> pose taunting muncul dengan efek kecil
+    this.fx.push({k:'ring',x:wn.x,y:50,t:0,max:22,r0:8,r1:80,c:'#ffffff',c2:'#ffb300',fl:.5,lw:3,lw2:7});
+    this.fx.push({k:'rays',x:wn.x,y:55,t:0,max:16,n:16,r0:8,r1:90,c:'#fff3b0'});SND.play('block');
    }
    if(this.koT===70&&this.winner&&this.winner.hp>0&&this.winner.y===0&&this.winner.state!=='attack'){this.winner.setState('win','win');SND.play('win')}
    const koDone=this.koFx?(performance.now()-this.koFx.t0>=this.koFx.dur*1000+250):this.koT>=170; // K.O.: tunggu audio selesai
